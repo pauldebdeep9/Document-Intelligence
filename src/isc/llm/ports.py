@@ -59,10 +59,17 @@ class LLMResult:
     finish_reason: str = "stop"
     # Mean per-token logprob when the provider exposes it. Feeds Signal.MODEL.
     mean_logprob: float | None = None
+    # Whether this result was served from ResponseCache rather than the
+    # provider. NOTE: because this dataclass is slots=True, this field's slot
+    # descriptor would shadow any method of the same name -- that is why the
+    # (de)serialisation helpers below are to_cache_payload/from_cache_payload,
+    # not to_cache/from_cache. `LLMResult.from_cache` used to resolve to this
+    # field's descriptor instead of the classmethod, so every cache hit raised
+    # "'member_descriptor' object is not callable".
     from_cache: bool = False
     raw: dict[str, Any] = field(default_factory=dict)
 
-    def to_cache(self) -> dict[str, Any]:
+    def to_cache_payload(self) -> dict[str, Any]:
         return {
             "text": self.text,
             "model": self.model,
@@ -76,7 +83,7 @@ class LLMResult:
         }
 
     @classmethod
-    def from_cache(cls, data: dict[str, Any]) -> LLMResult:
+    def from_cache_payload(cls, data: dict[str, Any]) -> LLMResult:
         return cls(
             text=data["text"],
             model=data["model"],

@@ -10,7 +10,8 @@ and tested, the pipeline stages are typed stubs.
 conda env create -f environment.yml
 conda activate Sai2608
 cp .env.example .env          # add OPENAI_API_KEY
-make test                     # 87 tests, no network required
+make corpus                   # generates masters, ACL graph, 20 synthetic POs + extraction gold
+make test                     # 200 tests, no network required
 ```
 
 The env name is case-sensitive — `conda activate sai2608` will fail.
@@ -31,6 +32,7 @@ The env name is case-sensitive — `conda activate sai2608` will fail.
 | `eval/` metrics + reports | Complete — the comparison functions are stubs |
 | `retrieve/fusion.py` | Complete — RRF |
 | `tests/adversarial/acl/` | Complete — 15 hard invariants |
+| `scripts/gen_masters.py`, `gen_acl_graph.py`, `gen_corpus.py` | Complete — masters, ACL graph, 20-PO synthetic corpus with extraction gold |
 | ingest / parse / extract / index / retrieve / answer | Typed stubs |
 
 ## First slice — build this before widening anything
@@ -38,9 +40,11 @@ The env name is case-sensitive — `conda activate sai2608` will fail.
 One document type, end to end, ~1,200 LOC. It exercises every seam; everything
 after it is additive rather than architectural.
 
-1. `scripts/gen_corpus.py` — 20 POs. **Generate the gold record first, render the
-   document from it.** Annotating generated documents afterwards reintroduces the
-   labelling error you were avoiding.
+1. `scripts/gen_corpus.py` — 20 POs. **Done.** Generates the gold record first,
+   renders the document from it. Annotating generated documents afterwards
+   reintroduces the labelling error you were avoiding. Enforced by
+   `tests/integration/test_corpus_fidelity.py`; output is deterministic under
+   `--seed` (default 2608).
 2. `parse/chain.py::NativeTextParser` — pypdf pages → `Block(PARAGRAPH)`.
 3. `extract/extractor.py::_wrap` — map 8 `PurchaseOrderRaw` fields, locate spans
    by string search, apply `validators.py`. This is the most important function

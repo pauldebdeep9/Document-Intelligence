@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -18,6 +19,16 @@ from isc.common.errors import ConfigError
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CONFIG_DIR = REPO_ROOT / "config"
+
+# pydantic-settings reads .env to populate Settings below, but it does NOT
+# export those values to os.environ -- and provider SDKs (OpenAI, etc.) read
+# os.environ directly, not Settings. OPENAI_API_KEY also doesn't match
+# env_prefix="ISC_", so Settings ignores it entirely regardless. Without this
+# call the key sits in .env and get_chat_model() fails as "Missing
+# credentials" even though the file looks correctly configured.
+# override=False so a real environment variable (CI, Azure managed identity)
+# always wins over the file.
+load_dotenv(REPO_ROOT / ".env", override=False)
 
 
 class LLMSettings(BaseModel):

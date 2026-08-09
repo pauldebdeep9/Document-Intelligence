@@ -1,0 +1,87 @@
+{
+  "document": "po_013.pdf",
+  "doc_type": "purchase_order",
+  "raw": {
+    "po_number": "4580799032",
+    "po_date": "01/15/2026",
+    "supplier_name": "Keyence Singapore Pte Ltd",
+    "supplier_id": "V103014",
+    "ship_to_site": "Milwaukee Plant 42",
+    "incoterms": "CIP",
+    "payment_terms": "2/10 Net 30",
+    "currency": "USD",
+    "buyer_contact": null,
+    "total_amount": "15,185.60",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "10",
+        "unit_of_measure": "PC",
+        "unit_price": "1,319.71",
+        "extended_price": "13,197.10",
+        "promised_date": "05/09/2026"
+      },
+      {
+        "line_number": 20,
+        "part_number": "VLV-5-2-24V",
+        "description": "Solenoid valve 5/2 24VDC",
+        "quantity": "2",
+        "unit_of_measure": "EA",
+        "unit_price": "994.25",
+        "extended_price": "1,988.50",
+        "promised_date": "01/31/2026"
+      }
+    ]
+  },
+  "normalised": {
+    "po_number": "4580799032",
+    "po_date": "2026-01-15",
+    "supplier_name": "Keyence Singapore Pte Ltd",
+    "supplier_id": "V103014",
+    "ship_to_site": "Milwaukee Plant 42",
+    "incoterms": "CIP",
+    "payment_terms": "2/10 Net 30",
+    "currency": "USD",
+    "total_amount": "15185.60",
+    "buyer_contact": null,
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "10",
+        "unit_of_measure": "PC",
+        "unit_price": "1319.71",
+        "extended_price": "13197.10",
+        "promised_date": "2026-05-09"
+      },
+      {
+        "line_number": 20,
+        "part_number": "VLV-5-2-24V",
+        "description": "Solenoid valve 5/2 24VDC",
+        "quantity": "2",
+        "unit_of_measure": "EA",
+        "unit_price": "994.25",
+        "extended_price": "1988.50",
+        "promised_date": "2026-01-31"
+      }
+    ]
+  },
+  "meta": {
+    "site_id": "site_us42",
+    "region": "AMER",
+    "date_format": "%m/%d/%Y",
+    "ambiguous_date_fields": [],
+    "n_lines": 2,
+    "n_pages": 1,
+    "wraps_pages": false,
+    "all_lines_priced": true,
+    "supplier_in_master": true,
+    "unmastered_parts": [],
+    "absent_fields": [
+      "buyer_contact"
+    ]
+  }
+}

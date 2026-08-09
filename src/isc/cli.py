@@ -46,14 +46,55 @@ def ingest(source: Path = typer.Option(..., "--source"),
 @app.command()
 def parse(run_id: str | None = typer.Option(None)) -> None:
     """Blobs -> Documents with blocks, tables and parser provenance."""
-    raise typer.Exit(code=_todo("parse"))
+    s = get_settings()
+    run = start_run(s.paths.runs, run_id)
+    from isc.parse.pipeline import run as do_parse
+    from isc.storage.local_blob import LocalBlobStore
+    from isc.storage.sqlite_docstore import SqliteDocStore
+
+    result = do_parse(run, LocalBlobStore(s.paths.data / "blobs"),
+                      SqliteDocStore(s.paths.data / "docstore.sqlite"))
+    console.print(f"[green]parsed[/] {len(result.parsed)} documents  run={run.run_id}")
+    if result.failed:
+        console.print(f"[red]failed[/] {len(result.failed)} documents:")
+        for doc_id, reason in result.failed:
+            console.print(f"  {doc_id}: {reason}")
+    run.summarise()
+    if result.failed:
+        raise typer.Exit(code=1)
 
 
 @app.command()
 def extract(doc_type: str = typer.Option(..., "--doc-type"),
             run_id: str | None = typer.Option(None)) -> None:
     """Documents -> ExtractionRecords, with low-confidence fields queued for review."""
-    raise typer.Exit(code=_todo("extract"))
+    from isc.common.confidence import Thresholds
+    from isc.extract.pipeline import run as do_extract
+    from isc.llm.registry import get_chat_model
+    from isc.models.document import DocType
+    from isc.storage.sqlite_docstore import SqliteDocStore
+
+    try:
+        dt = DocType(doc_type)
+    except ValueError:
+        console.print(f"[red]unknown doc_type[/] {doc_type!r}")
+        raise typer.Exit(code=1) from None
+
+    s = get_settings()
+    run = start_run(s.paths.runs, run_id)
+    thresholds = Thresholds(auto_accept=s.thresholds.auto_accept,
+                             review=s.thresholds.review, reject=s.thresholds.reject)
+    docs = SqliteDocStore(s.paths.data / "docstore.sqlite")
+
+    result = do_extract(run, docs, get_chat_model(), dt, thresholds, s.paths.data / "masters")
+    console.print(f"[green]extracted[/] {len(result.extracted)} documents  run={run.run_id}")
+    if result.failed:
+        console.print(f"[red]failed[/] {len(result.failed)} documents:")
+        for doc_id, reason in result.failed:
+            console.print(f"  {doc_id}: {reason}")
+    run.summarise()
+    if result.failed:
+        raise typer.Exit(code=1)
 
 
 @app.command()

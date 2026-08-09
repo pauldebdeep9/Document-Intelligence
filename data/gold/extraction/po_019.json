@@ -1,0 +1,89 @@
+{
+  "document": "po_019.pdf",
+  "doc_type": "purchase_order",
+  "raw": {
+    "po_number": "4538423075",
+    "po_date": "06/23/2025",
+    "supplier_name": "Fastenal Industrial Services Pte Ltd",
+    "supplier_id": null,
+    "ship_to_site": "Milwaukee Plant 42",
+    "incoterms": "FOB",
+    "payment_terms": null,
+    "currency": "USD",
+    "buyer_contact": null,
+    "total_amount": "21,719.10",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "5",
+        "unit_of_measure": "PC",
+        "unit_price": "171.70",
+        "extended_price": "858.50",
+        "promised_date": "08/09/2025"
+      },
+      {
+        "line_number": 20,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "10",
+        "unit_of_measure": "EA",
+        "unit_price": "2,086.06",
+        "extended_price": "20,860.60",
+        "promised_date": "07/15/2025"
+      }
+    ]
+  },
+  "normalised": {
+    "po_number": "4538423075",
+    "po_date": "2025-06-23",
+    "supplier_name": "Fastenal Industrial Services Pte Ltd",
+    "supplier_id": null,
+    "ship_to_site": "Milwaukee Plant 42",
+    "incoterms": "FOB",
+    "payment_terms": null,
+    "currency": "USD",
+    "total_amount": "21719.10",
+    "buyer_contact": null,
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "5",
+        "unit_of_measure": "PC",
+        "unit_price": "171.70",
+        "extended_price": "858.50",
+        "promised_date": "2025-08-09"
+      },
+      {
+        "line_number": 20,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "10",
+        "unit_of_measure": "EA",
+        "unit_price": "2086.06",
+        "extended_price": "20860.60",
+        "promised_date": "2025-07-15"
+      }
+    ]
+  },
+  "meta": {
+    "site_id": "site_us42",
+    "region": "AMER",
+    "date_format": "%m/%d/%Y",
+    "ambiguous_date_fields": [],
+    "n_lines": 2,
+    "n_pages": 1,
+    "wraps_pages": false,
+    "all_lines_priced": true,
+    "supplier_in_master": true,
+    "unmastered_parts": [],
+    "absent_fields": [
+      "buyer_contact",
+      "payment_terms",
+      "supplier_id"
+    ]
+  }
+}

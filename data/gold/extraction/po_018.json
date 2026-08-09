@@ -1,0 +1,210 @@
+{
+  "document": "po_018.pdf",
+  "doc_type": "purchase_order",
+  "raw": {
+    "po_number": "4569044139",
+    "po_date": "20/10/2025",
+    "supplier_name": "Keyence Singapore Pte Ltd",
+    "supplier_id": null,
+    "ship_to_site": "Singapore Plant 01",
+    "incoterms": null,
+    "payment_terms": "Net 60",
+    "currency": "SGD",
+    "buyer_contact": "P. Osei",
+    "total_amount": "138,870.01",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "SPR-KIT-4420",
+        "description": "Spare parts kit 4420",
+        "quantity": "100",
+        "unit_of_measure": "KIT",
+        "unit_price": "58.67",
+        "extended_price": "5,867.00",
+        "promised_date": "21/12/2025"
+      },
+      {
+        "line_number": 20,
+        "part_number": "PLC-1756-L83",
+        "description": "ControlLogix processor module",
+        "quantity": "5",
+        "unit_of_measure": "EA",
+        "unit_price": "1,922.89",
+        "extended_price": "9,614.45",
+        "promised_date": "09/02/2026"
+      },
+      {
+        "line_number": 30,
+        "part_number": "ENC-INC-1024",
+        "description": "Incremental encoder 1024ppr",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "383.76",
+        "extended_price": "38,376.00",
+        "promised_date": "27/11/2025"
+      },
+      {
+        "line_number": 40,
+        "part_number": "VLV-5-2-24V",
+        "description": "Solenoid valve 5/2 24VDC",
+        "quantity": "5",
+        "unit_of_measure": "EA",
+        "unit_price": "1,628.82",
+        "extended_price": "8,144.10",
+        "promised_date": "14/12/2025"
+      },
+      {
+        "line_number": 50,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "1,340.82",
+        "extended_price": "67,041.00",
+        "promised_date": "21/12/2025"
+      },
+      {
+        "line_number": 60,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "5",
+        "unit_of_measure": "PC",
+        "unit_price": "509.89",
+        "extended_price": "2,549.45",
+        "promised_date": "16/02/2026"
+      },
+      {
+        "line_number": 70,
+        "part_number": "VLV-5-2-24V",
+        "description": "Solenoid valve 5/2 24VDC",
+        "quantity": "5",
+        "unit_of_measure": "EA",
+        "unit_price": "845.57",
+        "extended_price": "4,227.85",
+        "promised_date": "13/02/2026"
+      },
+      {
+        "line_number": 80,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "2",
+        "unit_of_measure": "PC",
+        "unit_price": "1,525.08",
+        "extended_price": "3,050.16",
+        "promised_date": "19/11/2025"
+      }
+    ]
+  },
+  "normalised": {
+    "po_number": "4569044139",
+    "po_date": "2025-10-20",
+    "supplier_name": "Keyence Singapore Pte Ltd",
+    "supplier_id": null,
+    "ship_to_site": "Singapore Plant 01",
+    "incoterms": null,
+    "payment_terms": "Net 60",
+    "currency": "SGD",
+    "total_amount": "138870.01",
+    "buyer_contact": "P. Osei",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "SPR-KIT-4420",
+        "description": "Spare parts kit 4420",
+        "quantity": "100",
+        "unit_of_measure": "KIT",
+        "unit_price": "58.67",
+        "extended_price": "5867.00",
+        "promised_date": "2025-12-21"
+      },
+      {
+        "line_number": 20,
+        "part_number": "PLC-1756-L83",
+        "description": "ControlLogix processor module",
+        "quantity": "5",
+        "unit_of_measure": "EA",
+        "unit_price": "1922.89",
+        "extended_price": "9614.45",
+        "promised_date": "2026-02-09"
+      },
+      {
+        "line_number": 30,
+        "part_number": "ENC-INC-1024",
+        "description": "Incremental encoder 1024ppr",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "383.76",
+        "extended_price": "38376.00",
+        "promised_date": "2025-11-27"
+      },
+      {
+        "line_number": 40,
+        "part_number": "VLV-5-2-24V",
+        "description": "Solenoid valve 5/2 24VDC",
+        "quantity": "5",
+        "unit_of_measure": "EA",
+        "unit_price": "1628.82",
+        "extended_price": "8144.10",
+        "promised_date": "2025-12-14"
+      },
+      {
+        "line_number": 50,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "1340.82",
+        "extended_price": "67041.00",
+        "promised_date": "2025-12-21"
+      },
+      {
+        "line_number": 60,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "5",
+        "unit_of_measure": "PC",
+        "unit_price": "509.89",
+        "extended_price": "2549.45",
+        "promised_date": "2026-02-16"
+      },
+      {
+        "line_number": 70,
+        "part_number": "VLV-5-2-24V",
+        "description": "Solenoid valve 5/2 24VDC",
+        "quantity": "5",
+        "unit_of_measure": "EA",
+        "unit_price": "845.57",
+        "extended_price": "4227.85",
+        "promised_date": "2026-02-13"
+      },
+      {
+        "line_number": 80,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "2",
+        "unit_of_measure": "PC",
+        "unit_price": "1525.08",
+        "extended_price": "3050.16",
+        "promised_date": "2025-11-19"
+      }
+    ]
+  },
+  "meta": {
+    "site_id": "site_sg01",
+    "region": "APAC",
+    "date_format": "%d/%m/%Y",
+    "ambiguous_date_fields": [],
+    "n_lines": 8,
+    "n_pages": 1,
+    "wraps_pages": false,
+    "all_lines_priced": true,
+    "supplier_in_master": true,
+    "unmastered_parts": [
+      "SPR-KIT-4420"
+    ],
+    "absent_fields": [
+      "incoterms",
+      "supplier_id"
+    ]
+  }
+}

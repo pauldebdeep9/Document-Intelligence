@@ -1,0 +1,89 @@
+{
+  "document": "po_015.pdf",
+  "doc_type": "purchase_order",
+  "raw": {
+    "po_number": "4527194073",
+    "po_date": "02/23/2026",
+    "supplier_name": "Omron Electronics Asia",
+    "supplier_id": "V102337",
+    "ship_to_site": "Milwaukee Plant 42",
+    "incoterms": "EXW",
+    "payment_terms": "Net 30",
+    "currency": "USD",
+    "buyer_contact": null,
+    "total_amount": "96,702.90",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "SPR-KIT-4420",
+        "description": "Spare parts kit 4420",
+        "quantity": "5",
+        "unit_of_measure": "KIT",
+        "unit_price": "1,227.58",
+        "extended_price": "6,137.90",
+        "promised_date": "05/09/2026"
+      },
+      {
+        "line_number": 20,
+        "part_number": "CBL-M12-5M",
+        "description": "M12 sensor cable 5m shielded",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "1,811.30",
+        "extended_price": "90,565.00",
+        "promised_date": "06/11/2026"
+      }
+    ]
+  },
+  "normalised": {
+    "po_number": "4527194073",
+    "po_date": "2026-02-23",
+    "supplier_name": "Omron Electronics Asia",
+    "supplier_id": "V102337",
+    "ship_to_site": "Milwaukee Plant 42",
+    "incoterms": "EXW",
+    "payment_terms": "Net 30",
+    "currency": "USD",
+    "total_amount": "96702.90",
+    "buyer_contact": null,
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "SPR-KIT-4420",
+        "description": "Spare parts kit 4420",
+        "quantity": "5",
+        "unit_of_measure": "KIT",
+        "unit_price": "1227.58",
+        "extended_price": "6137.90",
+        "promised_date": "2026-05-09"
+      },
+      {
+        "line_number": 20,
+        "part_number": "CBL-M12-5M",
+        "description": "M12 sensor cable 5m shielded",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "1811.30",
+        "extended_price": "90565.00",
+        "promised_date": "2026-06-11"
+      }
+    ]
+  },
+  "meta": {
+    "site_id": "site_us42",
+    "region": "AMER",
+    "date_format": "%m/%d/%Y",
+    "ambiguous_date_fields": [],
+    "n_lines": 2,
+    "n_pages": 1,
+    "wraps_pages": false,
+    "all_lines_priced": true,
+    "supplier_in_master": true,
+    "unmastered_parts": [
+      "SPR-KIT-4420"
+    ],
+    "absent_fields": [
+      "buyer_contact"
+    ]
+  }
+}

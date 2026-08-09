@@ -1,0 +1,107 @@
+{
+  "document": "po_000.pdf",
+  "doc_type": "purchase_order",
+  "raw": {
+    "po_number": "4522345741",
+    "po_date": "16/08/2025",
+    "supplier_name": "Omron Electronics Asia",
+    "supplier_id": "V102337",
+    "ship_to_site": "Singapore Plant 01",
+    "incoterms": "EXW",
+    "payment_terms": "2/10 Net 30",
+    "currency": "SGD",
+    "buyer_contact": null,
+    "total_amount": "392,589.57",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "PLC-1756-L83",
+        "description": "ControlLogix processor module",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "1,536.37",
+        "extended_price": null,
+        "promised_date": "18/11/2025"
+      },
+      {
+        "line_number": 20,
+        "part_number": "PSU-24V-10A",
+        "description": "Switched mode power supply 24V 10A",
+        "quantity": "1",
+        "unit_of_measure": "EA",
+        "unit_price": "198.57",
+        "extended_price": null,
+        "promised_date": "26/09/2025"
+      },
+      {
+        "line_number": 30,
+        "part_number": "PSU-24V-10A",
+        "description": "Switched mode power supply 24V 10A",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "165.97",
+        "extended_price": null,
+        "promised_date": "05/11/2025"
+      }
+    ]
+  },
+  "normalised": {
+    "po_number": "4522345741",
+    "po_date": "2025-08-16",
+    "supplier_name": "Omron Electronics Asia",
+    "supplier_id": "V102337",
+    "ship_to_site": "Singapore Plant 01",
+    "incoterms": "EXW",
+    "payment_terms": "2/10 Net 30",
+    "currency": "SGD",
+    "total_amount": "392589.57",
+    "buyer_contact": null,
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "PLC-1756-L83",
+        "description": "ControlLogix processor module",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "1536.37",
+        "extended_price": null,
+        "promised_date": "2025-11-18"
+      },
+      {
+        "line_number": 20,
+        "part_number": "PSU-24V-10A",
+        "description": "Switched mode power supply 24V 10A",
+        "quantity": "1",
+        "unit_of_measure": "EA",
+        "unit_price": "198.57",
+        "extended_price": null,
+        "promised_date": "2025-09-26"
+      },
+      {
+        "line_number": 30,
+        "part_number": "PSU-24V-10A",
+        "description": "Switched mode power supply 24V 10A",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "165.97",
+        "extended_price": null,
+        "promised_date": "2025-11-05"
+      }
+    ]
+  },
+  "meta": {
+    "site_id": "site_sg01",
+    "region": "APAC",
+    "date_format": "%d/%m/%Y",
+    "ambiguous_date_fields": [],
+    "n_lines": 3,
+    "n_pages": 1,
+    "wraps_pages": false,
+    "all_lines_priced": false,
+    "supplier_in_master": true,
+    "unmastered_parts": [],
+    "absent_fields": [
+      "buyer_contact"
+    ]
+  }
+}

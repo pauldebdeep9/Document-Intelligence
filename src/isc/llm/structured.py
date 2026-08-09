@@ -18,7 +18,7 @@ from typing import Sequence, TypeVar
 from pydantic import BaseModel, ValidationError
 
 from isc.common.confidence import Confidence, Signal
-from isc.common.errors import SchemaRepairExhausted
+from isc.common.errors import OutputTruncated, SchemaRepairExhausted
 from isc.common.logging import get_logger
 from isc.common.tracing import span
 from isc.llm.ports import ChatModel, LLMResult, Message
@@ -63,6 +63,14 @@ def parse_structured(
     for attempt in range(max_repairs + 1):
         with span("structured.attempt", schema=schema.__name__, attempt=attempt):
             result = model.complete(convo, schema=schema)
+            if result.finish_reason == "length":
+                # Retrying cannot succeed: the next attempt gets the same
+                # max_tokens cap and truncates at the identical point, so
+                # entering the repair loop here just pays for three failures
+                # instead of one. Fail fast and name the real cause instead
+                # of letting this surface three attempts later as a
+                # misleading "Invalid JSON" from the eventual parse failure.
+                raise OutputTruncated(result.usage.completion_tokens)
             payload = strip_fences(result.text)
             try:
                 instance = schema.model_validate_json(payload)

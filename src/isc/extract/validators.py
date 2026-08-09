@@ -34,7 +34,10 @@ def check_enum(value: str | None, allowed: set[str], label: str) -> Confidence:
 def parse_iso_date(value: str | None) -> tuple[date | None, Confidence]:
     if not value:
         return None, Confidence.unknown()
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%b-%Y"):
+    # %d.%m.%Y: the DE site's format (site_de07 in data/masters/sites.json).
+    # Not ambiguous the way the two slash formats are -- there is no
+    # competing %m.%d.%Y in this corpus, so the separator alone disambiguates.
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d.%m.%Y", "%d-%b-%Y"):
         try:
             d = datetime.strptime(value, fmt).date()
         except ValueError:
@@ -47,13 +50,3 @@ def parse_iso_date(value: str | None) -> tuple[date | None, Confidence]:
             f"date fmt {fmt}" + (" AMBIGUOUS" if ambiguous else ""),
         )
     return None, Confidence.of(Signal.LEXICAL, 0.05, f"unparseable date {value!r}")
-
-
-def check_master(value: str | None, master: set[str], label: str) -> Confidence:
-    """Resolution against supplier/part master is the strongest cheap signal."""
-    if value is None:
-        return Confidence.unknown()
-    return Confidence.of(
-        Signal.MASTER_DATA, 0.97 if value in master else 0.15,
-        f"{label}:{'hit' if value in master else 'miss'}",
-    )

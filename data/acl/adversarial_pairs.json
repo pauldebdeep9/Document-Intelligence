@@ -1,0 +1,42 @@
+[
+  {
+    "can_see": "u_alice",
+    "cannot_see": "u_frank",
+    "requires": [
+      "purchase_order"
+    ],
+    "why": "contractor has no group grant on buyer documents"
+  },
+  {
+    "can_see": "u_alice",
+    "cannot_see": "u_chen",
+    "requires": [
+      "purchase_order"
+    ],
+    "why": "regional split: APAC buyer vs EMEA buyer"
+  },
+  {
+    "can_see": "u_gita",
+    "cannot_see": "u_ewan",
+    "requires": [
+      "purchase_order"
+    ],
+    "why": "export-controlled document requires a matching jurisdiction"
+  },
+  {
+    "can_see": "u_alice",
+    "cannot_see": "u_ben",
+    "requires": [
+      "purchase_order"
+    ],
+    "why": "confidential clearance vs internal clearance"
+  },
+  {
+    "can_see": "u_dara",
+    "cannot_see": "u_ben",
+    "requires": [
+      "ncr"
+    ],
+    "why": "quality NCR restricted to the quality group"
+  }
+]

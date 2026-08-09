@@ -1,0 +1,105 @@
+{
+  "document": "po_007.pdf",
+  "doc_type": "purchase_order",
+  "raw": {
+    "po_number": "4512472645",
+    "po_date": "16.06.2026",
+    "supplier_name": "Bosch Rexroth AG",
+    "supplier_id": "V100781",
+    "ship_to_site": "Stuttgart Werk 07",
+    "incoterms": "CIP",
+    "payment_terms": "Net 45",
+    "currency": "EUR",
+    "buyer_contact": "J. Ruiz",
+    "total_amount": "20,298.30",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "24",
+        "unit_of_measure": "EA",
+        "unit_price": "69.95",
+        "extended_price": "1,678.80",
+        "promised_date": "08.10.2026"
+      },
+      {
+        "line_number": 20,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "5",
+        "unit_of_measure": "PC",
+        "unit_price": "1,338.10",
+        "extended_price": "6,690.50",
+        "promised_date": "06.07.2026"
+      },
+      {
+        "line_number": 30,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "238.58",
+        "extended_price": "11,929.00",
+        "promised_date": "26.09.2026"
+      }
+    ]
+  },
+  "normalised": {
+    "po_number": "4512472645",
+    "po_date": "2026-06-16",
+    "supplier_name": "Bosch Rexroth AG",
+    "supplier_id": "V100781",
+    "ship_to_site": "Stuttgart Werk 07",
+    "incoterms": "CIP",
+    "payment_terms": "Net 45",
+    "currency": "EUR",
+    "total_amount": "20298.30",
+    "buyer_contact": "J. Ruiz",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "24",
+        "unit_of_measure": "EA",
+        "unit_price": "69.95",
+        "extended_price": "1678.80",
+        "promised_date": "2026-10-08"
+      },
+      {
+        "line_number": 20,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "5",
+        "unit_of_measure": "PC",
+        "unit_price": "1338.10",
+        "extended_price": "6690.50",
+        "promised_date": "2026-07-06"
+      },
+      {
+        "line_number": 30,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "238.58",
+        "extended_price": "11929.00",
+        "promised_date": "2026-09-26"
+      }
+    ]
+  },
+  "meta": {
+    "site_id": "site_de07",
+    "region": "EMEA",
+    "date_format": "%d.%m.%Y",
+    "ambiguous_date_fields": [],
+    "n_lines": 3,
+    "n_pages": 1,
+    "wraps_pages": false,
+    "all_lines_priced": true,
+    "supplier_in_master": true,
+    "unmastered_parts": [],
+    "absent_fields": []
+  }
+}

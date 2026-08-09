@@ -44,6 +44,7 @@ class Signal(StrEnum):
     RETRIEVAL = "retrieval"        # similarity or rerank score
     AGREEMENT = "agreement"        # multiple extractors returned the same value
     HUMAN = "human"                # reviewed in the HITL queue
+    PROVENANCE = "provenance"      # value's source text could (not) be located in the document
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,11 +117,14 @@ class Confidence:
         score = sum(c.score * w for c, w in pairs) / total
         return cls(score, _merge([c for c, _ in pairs]))
 
-    def penalise(self, factor: float, reason: str) -> Confidence:
-        """Apply a known-defect discount, e.g. a parser fallback was used."""
+    def penalise(self, signal: Signal, factor: float, reason: str) -> Confidence:
+        """Apply a known-defect discount, e.g. a parser fallback was used.
+        `signal` is the source of the defect, not assumed -- a MASTER_DATA
+        conflict and a parser fallback are not the same signal, and tagging
+        both as LAYOUT would mislabel the weakest factor shown to a reviewer."""
         return Confidence(
             self.score * factor,
-            (*self.factors, Factor(Signal.LAYOUT, factor, reason)),
+            (*self.factors, Factor(signal, factor, reason)),
         )
 
     # -- interpretation ----------------------------------------------------

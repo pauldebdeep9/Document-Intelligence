@@ -1,0 +1,129 @@
+{
+  "document": "po_006.pdf",
+  "doc_type": "purchase_order",
+  "raw": {
+    "po_number": "4582333324",
+    "po_date": "22/03/2025",
+    "supplier_name": "Molex Interconnect LLC",
+    "supplier_id": "V101450",
+    "ship_to_site": "Singapore Plant 01",
+    "incoterms": "DAP",
+    "payment_terms": "Net 60",
+    "currency": "SGD",
+    "buyer_contact": null,
+    "total_amount": "631,425.14",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "VLV-5-2-24V",
+        "description": "Solenoid valve 5/2 24VDC",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "1,787.23",
+        "extended_price": "446,807.50",
+        "promised_date": "23/06/2025"
+      },
+      {
+        "line_number": 20,
+        "part_number": "TMP-XR-0091",
+        "description": "Temporary tooling fixture XR-91",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "442.10",
+        "extended_price": "44,210.00",
+        "promised_date": "16/06/2025"
+      },
+      {
+        "line_number": 30,
+        "part_number": "SNS-PROX-M18",
+        "description": "Inductive proximity sensor M18",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "967.01",
+        "extended_price": "96,701.00",
+        "promised_date": "13/04/2025"
+      },
+      {
+        "line_number": 40,
+        "part_number": "SNS-PROX-M18",
+        "description": "Inductive proximity sensor M18",
+        "quantity": "24",
+        "unit_of_measure": "EA",
+        "unit_price": "1,821.11",
+        "extended_price": "43,706.64",
+        "promised_date": "10/05/2025"
+      }
+    ]
+  },
+  "normalised": {
+    "po_number": "4582333324",
+    "po_date": "2025-03-22",
+    "supplier_name": "Molex Interconnect LLC",
+    "supplier_id": "V101450",
+    "ship_to_site": "Singapore Plant 01",
+    "incoterms": "DAP",
+    "payment_terms": "Net 60",
+    "currency": "SGD",
+    "total_amount": "631425.14",
+    "buyer_contact": null,
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "VLV-5-2-24V",
+        "description": "Solenoid valve 5/2 24VDC",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "1787.23",
+        "extended_price": "446807.50",
+        "promised_date": "2025-06-23"
+      },
+      {
+        "line_number": 20,
+        "part_number": "TMP-XR-0091",
+        "description": "Temporary tooling fixture XR-91",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "442.10",
+        "extended_price": "44210.00",
+        "promised_date": "2025-06-16"
+      },
+      {
+        "line_number": 30,
+        "part_number": "SNS-PROX-M18",
+        "description": "Inductive proximity sensor M18",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "967.01",
+        "extended_price": "96701.00",
+        "promised_date": "2025-04-13"
+      },
+      {
+        "line_number": 40,
+        "part_number": "SNS-PROX-M18",
+        "description": "Inductive proximity sensor M18",
+        "quantity": "24",
+        "unit_of_measure": "EA",
+        "unit_price": "1821.11",
+        "extended_price": "43706.64",
+        "promised_date": "2025-05-10"
+      }
+    ]
+  },
+  "meta": {
+    "site_id": "site_sg01",
+    "region": "APAC",
+    "date_format": "%d/%m/%Y",
+    "ambiguous_date_fields": [],
+    "n_lines": 4,
+    "n_pages": 1,
+    "wraps_pages": false,
+    "all_lines_priced": true,
+    "supplier_in_master": true,
+    "unmastered_parts": [
+      "TMP-XR-0091"
+    ],
+    "absent_fields": [
+      "buyer_contact"
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "buyers-apac": [
+    "u_alice",
+    "u_ben"
+  ],
+  "buyers-emea": [
+    "u_chen"
+  ],
+  "quality-sg": [
+    "u_dara",
+    "u_alice"
+  ],
+  "engineering": [
+    "u_ewan"
+  ],
+  "contractors": [
+    "u_frank"
+  ],
+  "trade-compliance": [
+    "u_gita"
+  ]
+}

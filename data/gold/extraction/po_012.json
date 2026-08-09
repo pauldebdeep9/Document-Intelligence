@@ -1,0 +1,107 @@
+{
+  "document": "po_012.pdf",
+  "doc_type": "purchase_order",
+  "raw": {
+    "po_number": "4557830886",
+    "po_date": "01/17/2025",
+    "supplier_name": "Bosch Rexroth Pneumatics GmbH",
+    "supplier_id": "V100782",
+    "ship_to_site": "Milwaukee Plant 42",
+    "incoterms": "DAP",
+    "payment_terms": null,
+    "currency": "USD",
+    "buyer_contact": "P. Osei",
+    "total_amount": "39,211.16",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "RA-24VDC-4K",
+        "description": "Relay module 24VDC 4-channel",
+        "quantity": "24",
+        "unit_of_measure": "EA",
+        "unit_price": "852.08",
+        "extended_price": "20,449.92",
+        "promised_date": "04/23/2025"
+      },
+      {
+        "line_number": 20,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "1",
+        "unit_of_measure": "EA",
+        "unit_price": "904.24",
+        "extended_price": "904.24",
+        "promised_date": "04/29/2025"
+      },
+      {
+        "line_number": 30,
+        "part_number": "PLC-1756-L83",
+        "description": "ControlLogix processor module",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "357.14",
+        "extended_price": "17,857.00",
+        "promised_date": "02/10/2025"
+      }
+    ]
+  },
+  "normalised": {
+    "po_number": "4557830886",
+    "po_date": "2025-01-17",
+    "supplier_name": "Bosch Rexroth Pneumatics GmbH",
+    "supplier_id": "V100782",
+    "ship_to_site": "Milwaukee Plant 42",
+    "incoterms": "DAP",
+    "payment_terms": null,
+    "currency": "USD",
+    "total_amount": "39211.16",
+    "buyer_contact": "P. Osei",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "RA-24VDC-4K",
+        "description": "Relay module 24VDC 4-channel",
+        "quantity": "24",
+        "unit_of_measure": "EA",
+        "unit_price": "852.08",
+        "extended_price": "20449.92",
+        "promised_date": "2025-04-23"
+      },
+      {
+        "line_number": 20,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "1",
+        "unit_of_measure": "EA",
+        "unit_price": "904.24",
+        "extended_price": "904.24",
+        "promised_date": "2025-04-29"
+      },
+      {
+        "line_number": 30,
+        "part_number": "PLC-1756-L83",
+        "description": "ControlLogix processor module",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "357.14",
+        "extended_price": "17857.00",
+        "promised_date": "2025-02-10"
+      }
+    ]
+  },
+  "meta": {
+    "site_id": "site_us42",
+    "region": "AMER",
+    "date_format": "%m/%d/%Y",
+    "ambiguous_date_fields": [],
+    "n_lines": 3,
+    "n_pages": 1,
+    "wraps_pages": false,
+    "all_lines_priced": true,
+    "supplier_in_master": true,
+    "unmastered_parts": [],
+    "absent_fields": [
+      "payment_terms"
+    ]
+  }
+}

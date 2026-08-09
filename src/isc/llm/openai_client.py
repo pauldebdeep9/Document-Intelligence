@@ -19,6 +19,7 @@ from isc.common.tracing import current_run, span
 from isc.llm.cache import ResponseCache
 from isc.llm.cost import estimate_usd
 from isc.llm.ports import LLMResult, Message, Usage
+from isc.llm.schema import to_strict_schema
 
 log = get_logger("llm.openai")
 
@@ -54,14 +55,14 @@ class OpenAIChatModel:
                 "type": "json_schema",
                 "json_schema": {
                     "name": schema.__name__,
-                    "schema": schema.model_json_schema(),
+                    "schema": to_strict_schema(schema),
                     "strict": True,
                 },
             }
 
         key = self._cache.key_for("chat", payload)
         if (hit := self._cache.get(key)) is not None:
-            return LLMResult.from_cache(hit)
+            return LLMResult.from_cache_payload(hit)
 
         with span("llm.complete", model=self.model, schema=schema.__name__ if schema else None):
             raw = self._call_with_retry(payload)
@@ -75,7 +76,7 @@ class OpenAIChatModel:
             mean_logprob=_mean_logprob(choice),
         )
         self._record(result)
-        self._cache.put(key, result.to_cache())
+        self._cache.put(key, result.to_cache_payload())
         return result
 
     def _call_with_retry(self, payload: dict[str, Any]) -> Any:

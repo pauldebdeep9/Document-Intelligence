@@ -5,7 +5,16 @@ llm:
   chat_model: gpt-4o-mini
   embed_model: text-embedding-3-small
   temperature: 0.0
-  max_tokens: 2048
+  # Measured, not guessed: structured PurchaseOrderRaw output costs ~53
+  # completion tokens per line item; the largest corpus document (42 lines)
+  # needs ~2,305, which the old 2048 cap exceeded above ~36 lines. 8192 gives
+  # ~3.6x headroom (~151 line items) rather than ~1.8x, because this setting
+  # is shared with P1-11's invoices and a cap that is merely adequate today
+  # silently truncates after the next corpus change. This is a ceiling, not
+  # an allocation -- only tokens actually generated are billed, so headroom
+  # here costs nothing when unused. llm/structured.py fails fast on
+  # finish_reason == "length" rather than relying on this number being right.
+  max_tokens: 8192
   timeout_s: 60.0
   max_retries: 3
   embed_batch_size: 64

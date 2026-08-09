@@ -1,0 +1,105 @@
+{
+  "document": "po_011.pdf",
+  "doc_type": "purchase_order",
+  "raw": {
+    "po_number": "4542555435",
+    "po_date": "13.09.2025",
+    "supplier_name": "TE Connectivity Solutions",
+    "supplier_id": "V101902",
+    "ship_to_site": "Stuttgart Werk 07",
+    "incoterms": "CIP",
+    "payment_terms": "2/10 Net 30",
+    "currency": "EUR",
+    "buyer_contact": "K. Nakamura",
+    "total_amount": "379,189.50",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "2,178.50",
+        "extended_price": "217,850.00",
+        "promised_date": "20.12.2025"
+      },
+      {
+        "line_number": 20,
+        "part_number": "RA-24VDC-4K",
+        "description": "Relay module 24VDC 4-channel",
+        "quantity": "24",
+        "unit_of_measure": "EA",
+        "unit_price": "1,751.75",
+        "extended_price": "42,042.00",
+        "promised_date": "28.12.2025"
+      },
+      {
+        "line_number": 30,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "477.19",
+        "extended_price": "119,297.50",
+        "promised_date": "13.12.2025"
+      }
+    ]
+  },
+  "normalised": {
+    "po_number": "4542555435",
+    "po_date": "2025-09-13",
+    "supplier_name": "TE Connectivity Solutions",
+    "supplier_id": "V101902",
+    "ship_to_site": "Stuttgart Werk 07",
+    "incoterms": "CIP",
+    "payment_terms": "2/10 Net 30",
+    "currency": "EUR",
+    "total_amount": "379189.50",
+    "buyer_contact": "K. Nakamura",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "2178.50",
+        "extended_price": "217850.00",
+        "promised_date": "2025-12-20"
+      },
+      {
+        "line_number": 20,
+        "part_number": "RA-24VDC-4K",
+        "description": "Relay module 24VDC 4-channel",
+        "quantity": "24",
+        "unit_of_measure": "EA",
+        "unit_price": "1751.75",
+        "extended_price": "42042.00",
+        "promised_date": "2025-12-28"
+      },
+      {
+        "line_number": 30,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "477.19",
+        "extended_price": "119297.50",
+        "promised_date": "2025-12-13"
+      }
+    ]
+  },
+  "meta": {
+    "site_id": "site_de07",
+    "region": "EMEA",
+    "date_format": "%d.%m.%Y",
+    "ambiguous_date_fields": [],
+    "n_lines": 3,
+    "n_pages": 1,
+    "wraps_pages": false,
+    "all_lines_priced": true,
+    "supplier_in_master": true,
+    "unmastered_parts": [],
+    "absent_fields": []
+  }
+}

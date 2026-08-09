@@ -1,0 +1,80 @@
+{
+  "u_alice": {
+    "groups": [
+      "buyers-apac",
+      "quality-sg"
+    ],
+    "sites": [
+      "site_sg01"
+    ],
+    "clearance": "confidential",
+    "jurisdictions": [
+      "SG"
+    ]
+  },
+  "u_ben": {
+    "groups": [
+      "buyers-apac"
+    ],
+    "sites": [
+      "site_sg01"
+    ],
+    "clearance": "internal",
+    "jurisdictions": []
+  },
+  "u_chen": {
+    "groups": [
+      "buyers-emea"
+    ],
+    "sites": [
+      "site_de07"
+    ],
+    "clearance": "confidential",
+    "jurisdictions": [
+      "DE"
+    ]
+  },
+  "u_dara": {
+    "groups": [
+      "quality-sg"
+    ],
+    "sites": [
+      "site_sg01"
+    ],
+    "clearance": "internal",
+    "jurisdictions": []
+  },
+  "u_ewan": {
+    "groups": [
+      "engineering"
+    ],
+    "sites": [
+      "site_us42"
+    ],
+    "clearance": "confidential",
+    "jurisdictions": [
+      "US"
+    ]
+  },
+  "u_frank": {
+    "groups": [
+      "contractors"
+    ],
+    "sites": [],
+    "clearance": "public",
+    "jurisdictions": []
+  },
+  "u_gita": {
+    "groups": [
+      "trade-compliance"
+    ],
+    "sites": [
+      "site_us42"
+    ],
+    "clearance": "export_controlled",
+    "jurisdictions": [
+      "US",
+      "SG"
+    ]
+  }
+}

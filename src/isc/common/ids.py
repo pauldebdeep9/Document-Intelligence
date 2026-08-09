@@ -42,6 +42,11 @@ def span_id(document_id: str, page: int, bbox: tuple[float, float, float, float]
     return f"spn_{_h(document_id, str(page), ','.join(f'{v:.2f}' for v in bbox))}"
 
 
+def block_id(document_id: str, page: int, reading_order: int, text: str) -> str:
+    """Includes text so a re-parse with different heuristics does not silently alias."""
+    return f"blk_{_h(document_id, str(page), str(reading_order), text)}"
+
+
 def cache_key(namespace: str, payload: Any) -> str:
     """Canonical JSON so key ordering never changes the key."""
     blob = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)

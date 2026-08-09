@@ -1,0 +1,52 @@
+[
+  {
+    "part_number": "RA-24VDC-4K",
+    "description": "Relay module 24VDC 4-channel",
+    "uom": "EA"
+  },
+  {
+    "part_number": "CBL-M12-5M",
+    "description": "M12 sensor cable 5m shielded",
+    "uom": "EA"
+  },
+  {
+    "part_number": "PLC-1756-L83",
+    "description": "ControlLogix processor module",
+    "uom": "EA"
+  },
+  {
+    "part_number": "BRG-6205-2RS",
+    "description": "Deep groove ball bearing 6205",
+    "uom": "EA"
+  },
+  {
+    "part_number": "TRM-BLK-2P5",
+    "description": "Terminal block 2.5mm pluggable",
+    "uom": "PC"
+  },
+  {
+    "part_number": "SNS-PROX-M18",
+    "description": "Inductive proximity sensor M18",
+    "uom": "EA"
+  },
+  {
+    "part_number": "PSU-24V-10A",
+    "description": "Switched mode power supply 24V 10A",
+    "uom": "EA"
+  },
+  {
+    "part_number": "CTR-HMI-7IN",
+    "description": "Operator terminal 7in colour",
+    "uom": "EA"
+  },
+  {
+    "part_number": "VLV-5-2-24V",
+    "description": "Solenoid valve 5/2 24VDC",
+    "uom": "EA"
+  },
+  {
+    "part_number": "ENC-INC-1024",
+    "description": "Incremental encoder 1024ppr",
+    "uom": "EA"
+  }
+]

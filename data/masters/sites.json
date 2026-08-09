@@ -1,0 +1,23 @@
+[
+  {
+    "site_id": "site_sg01",
+    "name": "Singapore Plant 01",
+    "region": "APAC",
+    "address": "12 Tuas Avenue 8, Singapore 639234",
+    "date_format": "%d/%m/%Y"
+  },
+  {
+    "site_id": "site_us42",
+    "name": "Milwaukee Plant 42",
+    "region": "AMER",
+    "address": "1201 S 2nd St, Milwaukee, WI 53204, USA",
+    "date_format": "%m/%d/%Y"
+  },
+  {
+    "site_id": "site_de07",
+    "name": "Stuttgart Werk 07",
+    "region": "EMEA",
+    "address": "Industriestrasse 7, 70565 Stuttgart, Germany",
+    "date_format": "%d.%m.%Y"
+  }
+]

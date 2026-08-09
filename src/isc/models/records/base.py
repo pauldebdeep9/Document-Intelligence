@@ -63,9 +63,12 @@ class ExtractedField(BaseModel, Generic[T]):
             Confidence.corroborate(self.confidence, Confidence.of(signal, score, detail)),
         )
 
-    def flag_conflict(self, message: str, penalty: float = 0.5) -> None:
+    def flag_conflict(self, signal: Signal, message: str, penalty: float = 0.5) -> None:
+        """Fold in a check that disagreed with the value (failed regex,
+        master-data miss, arithmetic disagreement). `signal` must name the
+        check that actually failed -- see Confidence.penalise()."""
         self.conflicts.append(message)
-        object.__setattr__(self, "confidence", self.confidence.penalise(penalty, message))
+        object.__setattr__(self, "confidence", self.confidence.penalise(signal, penalty, message))
 
 
 class ExtractionRecord(BaseModel):
@@ -79,20 +82,69 @@ class ExtractionRecord(BaseModel):
     document_id: str
     extracted_at: date | None = None
     record_confidence: Confidence = Field(default_factory=Confidence.unknown)
+    # Line-item spans are located positionally (row text scoped from a
+    # structural row-extraction pass), not by content match. True unless that
+    # structural pass failed to verifiably line up with the record -- see
+    # extract/extractor.py's row-alignment self-check. False means every
+    # line-item field on this record has span=None regardless of whether an
+    # unscoped search would otherwise have found something: a silently
+    # misaligned span points a reviewer at the wrong row while looking
+    # healthy, which is worse than no span at all.
+    row_alignment_ok: bool = True
+    row_alignment_detail: str = ""
 
     def fields(self) -> dict[str, ExtractedField[Any]]:
+        """Top-level ExtractedField attributes only. Does not see into a
+        `lines: list[POLine]`-shaped attribute -- use all_fields() for that."""
         return {
             name: value
             for name, value in self
             if isinstance(value, ExtractedField)
         }
 
-    def rollup(self) -> Confidence:
-        """Record-level confidence is the weakest required field, not the mean.
+    def all_fields(self) -> dict[str, ExtractedField[Any]]:
+        """Every ExtractedField on this record, including line items --
+        keyed lines[i].name for anything nested inside a list of sub-records.
+        fields() alone only sees top-level attributes: a record with a
+        `lines: list[POLine]` attribute has no other way for a per-line
+        problem to ever reach rollup() or a reviewer."""
+        out = dict(self.fields())
+        for name, value in self:
+            if isinstance(value, list):
+                for i, item in enumerate(value):
+                    if isinstance(item, BaseModel):
+                        out.update({
+                            f"{name}[{i}].{sub_name}": sub_value
+                            for sub_name, sub_value in item
+                            if isinstance(sub_value, ExtractedField)
+                        })
+        return out
 
-        Averaging hides the one wrong field that makes the whole record unusable,
-        which is exactly the failure the HITL queue exists to catch.
+    def rollup(self) -> Confidence:
+        """Record-level confidence is the weakest *populated* field across
+        the whole record -- header and line items alike -- not the mean, and
+        not scoped to required_fields(). A record can have a sound
+        po_number/supplier_name/po_date and still contain a materially wrong
+        total_amount or a wrong line price; this is what is supposed to
+        catch that. See required_confidence() for the narrower "can we
+        proceed at all" question that required_fields() alone used to answer
+        here, which is worth asking separately, not instead.
+
+        Fields that are correctly absent are excluded explicitly. missing()
+        already scores them certain() (1.0), so they would never be the
+        minimum regardless -- excluded anyway so the intent reads directly
+        rather than depending on that staying true.
         """
+        populated = [f for f in self.all_fields().values() if f.absent_reason is None]
+        if not populated:
+            return Confidence.unknown()
+        return Confidence.weakest_link(*[f.confidence for f in populated])
+
+    def required_confidence(self) -> Confidence:
+        """The narrower question rollup() used to answer alone: are the
+        fields we cannot proceed without sound? "Is this record usable at
+        all" and "is anything in this record wrong" are different questions
+        with different consumers -- this is the first one."""
         required = [f for name, f in self.fields().items() if name in self.required_fields()]
         if not required:
             return Confidence.unknown()
@@ -105,7 +157,7 @@ class ExtractionRecord(BaseModel):
 
     def needs_review(self, thresholds: Thresholds) -> list[str]:
         return [
-            name for name, f in self.fields().items()
+            name for name, f in self.all_fields().items()
             if thresholds.route(f.confidence) in {"review", "low_confidence"}
         ]
 

@@ -1,0 +1,128 @@
+{
+  "document": "po_002.pdf",
+  "doc_type": "purchase_order",
+  "raw": {
+    "po_number": "4594564683",
+    "po_date": "22.04.2025",
+    "supplier_name": "Fastenal Industrial Services Pte Ltd",
+    "supplier_id": null,
+    "ship_to_site": "Stuttgart Werk 07",
+    "incoterms": "DDP",
+    "payment_terms": null,
+    "currency": "EUR",
+    "buyer_contact": "K. Nakamura",
+    "total_amount": "320,101.24",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "1,751.55",
+        "extended_price": null,
+        "promised_date": "01.06.2025"
+      },
+      {
+        "line_number": 20,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "1",
+        "unit_of_measure": "EA",
+        "unit_price": "326.74",
+        "extended_price": null,
+        "promised_date": "18.05.2025"
+      },
+      {
+        "line_number": 30,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "896.86",
+        "extended_price": null,
+        "promised_date": "01.07.2025"
+      },
+      {
+        "line_number": 40,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "100",
+        "unit_of_measure": "PC",
+        "unit_price": "1,425.11",
+        "extended_price": null,
+        "promised_date": "12.06.2025"
+      }
+    ]
+  },
+  "normalised": {
+    "po_number": "4594564683",
+    "po_date": "2025-04-22",
+    "supplier_name": "Fastenal Industrial Services Pte Ltd",
+    "supplier_id": null,
+    "ship_to_site": "Stuttgart Werk 07",
+    "incoterms": "DDP",
+    "payment_terms": null,
+    "currency": "EUR",
+    "total_amount": "320101.24",
+    "buyer_contact": "K. Nakamura",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "1751.55",
+        "extended_price": null,
+        "promised_date": "2025-06-01"
+      },
+      {
+        "line_number": 20,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "1",
+        "unit_of_measure": "EA",
+        "unit_price": "326.74",
+        "extended_price": null,
+        "promised_date": "2025-05-18"
+      },
+      {
+        "line_number": 30,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "896.86",
+        "extended_price": null,
+        "promised_date": "2025-07-01"
+      },
+      {
+        "line_number": 40,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "100",
+        "unit_of_measure": "PC",
+        "unit_price": "1425.11",
+        "extended_price": null,
+        "promised_date": "2025-06-12"
+      }
+    ]
+  },
+  "meta": {
+    "site_id": "site_de07",
+    "region": "EMEA",
+    "date_format": "%d.%m.%Y",
+    "ambiguous_date_fields": [],
+    "n_lines": 4,
+    "n_pages": 1,
+    "wraps_pages": false,
+    "all_lines_priced": false,
+    "supplier_in_master": true,
+    "unmastered_parts": [],
+    "absent_fields": [
+      "payment_terms",
+      "supplier_id"
+    ]
+  }
+}

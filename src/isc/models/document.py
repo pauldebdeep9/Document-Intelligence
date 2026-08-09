@@ -6,6 +6,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from isc.common.confidence import Confidence
 from isc.models.acl import AclSet
 
 
@@ -116,6 +117,9 @@ class Document(BaseModel):
     pages: list[Page] = Field(default_factory=list)
     parser: str = ""            # which parser in the fallback chain succeeded
     parser_degraded: bool = False
+    # Set by parse_with_fallback. Carried in the artifact so extract/ folds it
+    # into record confidence instead of recomputing the parser penalty.
+    parse_confidence: Confidence | None = None
     metadata: dict[str, str] = Field(default_factory=dict)
 
     def blocks(self) -> list[Block]:

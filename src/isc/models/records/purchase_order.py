@@ -15,7 +15,6 @@ from pydantic import BaseModel, Field
 from isc.models.document import DocType
 from isc.models.records.base import ExtractedField, ExtractionRecord, register
 
-
 # --- what the model is asked for -----------------------------------------
 
 class POLineRaw(BaseModel):
@@ -57,6 +56,19 @@ class POLine(BaseModel):
     extended_price: ExtractedField[Decimal] = Field(default_factory=ExtractedField[Decimal])
     promised_date: ExtractedField[date] = Field(default_factory=ExtractedField[date])
 
+    def extended_price_agrees(self, tolerance: Decimal = Decimal("0.01")) -> bool | None:
+        """Per-line cross-check: printed extended price vs quantity x unit
+        price. None (not just False) when extended_price was not printed --
+        the prompt instructs the model to return null rather than compute a
+        value itself, so an absent extended price is a correct read, not a
+        check that failed."""
+        if not (self.quantity.present and self.unit_price.present and self.extended_price.present):
+            return None
+        assert self.quantity.value is not None and self.unit_price.value is not None
+        assert self.extended_price.value is not None
+        computed = self.quantity.value * self.unit_price.value
+        return abs(computed - self.extended_price.value) <= tolerance
+
 
 @register
 class PurchaseOrder(ExtractionRecord):
@@ -80,14 +92,26 @@ class PurchaseOrder(ExtractionRecord):
         return {"po_number", "supplier_name", "po_date"}
 
     def line_total_agrees(self, tolerance: Decimal = Decimal("0.01")) -> bool | None:
-        """Arithmetic cross-check. Feeds Signal.AGREEMENT on total_amount:
-        a total that reconciles against the lines is evidence both were read right."""
+        """Arithmetic cross-check. Feeds Signal.AGREEMENT on total_amount: a
+        total that reconciles against quantity x unit_price for every line is
+        evidence both were read right.
+
+        Sums quantity x unit_price, NOT the printed extended price: 4/20
+        corpus documents omit the extended-price column entirely while still
+        printing a true total, so summing extendeds there yields zero and
+        fires a false conflict on a fifth of the corpus. Requires every line
+        to have both quantity and unit_price before summing anything -- a
+        partial sum compared against the full total would misreport a gap in
+        extraction as an arithmetic disagreement, which is a different claim.
+        """
         if not self.present_total() or not self.lines:
             return None
-        summed = sum(
-            (ln.extended_price.value for ln in self.lines if ln.extended_price.present),
-            Decimal(0),
-        )
+        if not all(ln.quantity.present and ln.unit_price.present for ln in self.lines):
+            return None
+        summed = Decimal(0)
+        for ln in self.lines:
+            assert ln.quantity.value is not None and ln.unit_price.value is not None
+            summed += ln.quantity.value * ln.unit_price.value
         assert self.total_amount.value is not None
         return abs(summed - self.total_amount.value) <= tolerance
 

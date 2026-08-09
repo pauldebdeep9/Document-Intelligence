@@ -1,0 +1,652 @@
+{
+  "document": "po_017.pdf",
+  "doc_type": "purchase_order",
+  "raw": {
+    "po_number": "4591786279",
+    "po_date": "10/07/2025",
+    "supplier_name": "Omron Electronics Asia",
+    "supplier_id": null,
+    "ship_to_site": "Singapore Plant 01",
+    "incoterms": "EXW",
+    "payment_terms": "Net 45",
+    "currency": "SGD",
+    "buyer_contact": "M. Weber",
+    "total_amount": "2,579,748.53",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "363.35",
+        "extended_price": null,
+        "promised_date": "02/10/2025"
+      },
+      {
+        "line_number": 20,
+        "part_number": "CBL-M12-5M",
+        "description": "M12 sensor cable 5m shielded",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "805.51",
+        "extended_price": null,
+        "promised_date": "21/08/2025"
+      },
+      {
+        "line_number": 30,
+        "part_number": "SNS-PROX-M18",
+        "description": "Inductive proximity sensor M18",
+        "quantity": "10",
+        "unit_of_measure": "EA",
+        "unit_price": "1,148.73",
+        "extended_price": null,
+        "promised_date": "17/09/2025"
+      },
+      {
+        "line_number": 40,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "1,145.31",
+        "extended_price": null,
+        "promised_date": "25/08/2025"
+      },
+      {
+        "line_number": 50,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "1,609.35",
+        "extended_price": null,
+        "promised_date": "27/10/2025"
+      },
+      {
+        "line_number": 60,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "1,079.92",
+        "extended_price": null,
+        "promised_date": "30/08/2025"
+      },
+      {
+        "line_number": 70,
+        "part_number": "SNS-PROX-M18",
+        "description": "Inductive proximity sensor M18",
+        "quantity": "1",
+        "unit_of_measure": "EA",
+        "unit_price": "1,261.77",
+        "extended_price": null,
+        "promised_date": "07/09/2025"
+      },
+      {
+        "line_number": 80,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "50",
+        "unit_of_measure": "PC",
+        "unit_price": "1,227.80",
+        "extended_price": null,
+        "promised_date": "11/08/2025"
+      },
+      {
+        "line_number": 90,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "2,116.82",
+        "extended_price": null,
+        "promised_date": "27/10/2025"
+      },
+      {
+        "line_number": 100,
+        "part_number": "RA-24VDC-4K",
+        "description": "Relay module 24VDC 4-channel",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "1,397.94",
+        "extended_price": null,
+        "promised_date": "07/09/2025"
+      },
+      {
+        "line_number": 110,
+        "part_number": "SNS-PROX-M18",
+        "description": "Inductive proximity sensor M18",
+        "quantity": "5",
+        "unit_of_measure": "EA",
+        "unit_price": "2,093.83",
+        "extended_price": null,
+        "promised_date": "08/10/2025"
+      },
+      {
+        "line_number": 120,
+        "part_number": "VLV-5-2-24V",
+        "description": "Solenoid valve 5/2 24VDC",
+        "quantity": "10",
+        "unit_of_measure": "EA",
+        "unit_price": "956.41",
+        "extended_price": null,
+        "promised_date": "02/09/2025"
+      },
+      {
+        "line_number": 130,
+        "part_number": "CBL-M12-5M",
+        "description": "M12 sensor cable 5m shielded",
+        "quantity": "1",
+        "unit_of_measure": "EA",
+        "unit_price": "217.47",
+        "extended_price": null,
+        "promised_date": "04/08/2025"
+      },
+      {
+        "line_number": 140,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "24",
+        "unit_of_measure": "PC",
+        "unit_price": "905.45",
+        "extended_price": null,
+        "promised_date": "16/09/2025"
+      },
+      {
+        "line_number": 150,
+        "part_number": "ENC-INC-1024",
+        "description": "Incremental encoder 1024ppr",
+        "quantity": "1",
+        "unit_of_measure": "EA",
+        "unit_price": "321.55",
+        "extended_price": null,
+        "promised_date": "05/08/2025"
+      },
+      {
+        "line_number": 160,
+        "part_number": "PSU-24V-10A",
+        "description": "Switched mode power supply 24V 10A",
+        "quantity": "10",
+        "unit_of_measure": "EA",
+        "unit_price": "2,342.57",
+        "extended_price": null,
+        "promised_date": "08/08/2025"
+      },
+      {
+        "line_number": 170,
+        "part_number": "RA-24VDC-4K",
+        "description": "Relay module 24VDC 4-channel",
+        "quantity": "5",
+        "unit_of_measure": "EA",
+        "unit_price": "700.43",
+        "extended_price": null,
+        "promised_date": "27/10/2025"
+      },
+      {
+        "line_number": 180,
+        "part_number": "SPR-KIT-4420",
+        "description": "Spare parts kit 4420",
+        "quantity": "1",
+        "unit_of_measure": "KIT",
+        "unit_price": "722.72",
+        "extended_price": null,
+        "promised_date": "19/08/2025"
+      },
+      {
+        "line_number": 190,
+        "part_number": "CBL-M12-5M",
+        "description": "M12 sensor cable 5m shielded",
+        "quantity": "24",
+        "unit_of_measure": "EA",
+        "unit_price": "1,177.71",
+        "extended_price": null,
+        "promised_date": "04/11/2025"
+      },
+      {
+        "line_number": 200,
+        "part_number": "ENC-INC-1024",
+        "description": "Incremental encoder 1024ppr",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "1,179.44",
+        "extended_price": null,
+        "promised_date": "04/10/2025"
+      },
+      {
+        "line_number": 210,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "2",
+        "unit_of_measure": "PC",
+        "unit_price": "1,709.39",
+        "extended_price": null,
+        "promised_date": "28/07/2025"
+      },
+      {
+        "line_number": 220,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "2",
+        "unit_of_measure": "EA",
+        "unit_price": "1,262.86",
+        "extended_price": null,
+        "promised_date": "24/08/2025"
+      },
+      {
+        "line_number": 230,
+        "part_number": "TMP-XR-0091",
+        "description": "Temporary tooling fixture XR-91",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "1,598.00",
+        "extended_price": null,
+        "promised_date": "01/10/2025"
+      },
+      {
+        "line_number": 240,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "1,137.95",
+        "extended_price": null,
+        "promised_date": "30/08/2025"
+      },
+      {
+        "line_number": 250,
+        "part_number": "PLC-1756-L83",
+        "description": "ControlLogix processor module",
+        "quantity": "2",
+        "unit_of_measure": "EA",
+        "unit_price": "882.09",
+        "extended_price": null,
+        "promised_date": "15/10/2025"
+      },
+      {
+        "line_number": 260,
+        "part_number": "VLV-5-2-24V",
+        "description": "Solenoid valve 5/2 24VDC",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "1,256.25",
+        "extended_price": null,
+        "promised_date": "28/07/2025"
+      },
+      {
+        "line_number": 270,
+        "part_number": "PSU-24V-10A",
+        "description": "Switched mode power supply 24V 10A",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "637.22",
+        "extended_price": null,
+        "promised_date": "19/08/2025"
+      },
+      {
+        "line_number": 280,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "10",
+        "unit_of_measure": "EA",
+        "unit_price": "1,004.51",
+        "extended_price": null,
+        "promised_date": "07/08/2025"
+      },
+      {
+        "line_number": 290,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "250",
+        "unit_of_measure": "PC",
+        "unit_price": "556.23",
+        "extended_price": null,
+        "promised_date": "28/08/2025"
+      },
+      {
+        "line_number": 300,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "561.10",
+        "extended_price": null,
+        "promised_date": "26/08/2025"
+      }
+    ]
+  },
+  "normalised": {
+    "po_number": "4591786279",
+    "po_date": "2025-07-10",
+    "supplier_name": "Omron Electronics Asia",
+    "supplier_id": null,
+    "ship_to_site": "Singapore Plant 01",
+    "incoterms": "EXW",
+    "payment_terms": "Net 45",
+    "currency": "SGD",
+    "total_amount": "2579748.53",
+    "buyer_contact": "M. Weber",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "363.35",
+        "extended_price": null,
+        "promised_date": "2025-10-02"
+      },
+      {
+        "line_number": 20,
+        "part_number": "CBL-M12-5M",
+        "description": "M12 sensor cable 5m shielded",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "805.51",
+        "extended_price": null,
+        "promised_date": "2025-08-21"
+      },
+      {
+        "line_number": 30,
+        "part_number": "SNS-PROX-M18",
+        "description": "Inductive proximity sensor M18",
+        "quantity": "10",
+        "unit_of_measure": "EA",
+        "unit_price": "1148.73",
+        "extended_price": null,
+        "promised_date": "2025-09-17"
+      },
+      {
+        "line_number": 40,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "1145.31",
+        "extended_price": null,
+        "promised_date": "2025-08-25"
+      },
+      {
+        "line_number": 50,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "1609.35",
+        "extended_price": null,
+        "promised_date": "2025-10-27"
+      },
+      {
+        "line_number": 60,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "1079.92",
+        "extended_price": null,
+        "promised_date": "2025-08-30"
+      },
+      {
+        "line_number": 70,
+        "part_number": "SNS-PROX-M18",
+        "description": "Inductive proximity sensor M18",
+        "quantity": "1",
+        "unit_of_measure": "EA",
+        "unit_price": "1261.77",
+        "extended_price": null,
+        "promised_date": "2025-09-07"
+      },
+      {
+        "line_number": 80,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "50",
+        "unit_of_measure": "PC",
+        "unit_price": "1227.80",
+        "extended_price": null,
+        "promised_date": "2025-08-11"
+      },
+      {
+        "line_number": 90,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "2116.82",
+        "extended_price": null,
+        "promised_date": "2025-10-27"
+      },
+      {
+        "line_number": 100,
+        "part_number": "RA-24VDC-4K",
+        "description": "Relay module 24VDC 4-channel",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "1397.94",
+        "extended_price": null,
+        "promised_date": "2025-09-07"
+      },
+      {
+        "line_number": 110,
+        "part_number": "SNS-PROX-M18",
+        "description": "Inductive proximity sensor M18",
+        "quantity": "5",
+        "unit_of_measure": "EA",
+        "unit_price": "2093.83",
+        "extended_price": null,
+        "promised_date": "2025-10-08"
+      },
+      {
+        "line_number": 120,
+        "part_number": "VLV-5-2-24V",
+        "description": "Solenoid valve 5/2 24VDC",
+        "quantity": "10",
+        "unit_of_measure": "EA",
+        "unit_price": "956.41",
+        "extended_price": null,
+        "promised_date": "2025-09-02"
+      },
+      {
+        "line_number": 130,
+        "part_number": "CBL-M12-5M",
+        "description": "M12 sensor cable 5m shielded",
+        "quantity": "1",
+        "unit_of_measure": "EA",
+        "unit_price": "217.47",
+        "extended_price": null,
+        "promised_date": "2025-08-04"
+      },
+      {
+        "line_number": 140,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "24",
+        "unit_of_measure": "PC",
+        "unit_price": "905.45",
+        "extended_price": null,
+        "promised_date": "2025-09-16"
+      },
+      {
+        "line_number": 150,
+        "part_number": "ENC-INC-1024",
+        "description": "Incremental encoder 1024ppr",
+        "quantity": "1",
+        "unit_of_measure": "EA",
+        "unit_price": "321.55",
+        "extended_price": null,
+        "promised_date": "2025-08-05"
+      },
+      {
+        "line_number": 160,
+        "part_number": "PSU-24V-10A",
+        "description": "Switched mode power supply 24V 10A",
+        "quantity": "10",
+        "unit_of_measure": "EA",
+        "unit_price": "2342.57",
+        "extended_price": null,
+        "promised_date": "2025-08-08"
+      },
+      {
+        "line_number": 170,
+        "part_number": "RA-24VDC-4K",
+        "description": "Relay module 24VDC 4-channel",
+        "quantity": "5",
+        "unit_of_measure": "EA",
+        "unit_price": "700.43",
+        "extended_price": null,
+        "promised_date": "2025-10-27"
+      },
+      {
+        "line_number": 180,
+        "part_number": "SPR-KIT-4420",
+        "description": "Spare parts kit 4420",
+        "quantity": "1",
+        "unit_of_measure": "KIT",
+        "unit_price": "722.72",
+        "extended_price": null,
+        "promised_date": "2025-08-19"
+      },
+      {
+        "line_number": 190,
+        "part_number": "CBL-M12-5M",
+        "description": "M12 sensor cable 5m shielded",
+        "quantity": "24",
+        "unit_of_measure": "EA",
+        "unit_price": "1177.71",
+        "extended_price": null,
+        "promised_date": "2025-11-04"
+      },
+      {
+        "line_number": 200,
+        "part_number": "ENC-INC-1024",
+        "description": "Incremental encoder 1024ppr",
+        "quantity": "50",
+        "unit_of_measure": "EA",
+        "unit_price": "1179.44",
+        "extended_price": null,
+        "promised_date": "2025-10-04"
+      },
+      {
+        "line_number": 210,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "2",
+        "unit_of_measure": "PC",
+        "unit_price": "1709.39",
+        "extended_price": null,
+        "promised_date": "2025-07-28"
+      },
+      {
+        "line_number": 220,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "2",
+        "unit_of_measure": "EA",
+        "unit_price": "1262.86",
+        "extended_price": null,
+        "promised_date": "2025-08-24"
+      },
+      {
+        "line_number": 230,
+        "part_number": "TMP-XR-0091",
+        "description": "Temporary tooling fixture XR-91",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "1598.00",
+        "extended_price": null,
+        "promised_date": "2025-10-01"
+      },
+      {
+        "line_number": 240,
+        "part_number": "BRG-6205-2RS",
+        "description": "Deep groove ball bearing 6205",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "1137.95",
+        "extended_price": null,
+        "promised_date": "2025-08-30"
+      },
+      {
+        "line_number": 250,
+        "part_number": "PLC-1756-L83",
+        "description": "ControlLogix processor module",
+        "quantity": "2",
+        "unit_of_measure": "EA",
+        "unit_price": "882.09",
+        "extended_price": null,
+        "promised_date": "2025-10-15"
+      },
+      {
+        "line_number": 260,
+        "part_number": "VLV-5-2-24V",
+        "description": "Solenoid valve 5/2 24VDC",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "1256.25",
+        "extended_price": null,
+        "promised_date": "2025-07-28"
+      },
+      {
+        "line_number": 270,
+        "part_number": "PSU-24V-10A",
+        "description": "Switched mode power supply 24V 10A",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "637.22",
+        "extended_price": null,
+        "promised_date": "2025-08-19"
+      },
+      {
+        "line_number": 280,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "10",
+        "unit_of_measure": "EA",
+        "unit_price": "1004.51",
+        "extended_price": null,
+        "promised_date": "2025-08-07"
+      },
+      {
+        "line_number": 290,
+        "part_number": "TRM-BLK-2P5",
+        "description": "Terminal block 2.5mm pluggable",
+        "quantity": "250",
+        "unit_of_measure": "PC",
+        "unit_price": "556.23",
+        "extended_price": null,
+        "promised_date": "2025-08-28"
+      },
+      {
+        "line_number": 300,
+        "part_number": "CTR-HMI-7IN",
+        "description": "Operator terminal 7in colour",
+        "quantity": "100",
+        "unit_of_measure": "EA",
+        "unit_price": "561.10",
+        "extended_price": null,
+        "promised_date": "2025-08-26"
+      }
+    ]
+  },
+  "meta": {
+    "site_id": "site_sg01",
+    "region": "APAC",
+    "date_format": "%d/%m/%Y",
+    "ambiguous_date_fields": [
+      "po_date"
+    ],
+    "n_lines": 30,
+    "n_pages": 1,
+    "wraps_pages": false,
+    "all_lines_priced": false,
+    "supplier_in_master": true,
+    "unmastered_parts": [
+      "SPR-KIT-4420",
+      "TMP-XR-0091"
+    ],
+    "absent_fields": [
+      "supplier_id"
+    ]
+  }
+}

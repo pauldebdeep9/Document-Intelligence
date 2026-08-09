@@ -1,0 +1,129 @@
+{
+  "document": "po_003.pdf",
+  "doc_type": "purchase_order",
+  "raw": {
+    "po_number": "4547294316",
+    "po_date": "21.03.2026",
+    "supplier_name": "Keyence Singapore Pte Ltd",
+    "supplier_id": "V103014",
+    "ship_to_site": "Stuttgart Werk 07",
+    "incoterms": "EXW",
+    "payment_terms": "2/10 Net 30",
+    "currency": "EUR",
+    "buyer_contact": "J. Ruiz",
+    "total_amount": null,
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "RA-24VDC-4K",
+        "description": "Relay module 24VDC 4-channel",
+        "quantity": "5",
+        "unit_of_measure": "EA",
+        "unit_price": "2,314.48",
+        "extended_price": "11,572.40",
+        "promised_date": "09.04.2026"
+      },
+      {
+        "line_number": 20,
+        "part_number": "SPR-KIT-4420",
+        "description": "Spare parts kit 4420",
+        "quantity": "10",
+        "unit_of_measure": "KIT",
+        "unit_price": "872.64",
+        "extended_price": "8,726.40",
+        "promised_date": "10.05.2026"
+      },
+      {
+        "line_number": 30,
+        "part_number": "ENC-INC-1024",
+        "description": "Incremental encoder 1024ppr",
+        "quantity": "24",
+        "unit_of_measure": "EA",
+        "unit_price": "656.20",
+        "extended_price": "15,748.80",
+        "promised_date": "01.06.2026"
+      },
+      {
+        "line_number": 40,
+        "part_number": "PSU-24V-10A",
+        "description": "Switched mode power supply 24V 10A",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "1,828.33",
+        "extended_price": "457,082.50",
+        "promised_date": "13.04.2026"
+      }
+    ]
+  },
+  "normalised": {
+    "po_number": "4547294316",
+    "po_date": "2026-03-21",
+    "supplier_name": "Keyence Singapore Pte Ltd",
+    "supplier_id": "V103014",
+    "ship_to_site": "Stuttgart Werk 07",
+    "incoterms": "EXW",
+    "payment_terms": "2/10 Net 30",
+    "currency": "EUR",
+    "total_amount": null,
+    "buyer_contact": "J. Ruiz",
+    "lines": [
+      {
+        "line_number": 10,
+        "part_number": "RA-24VDC-4K",
+        "description": "Relay module 24VDC 4-channel",
+        "quantity": "5",
+        "unit_of_measure": "EA",
+        "unit_price": "2314.48",
+        "extended_price": "11572.40",
+        "promised_date": "2026-04-09"
+      },
+      {
+        "line_number": 20,
+        "part_number": "SPR-KIT-4420",
+        "description": "Spare parts kit 4420",
+        "quantity": "10",
+        "unit_of_measure": "KIT",
+        "unit_price": "872.64",
+        "extended_price": "8726.40",
+        "promised_date": "2026-05-10"
+      },
+      {
+        "line_number": 30,
+        "part_number": "ENC-INC-1024",
+        "description": "Incremental encoder 1024ppr",
+        "quantity": "24",
+        "unit_of_measure": "EA",
+        "unit_price": "656.20",
+        "extended_price": "15748.80",
+        "promised_date": "2026-06-01"
+      },
+      {
+        "line_number": 40,
+        "part_number": "PSU-24V-10A",
+        "description": "Switched mode power supply 24V 10A",
+        "quantity": "250",
+        "unit_of_measure": "EA",
+        "unit_price": "1828.33",
+        "extended_price": "457082.50",
+        "promised_date": "2026-04-13"
+      }
+    ]
+  },
+  "meta": {
+    "site_id": "site_de07",
+    "region": "EMEA",
+    "date_format": "%d.%m.%Y",
+    "ambiguous_date_fields": [],
+    "n_lines": 4,
+    "n_pages": 1,
+    "wraps_pages": false,
+    "all_lines_priced": true,
+    "supplier_in_master": true,
+    "unmastered_parts": [
+      "SPR-KIT-4420"
+    ],
+    "absent_fields": [
+      "total_amount"
+    ]
+  }
+}

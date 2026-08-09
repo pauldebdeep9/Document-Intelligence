@@ -40,13 +40,21 @@ USERS = {
                 "clearance": "export_controlled", "jurisdictions": ["US", "SG"]},
 }
 
-# (can_see, cannot_see, why) — every one of these must hold in the test suite.
+# Each pair declares the doc types it needs present in the corpus. A pair whose
+# doc types are absent is reported as PENDING, never as passing: a pair that
+# cannot fire is zero coverage, and letting it read as green is how a permission
+# suite ends up testing less than it appears to.
 ADVERSARIAL_PAIRS = [
-    ("u_alice", "u_frank", "contractor has no group grant on buyer documents"),
-    ("u_alice", "u_chen", "regional split: APAC buyer vs EMEA buyer"),
-    ("u_gita", "u_ewan", "export-controlled doc requires SG jurisdiction"),
-    ("u_alice", "u_ben", "confidential clearance vs internal clearance"),
-    ("u_dara", "u_ben", "quality NCR restricted to quality group"),
+    {"can_see": "u_alice", "cannot_see": "u_frank", "requires": ["purchase_order"],
+     "why": "contractor has no group grant on buyer documents"},
+    {"can_see": "u_alice", "cannot_see": "u_chen", "requires": ["purchase_order"],
+     "why": "regional split: APAC buyer vs EMEA buyer"},
+    {"can_see": "u_gita", "cannot_see": "u_ewan", "requires": ["purchase_order"],
+     "why": "export-controlled document requires a matching jurisdiction"},
+    {"can_see": "u_alice", "cannot_see": "u_ben", "requires": ["purchase_order"],
+     "why": "confidential clearance vs internal clearance"},
+    {"can_see": "u_dara", "cannot_see": "u_ben", "requires": ["ncr"],
+     "why": "quality NCR restricted to the quality group"},
 ]
 
 
