@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+config/local.yaml
+runs/
+data/synthetic/*
+!data/synthetic/.gitkeep
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.conda/
