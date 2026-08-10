@@ -54,7 +54,14 @@ class ChunkSettings(BaseModel):
     target_tokens: int = 512
     overlap_tokens: int = 64
     keep_tables_whole: bool = True
-    max_table_tokens: int = 1500
+    # 800, not the original 1500: measured against the real 20-doc corpus
+    # (see docs/adr/0007), per-row cost is ~43 tokens median, and 1500 lets
+    # a 38-41 row table split into as few as 2 parts -- "rows 10-1180" is
+    # barely more useful as a citation than "the table". 800 keeps small
+    # tables (the common case, almost all under 250 tokens) whole while
+    # forcing the four largest into 3-4 parts of ~15-18 rows each, roughly
+    # the same retrieval-unit scale as a prose chunk at target_tokens=512.
+    max_table_tokens: int = 800
 
 
 class RetrievalSettings(BaseModel):

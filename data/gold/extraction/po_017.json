@@ -634,7 +634,20 @@
     "region": "APAC",
     "date_format": "%d/%m/%Y",
     "ambiguous_date_fields": [
-      "po_date"
+      "po_date",
+      "lines[10].promised_date",
+      "lines[70].promised_date",
+      "lines[80].promised_date",
+      "lines[100].promised_date",
+      "lines[110].promised_date",
+      "lines[120].promised_date",
+      "lines[130].promised_date",
+      "lines[150].promised_date",
+      "lines[160].promised_date",
+      "lines[190].promised_date",
+      "lines[200].promised_date",
+      "lines[230].promised_date",
+      "lines[280].promised_date"
     ],
     "n_lines": 30,
     "n_pages": 1,

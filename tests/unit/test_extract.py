@@ -10,14 +10,16 @@ test_spans.py.
 from __future__ import annotations
 
 import json
+from datetime import date
 from decimal import Decimal
 
 import pytest
 
-from isc.common.confidence import Confidence, Signal
-from isc.extract.extractor import _date_field, _row_scopes, _wrap_purchase_order
+from isc.common.confidence import Check, CheckOutcome, Confidence, Signal
+from isc.extract.extractor import _apply_check, _date_field, _row_scopes, _wrap_purchase_order
 from isc.models.acl import AclSet
 from isc.models.document import Block, BlockType, Document, Page
+from isc.models.records.base import ExtractedField
 from isc.models.records.purchase_order import POLineRaw, PurchaseOrderRaw
 
 _ITEM_TABLE = (
@@ -40,11 +42,20 @@ def masters_dir(tmp_path):
         {"supplier_id": "V1", "name": "Acme Supply Co", "country": "US"},
     ]))
     (d / "parts.json").write_text(json.dumps([
-        {"part_number": "PLC-1756-L83", "description": "x", "uom": "EA"},
+        # Description matches _line()'s default exactly, so tests that don't
+        # care about the description cross-check aren't silently touched by
+        # it -- see test_master_data_description_* below for that check's
+        # own dedicated coverage.
+        {"part_number": "PLC-1756-L83", "description": "ControlLogix module", "uom": "EA"},
     ]))
     (d / "unmastered_parts.json").write_text(json.dumps([
         {"part_number": "ZZ-UNKNOWN", "description": "y", "uom": "EA"},
     ]))
+    # Empty on purpose: no site here named "Plant 1" (the default ship_to_site
+    # below), so date tests keep exercising the fixed-priority fallback
+    # rather than accidentally resolving through a site. Site-aware date
+    # tests build their own masters_dir with an explicit site instead.
+    (d / "sites.json").write_text("[]")
     return d
 
 
@@ -233,6 +244,104 @@ def test_ambiguous_date_gets_reduced_lexical_confidence(masters_dir):
     assert "AMBIGUOUS" in factor.detail
 
 
+def test_ambiguous_date_discounts_confidence_never_raises_it(masters_dir):
+    """Regression for the corroborate/discount inversion: _apply_check used
+    to read parse_iso_date's ambiguous 0.6 score as a pass and corroborate
+    (noisy-OR) the field's confidence upward -- doubt read as support.
+    discount() uses independent(), which can only lower it."""
+    base = Confidence.of(Signal.MODEL, 0.8)
+    doc = _doc("PO Date 03/04/2025")
+    record = _wrap(_raw(po_date="03/04/2025"), doc, masters_dir, base)
+    assert record.po_date.confidence.score < base.score
+    assert record.po_date.conflicts == []  # uncertain, not a conflict -- nothing disagreed
+
+
+def test_unambiguous_date_still_corroborates_above_base(masters_dir):
+    """Contrast case: a date that was never ambiguous is a genuine PASS and
+    must still raise confidence via corroborate_with(), same as before the
+    three-state fix."""
+    base = Confidence.of(Signal.MODEL, 0.8)
+    doc = _doc("PO Date 25/12/2025")
+    record = _wrap(_raw(po_date="25/12/2025"), doc, masters_dir, base)
+    assert record.po_date.confidence.score > base.score
+
+
+def test_promised_date_lexical_check_is_now_applied(masters_dir):
+    """Regression for a wiring gap found alongside the corroborate fix:
+    scoped()'s promised_date never called _apply_check at all, so no
+    LEXICAL factor -- ambiguous or not -- ever reached a line date's
+    confidence, regardless of _apply_check's own correctness."""
+    row = "10    PLC-1756-L83  ControlLogix module  3    EA   500.00      1500.00   03/04/2025"
+    doc = _doc("PO Number 4500123456 Order Date 16/08/2025 Supplier Acme Supply Co", items=row)
+    record = _wrap(_raw(lines=[_line(promised_date="03/04/2025")]), doc, masters_dir)
+    assert record.row_alignment_ok is True
+    factors = record.lines[0].promised_date.confidence.factors
+    assert any(f.signal == Signal.LEXICAL for f in factors)
+
+
+def test_site_date_format_resolves_promised_date_end_to_end(tmp_path):
+    """Fix 2, wired all the way through: ship_to_site -> sites.json ->
+    date_format -> parse_iso_date, for a line-item date. site_us42
+    (%m/%d/%Y) is the corpus's one US site -- 03/04/2025 means March 4th
+    there, the opposite of the %d/%m/%Y-first fallback guess."""
+    d = tmp_path / "masters_site"
+    d.mkdir()
+    (d / "suppliers.json").write_text("[]")
+    (d / "parts.json").write_text("[]")
+    (d / "unmastered_parts.json").write_text("[]")
+    (d / "sites.json").write_text(json.dumps([
+        {"site_id": "site_us99", "name": "Milwaukee Plant 99", "date_format": "%m/%d/%Y"},
+    ]))
+    row = "10    PLC-1756-L83  ControlLogix module  3    EA   500.00      1500.00   03/04/2025"
+    doc = _doc("Ship To Milwaukee Plant 99", items=row)
+    raw = _raw(ship_to_site="Milwaukee Plant 99", lines=[_line(promised_date="03/04/2025")])
+    record = _wrap(raw, doc, d)
+    assert record.lines[0].promised_date.value == date(2025, 3, 4)
+    factor = next(
+        f for f in record.lines[0].promised_date.confidence.factors if f.signal == Signal.LEXICAL
+    )
+    assert "site-resolved" in factor.detail
+
+
+def test_unresolved_site_falls_back_to_blind_guess(masters_dir):
+    """ship_to_site doesn't match any site in the master -- falls back to
+    the fixed-priority guess, never a default convention."""
+    doc = _doc("PO Date 03/04/2025")
+    record = _wrap(_raw(po_date="03/04/2025", ship_to_site="Nowhere Plant"), doc, masters_dir)
+    factor = next(f for f in record.po_date.confidence.factors if f.signal == Signal.LEXICAL)
+    assert "AMBIGUOUS" in factor.detail
+    assert "site-resolved" not in factor.detail
+
+
+# --- _apply_check: CheckOutcome dispatch ------------------------------------
+
+def test_apply_check_pass_corroborates_upward():
+    field = ExtractedField(value="x", confidence=Confidence.of(Signal.MODEL, 0.8))
+    _apply_check(field, Check(CheckOutcome.PASS, Confidence.of(Signal.LEXICAL, 0.95, "ok")))
+    assert field.confidence.score > 0.8
+    assert field.conflicts == []
+
+
+def test_apply_check_uncertain_lowers_and_is_not_a_conflict():
+    field = ExtractedField(value="x", confidence=Confidence.of(Signal.MODEL, 0.8))
+    _apply_check(field, Check(CheckOutcome.UNCERTAIN, Confidence.of(Signal.LEXICAL, 0.6, "maybe")))
+    assert field.confidence.score < 0.8
+    assert field.conflicts == []  # not logged as a conflict -- nothing disagreed
+
+
+def test_apply_check_fail_lowers_and_logs_a_conflict():
+    field = ExtractedField(value="x", confidence=Confidence.of(Signal.MODEL, 0.8))
+    _apply_check(field, Check(CheckOutcome.FAIL, Confidence.of(Signal.LEXICAL, 0.1, "bad")))
+    assert field.confidence.score < 0.8
+    assert field.conflicts == ["bad"]
+
+
+def test_apply_check_not_applicable_is_a_noop():
+    field = ExtractedField(value="x", confidence=Confidence.of(Signal.MODEL, 0.8))
+    _apply_check(field, Check.not_applicable())
+    assert field.confidence.score == 0.8
+
+
 # --- MASTER_DATA ------------------------------------------------------------
 
 def test_master_data_resolves_supplier_by_name(masters_dir):
@@ -265,6 +374,7 @@ def test_master_data_never_fuzzy_matches_confusable_names(masters_dir, tmp_path)
     ]))
     (d / "parts.json").write_text("[]")
     (d / "unmastered_parts.json").write_text("[]")
+    (d / "sites.json").write_text("[]")
 
     base = Confidence.of(Signal.MODEL, 0.8)
     doc = _doc("Supplier Fastenal Industrial Pte Ltd Vendor Code V1")
@@ -300,6 +410,62 @@ def test_master_data_conflicts_genuinely_unknown_part(masters_dir):
     line = record.lines[1]
     assert line.part_number.confidence.score < base.score
     assert any("not found" in c for c in line.part_number.conflicts)
+
+
+# --- MASTER_DATA: description cross-check -----------------------------
+# The P1-03 finding this exists for: resolve_part() alone only ever checks
+# part_number, so a description truncated by a parse-stage table-wrap defect
+# (see docs/LIMITATIONS.md) was invisible to MASTER_DATA entirely -- the
+# part_number matched cleanly and nothing else ever looked at the text.
+
+def test_description_exact_match_corroborates(masters_dir):
+    base = Confidence.of(Signal.MODEL, 0.8)
+    record = _wrap(_raw(), _doc(), masters_dir, base)
+    line = record.lines[0]  # PLC-1756-L83, description="ControlLogix module"
+    assert line.description.confidence.score > base.score
+    factor = next(f for f in line.description.confidence.factors if f.signal == Signal.MASTER_DATA)
+    assert "matches master" in factor.detail
+
+
+def test_description_truncation_is_uncertain_not_a_conflict(masters_dir):
+    """The exact P1-03 shape: extraction got the first part of the master's
+    description and nothing after it. This must lower confidence -- so it
+    stops being a silent false negative -- without being logged as a
+    conflict, since nothing the extractor did actually disagrees with the
+    master; it just received less text than the master has."""
+    base = Confidence.of(Signal.MODEL, 0.8)
+    row = "10    PLC-1756-L83  ControlLogix  3    EA   500.00      1500.00   16/08/2025"
+    doc = _doc(items=row)
+    raw = _raw(lines=[_line(description="ControlLogix")])  # master: "ControlLogix module"
+    record = _wrap(raw, doc, masters_dir, base)
+    line = record.lines[0]
+    assert line.description.confidence.score < base.score
+    assert line.description.conflicts == []
+    factor = next(f for f in line.description.confidence.factors if f.signal == Signal.MASTER_DATA)
+    assert "partial match" in factor.detail
+
+
+def test_description_genuine_mismatch_conflicts(masters_dir):
+    base = Confidence.of(Signal.MODEL, 0.8)
+    row = "10    PLC-1756-L83  Something else entirely  3    EA   500.00      1500.00   16/08/2025"
+    doc = _doc(items=row)
+    raw = _raw(lines=[_line(description="Something else entirely")])
+    record = _wrap(raw, doc, masters_dir, base)
+    line = record.lines[0]
+    assert line.description.confidence.score < base.score
+    assert any("does not match master" in c for c in line.description.conflicts)
+
+
+def test_description_check_contributes_nothing_for_unresolved_part(masters_dir):
+    """PSU-24V-10A is neither mastered nor unmastered-listed in this
+    fixture -- resolve_part() already conflicts on the part_number itself;
+    the description check must not pile on with a second, redundant
+    MASTER_DATA factor when there is no master description to compare
+    against at all."""
+    base = Confidence.of(Signal.MODEL, 0.8)
+    record = _wrap(_raw(), _doc(), masters_dir, base)
+    line = record.lines[1]  # PSU-24V-10A
+    assert not any(f.signal == Signal.MASTER_DATA for f in line.description.confidence.factors)
 
 
 # --- AGREEMENT ---------------------------------------------------------

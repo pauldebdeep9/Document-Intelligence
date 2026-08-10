@@ -30,6 +30,12 @@ class Chunk(BaseModel):
     bboxes: tuple[BBox, ...] = ()
     section_path: tuple[str, ...] = ()   # breadcrumb from headings, for citations
     is_table: bool = False
+    # (first, last) line_number this chunk's table rows cover -- table chunks
+    # only. Populated whenever a table splits (or is emitted whole): "the
+    # table" is not a citation on a two-page purchase order, "rows 210-420"
+    # is. None for prose chunks and for any table whose row-identifying
+    # column does not parse as an integer.
+    line_range: tuple[int, int] | None = None
     token_count: int = 0
     # Filterable metadata projected from extraction (supplier_id, po_number, ...).
     # Enables metadata-filter inference in retrieve/ without a second index.
@@ -50,7 +56,12 @@ class Chunk(BaseModel):
             else f"pp.{self.page_start}-{self.page_end}"
         )
         section = " > ".join(self.section_path)
-        return f"{self.document_id} {pages}" + (f" [{section}]" if section else "")
+        label = f"{self.document_id} {pages}" + (f" [{section}]" if section else "")
+        if self.line_range is not None:
+            first, last = self.line_range
+            rows = f"row {first}" if first == last else f"rows {first}-{last}"
+            label += f" ({rows})"
+        return label
 
 
 class ScoredChunk(BaseModel):

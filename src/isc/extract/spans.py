@@ -69,6 +69,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from isc.models.document import Document, Span
+from isc.parse.chain import ROW_PATTERN
 
 _NUMERIC = re.compile(r"^-?\d+(\.\d+)?$")
 
@@ -160,9 +161,6 @@ def locate(doc: Document, value: object, scope: str | None = None) -> Located:
     return Located.found(Span(document_id=doc.id, page=hit_page, text=needle))
 
 
-_ROW = re.compile(r"^\s*(\d+)\s+(\S+)\s")
-
-
 def extract_rows(doc: Document) -> list[tuple[int, str]]:
     """Structural row extraction: a physical line beginning with an ordinal
     (the printed 'Item' number) followed by a separate token. This is shape,
@@ -184,7 +182,7 @@ def extract_rows(doc: Document) -> list[tuple[int, str]]:
     for page in doc.pages:
         for block in page.blocks:
             for line in block.text.split("\n"):
-                m = _ROW.match(line)
+                m = ROW_PATTERN.match(line)
                 if m:
                     rows.append((int(m.group(1)), line))
     return rows

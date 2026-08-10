@@ -47,6 +47,43 @@ class Signal(StrEnum):
     PROVENANCE = "provenance"      # value's source text could (not) be located in the document
 
 
+class CheckOutcome(StrEnum):
+    """What an independent check (extract/validators.py, extract/masters.py,
+    extract/extractor.py's AGREEMENT checks) is claiming about a value --
+    stated directly, not left for the reader to infer from a bare score.
+
+    A check that can only return a float forces every score into one of two
+    buckets by threshold, pass or fail. That is what let a date parser's
+    "ambiguous, 0.6" -- a statement of doubt, not support -- get read as a
+    pass and corroborate a field's confidence upward instead of lowering it.
+    A check that cannot express uncertainty will always have it rounded to
+    agreement. See extract/extractor.py's _apply_check().
+    """
+
+    PASS = "pass"            # supports the value -- corroborate() (raises)
+    UNCERTAIN = "uncertain"  # could not confirm either way -- discount() (lowers, not a conflict)
+    FAIL = "fail"             # disagrees with the value -- conflict() (lowers, logged)
+
+
+@dataclass(frozen=True, slots=True)
+class Check:
+    """One independent check's verdict: what it's claiming (CheckOutcome)
+    plus the evidence for it (a Confidence, normally single-factor via
+    Confidence.of()). Two fields because a bare Confidence conflates them --
+    see CheckOutcome's docstring."""
+
+    outcome: CheckOutcome
+    confidence: Confidence
+
+    @classmethod
+    def not_applicable(cls) -> Self:
+        """The check did not run at all -- e.g. the field was None, or the
+        value is a deliberately-unmastered part. confidence.factors is empty
+        either way, which is what _apply_check() actually keys off to
+        contribute nothing; `outcome` here is a placeholder, not read."""
+        return cls(CheckOutcome.PASS, Confidence.unknown())
+
+
 @dataclass(frozen=True, slots=True)
 class Factor:
     signal: Signal

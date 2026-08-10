@@ -34,7 +34,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from isc.common.confidence import Confidence, Signal, Thresholds
+from isc.common.confidence import Check, CheckOutcome, Confidence, Signal, Thresholds
 from isc.common.config import load_prompt
 from isc.extract import masters, spans, validators
 from isc.extract.spans import Located, SpanOutcome
@@ -52,12 +52,6 @@ from isc.storage.sqlite_docstore import SqliteDocStore
 # this -- see _apply_span_outcome.
 _NOT_FOUND_SCORE = 0.2
 
-# Threshold separating a validator's "pass" score (0.9-0.97 across
-# validators.py and masters.py) from its "fail" score (0.05-0.15). The wide
-# margin between the two clusters is what makes reading pass/fail off the
-# score itself, rather than a separate boolean, safe.
-_PASS_THRESHOLD = 0.5
-
 
 def extract(
     doc: Document,
@@ -66,11 +60,18 @@ def extract(
     thresholds: Thresholds,
     parse_confidence: Confidence,
     masters_dir: Path,
-) -> tuple[ExtractionRecord, LLMResult]:
-    """Returns the wrapped record and the raw LLMResult from the structured
-    call -- callers (extract/pipeline.py) need mean_logprob for calibration
-    reporting, and it is otherwise lost: the record only keeps the derived
-    model_confidence() folded into Signal.MODEL, not the logprob itself."""
+) -> tuple[ExtractionRecord, BaseModel, LLMResult]:
+    """Returns the wrapped record, the raw structured model output, and the
+    raw LLMResult -- all three, because each is otherwise lost:
+
+    * `raw` is discarded after _wrap() today; extract/pipeline.py needs it
+      to persist alongside the record so eval/ can score the extraction axis
+      against the exact bytes this run produced, instead of paying for a
+      second inference pass that is not even guaranteed to reproduce it.
+    * `llm_result` carries mean_logprob, finish_reason and usage, none of
+      which survive on the record -- it only keeps the derived
+      model_confidence() folded into Signal.MODEL, not the logprob itself.
+    """
     record_cls = registry.get(doc.doc_type)
     prompt = load_prompt(f"extract/{doc.doc_type}.v1.md")
     messages = [Message.system(prompt), Message.user(doc.text())]
@@ -87,7 +88,7 @@ def extract(
                 no_span = "no span -- open document manually"
                 detail = f"{detail}; {no_span}" if detail else no_span
             docs.enqueue_review(doc.id, field_name, field.confidence.score, detail)
-    return record, llm_result
+    return record, raw, llm_result
 
 
 def _wrap(
@@ -121,24 +122,34 @@ def _apply_span_outcome(field: ExtractedField[Any], located: Located) -> None:
     field.flag_conflict(Signal.PROVENANCE, "value not found in document text", _NOT_FOUND_SCORE)
 
 
-def _apply_check(field: ExtractedField[Any], check: Confidence) -> None:
-    """Fold a LEXICAL/MASTER_DATA/AGREEMENT check into a field.
+def _apply_check(field: ExtractedField[Any], check: Check) -> None:
+    """Fold a LEXICAL/MASTER_DATA/AGREEMENT check into a field, dispatching
+    on the check's own stated CheckOutcome -- not a threshold reinterpreting
+    its score. A check that could only return a float forced every score
+    into pass-or-fail; that is what let parse_iso_date's "ambiguous, 0.6" --
+    doubt, not support -- get read as a pass and corroborate a field's
+    confidence upward instead of lowering it.
 
-    check == Confidence.unknown() (no factors) means the check did not apply
-    -- e.g. the field was None, or the value is a deliberately-unmastered
-    part -- and contributes nothing: folding an unknown() into independent()
-    would zero the whole score, and corroborate() would silently no-op while
-    still polluting the factor list with a 0.0 entry that would wrongly look
-    like the field's weakest signal.
+    check.confidence == Confidence.unknown() (no factors) means the check
+    did not apply -- e.g. the field was None, or the value is a
+    deliberately-unmastered part -- and contributes nothing: folding an
+    unknown() into independent() would zero the whole score, and
+    corroborate() would silently no-op while still polluting the factor
+    list with a 0.0 entry that would wrongly look like the field's weakest
+    signal.
 
-    A real check corroborates (noisy-OR, can only raise) when it passed, or
-    conflicts (flag_conflict() -> independent(), multiplicative, with the
-    check's own correctly-tagged signal) when it failed."""
-    if not check.factors:
+    PASS corroborates (noisy-OR, can only raise). UNCERTAIN discounts
+    (independent(), can only lower -- never logged as a conflict, since
+    nothing actually disagreed, the check just could not confirm). FAIL
+    conflicts (independent() via flag_conflict(), lowers, logged so a
+    reviewer sees why)."""
+    if not check.confidence.factors:
         return
-    factor = check.factors[0]
-    if factor.value >= _PASS_THRESHOLD:
+    factor = check.confidence.factors[0]
+    if check.outcome is CheckOutcome.PASS:
         field.corroborate_with(factor.signal, factor.value, factor.detail)
+    elif check.outcome is CheckOutcome.UNCERTAIN:
+        field.discount(factor.signal, factor.value, factor.detail)
     else:
         field.flag_conflict(factor.signal, factor.detail, factor.value)
 
@@ -151,7 +162,7 @@ def _field(
     base: Confidence,
     transform: Callable[[str], str] = lambda v: v,
     *,
-    lexical: Callable[[str], Confidence] | None = None,
+    lexical: Callable[[str], Check] | None = None,
 ) -> ExtractedField[str]:
     if raw_value is None:
         return ExtractedField.missing()
@@ -175,17 +186,21 @@ def _decimal_field(
     return field
 
 
-def _date_field(doc: Document, raw_value: str | None, base: Confidence) -> ExtractedField[date]:
+def _date_field(
+    doc: Document, raw_value: str | None, base: Confidence, site_date_format: str | None = None,
+) -> ExtractedField[date]:
     """Null in the raw model means "not in the document" -- missing(). A
     string that is present but does not parse as a date is a different claim:
     the value is there, our normalisation just failed on it. That gets
     value=None with a span (if locatable), missing()'s certain-absent would
-    be the wrong claim entirely. parse_iso_date's own Confidence -- including
-    its ambiguous-format discount -- is exactly the LEXICAL signal for dates."""
+    be the wrong claim entirely. parse_iso_date's own Check -- including its
+    ambiguous-format discount -- is exactly the LEXICAL signal for dates.
+    `site_date_format` (see _wrap_purchase_order) lets it try the shipping
+    site's own convention before falling back to a guess."""
     if raw_value is None:
         return ExtractedField.missing()
     located = spans.locate(doc, raw_value)
-    value, lexical = validators.parse_iso_date(raw_value)
+    value, lexical = validators.parse_iso_date(raw_value, site_date_format)
     field = ExtractedField(value=value, span=located.span, confidence=base)
     _apply_span_outcome(field, located)
     _apply_check(field, lexical)
@@ -197,6 +212,13 @@ def _wrap_purchase_order(
 ) -> PurchaseOrder:
     scopes, detail = _row_scopes(doc, raw.lines)
     alignment_ok = detail == ""
+    # Resolved once from the model's own raw ship_to_site read, and fed to
+    # every date field on this record, header and lines alike -- see
+    # validators.parse_iso_date() and masters.resolve_site_date_format().
+    # An unresolved site (unknown or near-miss name) is None: every date
+    # field falls back to the fixed-priority guess on its own, never to a
+    # default convention.
+    site_date_format = masters.resolve_site_date_format(raw.ship_to_site, masters_dir)
 
     record = PurchaseOrder(
         document_id=doc.id,
@@ -205,7 +227,7 @@ def _wrap_purchase_order(
             doc, raw.po_number, base_confidence, str.strip,
             lexical=lambda v: validators.check_pattern(v, validators.PO_NUMBER, "po_number"),
         ),
-        po_date=_date_field(doc, raw.po_date, base_confidence),
+        po_date=_date_field(doc, raw.po_date, base_confidence, site_date_format),
         supplier_name=_field(doc, raw.supplier_name, base_confidence, str.strip),
         supplier_id=_field(doc, raw.supplier_id, base_confidence, str.strip),
         ship_to_site=_field(doc, raw.ship_to_site, base_confidence, str.strip),
@@ -221,7 +243,8 @@ def _wrap_purchase_order(
         total_amount=_decimal_field(doc, raw.total_amount, base_confidence),
         buyer_contact=_field(doc, raw.buyer_contact, base_confidence, str.strip),
         lines=[
-            _wrap_line(doc, raw_line, scope, alignment_ok, base_confidence, masters_dir)
+            _wrap_line(doc, raw_line, scope, alignment_ok, base_confidence, masters_dir,
+                       site_date_format)
             for raw_line, scope in zip(raw.lines, scopes, strict=True)
         ],
         row_alignment_ok=alignment_ok,
@@ -247,6 +270,7 @@ def _wrap_line(
     alignment_ok: bool,
     base: Confidence,
     masters_dir: Path,
+    site_date_format: str | None = None,
 ) -> POLine:
     """part_number, description and unit_of_measure are searched document-wide
     -- they are not in the scoped set (quantity, unit_price, extended_price,
@@ -265,7 +289,7 @@ def _wrap_line(
     def unscoped(
         raw_value: Any,
         transform: Callable[[Any], Any],
-        lexical: Callable[[Any], Confidence] | None = None,
+        lexical: Callable[[Any], Check] | None = None,
     ) -> ExtractedField[Any]:
         if raw_value is None:
             return ExtractedField.missing()
@@ -279,7 +303,11 @@ def _wrap_line(
             _apply_check(field, lexical(value))
         return field
 
-    def scoped(raw_value: Any, transform: Callable[[Any], Any]) -> ExtractedField[Any]:
+    def scoped(
+        raw_value: Any,
+        transform: Callable[[Any], Any],
+        lexical: Callable[[Any], Check] | None = None,
+    ) -> ExtractedField[Any]:
         if raw_value is None:
             return ExtractedField.missing()
         value = transform(raw_value)
@@ -288,6 +316,12 @@ def _wrap_line(
         located = spans.locate(doc, raw_value, scope=scope)
         field = ExtractedField(value=value, span=located.span, confidence=base)
         _apply_span_outcome(field, located)
+        # lexical receives raw_value, not value -- unlike unscoped() above,
+        # promised_date is the only scoped() caller that needs a check at
+        # all, and parse_iso_date operates on the pre-transform string, not
+        # the date object transform() already reduced it to.
+        if lexical is not None:
+            _apply_check(field, lexical(raw_value))
         return field
 
     line = POLine(
@@ -301,9 +335,16 @@ def _wrap_line(
         unit_of_measure=unscoped(raw.unit_of_measure, str.strip),
         unit_price=scoped(raw.unit_price, lambda v: Decimal(str(v))),
         extended_price=scoped(raw.extended_price, lambda v: Decimal(str(v))),
-        promised_date=scoped(raw.promised_date, lambda v: validators.parse_iso_date(v)[0]),
+        promised_date=scoped(
+            raw.promised_date,
+            lambda v: validators.parse_iso_date(v, site_date_format)[0],
+            lexical=lambda v: validators.parse_iso_date(v, site_date_format)[1],
+        ),
     )
     _apply_check(line.part_number, masters.resolve_part(line.part_number.value, masters_dir))
+    _apply_check(line.description, masters.check_description(
+        line.part_number.value, line.description.value, masters_dir,
+    ))
     return line
 
 
@@ -320,16 +361,22 @@ def _fold_agreement(record: PurchaseOrder) -> None:
     if total_agrees is not None:
         detail = "line sum (qty x price) agrees with total" if total_agrees else \
             "line sum (qty x price) disagrees with total"
+        outcome = CheckOutcome.PASS if total_agrees else CheckOutcome.FAIL
         score = 0.95 if total_agrees else 0.1
-        _apply_check(record.total_amount, Confidence.of(Signal.AGREEMENT, score, detail))
+        _apply_check(
+            record.total_amount, Check(outcome, Confidence.of(Signal.AGREEMENT, score, detail)),
+        )
 
     for line in record.lines:
         line_agrees = line.extended_price_agrees()
         if line_agrees is not None:
             detail = "extended price agrees with qty x unit_price" if line_agrees else \
                 "extended price disagrees with qty x unit_price"
+            outcome = CheckOutcome.PASS if line_agrees else CheckOutcome.FAIL
             score = 0.95 if line_agrees else 0.1
-            _apply_check(line.extended_price, Confidence.of(Signal.AGREEMENT, score, detail))
+            _apply_check(
+                line.extended_price, Check(outcome, Confidence.of(Signal.AGREEMENT, score, detail)),
+            )
 
 
 def _row_scopes(doc: Document, raw_lines: list[POLineRaw]) -> tuple[list[str | None], str]:

@@ -138,6 +138,36 @@ def _row_doc(lines: list[str]) -> Document:
                      pages=[Page(number=1, blocks=[block])])
 
 
+# --- FRAGMENTED via locate(), constructed synthetically --------------------
+# P1-04's table reconstruction removed the one real source of this in the
+# corpus (a wrapped continuation scattering a description's tokens across
+# two lines with the rest of the row's columns in between) -- confirmed by
+# re-running span location for every extracted field against every
+# document post-fix: zero FRAGMENTED outcomes anywhere (see ADR). That does
+# not make the outcome dead code: any other defect that scatters a value's
+# tokens without a contiguous run -- a column-boundary miscalculation this
+# corpus doesn't happen to exercise, say -- still needs it, and locate()'s
+# own FRAGMENTED branch (both the scoped and unscoped code paths, which
+# duplicate this check independently) would otherwise go untested and rot.
+
+def test_locate_scoped_returns_fragmented_when_tokens_scattered_not_contiguous():
+    scope = "20    PSU-24V-10A    24V Mode Switched Power Supply    1    EA"
+    doc = _row_doc([scope])
+    located = locate(doc, "Switched Mode Power Supply", scope=scope)
+    assert located.outcome is SpanOutcome.FRAGMENTED
+    assert located.span is None
+
+
+def test_locate_unscoped_returns_fragmented_when_tokens_scattered_not_contiguous():
+    doc = _row_doc([
+        "header line",
+        "20    PSU-24V-10A    24V Mode Switched Power Supply    1    EA",
+    ])
+    located = locate(doc, "Switched Mode Power Supply")
+    assert located.outcome is SpanOutcome.FRAGMENTED
+    assert located.span is None
+
+
 # --- against a real parsed corpus document ---------------------------------
 
 @_no_corpus
@@ -162,17 +192,30 @@ def test_locates_thousands_separated_amount_from_bare_model_number():
 
 
 @_no_corpus
-def test_wrapped_description_is_fragmented_not_not_found():
-    """'Switched mode power supply 24V' / '10A' wraps across two lines inside
-    one table block. The rest of that row's columns sit between the two
-    pieces in flattened text, so no contiguous match exists -- but every
-    token IS present in the block, correctly extracted, so this must be
-    FRAGMENTED (neutral), not NOT_FOUND (penalised). Scoring the parser's
-    flattening as if it were the model's hallucination was the actual bug."""
+def test_wrapped_description_now_locates_as_a_single_value():
+    """Regression for the P1-03 finding, fixed at the source in P1-04:
+    parse/ now reconstructs a wrapped table cell's continuation into its
+    row (see parse/chain.py's _reconstruct_table()) before Document.text()
+    is ever built, so 'Switched mode power supply 24V 10A' is one
+    contiguous string in the block, not split across two physical lines
+    with the rest of the row's other columns sitting between the pieces.
+    This used to be FRAGMENTED (tokens present, no contiguous match); now
+    it is a real value, present exactly where it is printed.
+
+    Unscoped it is AMBIGUOUS, not FOUND: po_000 prints this exact
+    description on two different rows (line 20 and line 30, both
+    PSU-24V-10A) -- the value genuinely occurs twice, a fact about the
+    document, not about how it was parsed. Scoped to either row it
+    resolves cleanly."""
     doc = _parse("po_000.pdf")
-    located = locate(doc, "Switched mode power supply 24V 10A")
-    assert located.outcome is SpanOutcome.FRAGMENTED
-    assert located.span is None
+    needle = "Switched mode power supply 24V 10A"
+    assert locate(doc, needle).outcome is SpanOutcome.AMBIGUOUS
+
+    rows = extract_rows(doc)
+    row_20 = next(text for ordinal, text in rows if ordinal == 20)
+    located = locate(doc, needle, scope=row_20)
+    assert located.outcome is SpanOutcome.FOUND
+    assert located.span is not None
 
 
 @_no_corpus

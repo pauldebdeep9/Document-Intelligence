@@ -874,7 +874,22 @@
     "region": "AMER",
     "date_format": "%m/%d/%Y",
     "ambiguous_date_fields": [
-      "po_date"
+      "po_date",
+      "lines[10].promised_date",
+      "lines[20].promised_date",
+      "lines[50].promised_date",
+      "lines[80].promised_date",
+      "lines[140].promised_date",
+      "lines[190].promised_date",
+      "lines[200].promised_date",
+      "lines[210].promised_date",
+      "lines[260].promised_date",
+      "lines[280].promised_date",
+      "lines[300].promised_date",
+      "lines[320].promised_date",
+      "lines[380].promised_date",
+      "lines[410].promised_date",
+      "lines[420].promised_date"
     ],
     "n_lines": 42,
     "n_pages": 2,

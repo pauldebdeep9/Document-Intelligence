@@ -17,7 +17,7 @@ from typing import Sequence
 
 import numpy as np
 
-from isc.common.errors import AclViolation
+from isc.common.errors import AclViolation, ChunkSettingsMismatch
 from isc.common.tracing import span
 from isc.models.acl import Principal
 from isc.models.chunk import Chunk, ScoredChunk
@@ -36,11 +36,19 @@ class LocalVectorStore:
         self._vectors: np.ndarray | None = None
         self._tokens: list[Counter[str]] = []
         self._df: Counter[str] = Counter()
+        # Set by the first add() call that supplies one; see
+        # settings_fingerprint's own docstring for what this guards against.
+        self._settings_fingerprint: str | None = None
         if path.exists():
             self.load()
 
     # -- write -------------------------------------------------------------
-    def add(self, chunks: Sequence[Chunk], vectors: Sequence[Sequence[float]]) -> None:
+    def add(
+        self,
+        chunks: Sequence[Chunk],
+        vectors: Sequence[Sequence[float]],
+        settings_fingerprint: str | None = None,
+    ) -> None:
         if len(chunks) != len(vectors):
             raise ValueError("chunks and vectors length mismatch")
         for c in chunks:
@@ -48,6 +56,18 @@ class LocalVectorStore:
             # last place a permissionless record could enter the system.
             if not c.acl.allow_terms:
                 raise AclViolation(f"chunk {c.id} has no allow_terms at index time")
+
+        if settings_fingerprint is not None:
+            if self._settings_fingerprint is None:
+                self._settings_fingerprint = settings_fingerprint
+            elif settings_fingerprint != self._settings_fingerprint:
+                raise ChunkSettingsMismatch(
+                    f"store at {self.path} was built with chunk settings "
+                    f"{self._settings_fingerprint!r}; this add() used "
+                    f"{settings_fingerprint!r} -- re-chunking under different "
+                    "settings into the same store silently mixes incompatible "
+                    "chunk boundaries. Start a fresh store or match the settings."
+                )
 
         arr = np.asarray(vectors, dtype=np.float32)
         arr /= np.linalg.norm(arr, axis=1, keepdims=True) + 1e-9
@@ -143,6 +163,12 @@ class LocalVectorStore:
     def count(self) -> int:
         return len(self._chunks)
 
+    def settings_fingerprint(self) -> str | None:
+        """None means either an empty store or one built before this guard
+        existed -- both legitimate, so callers that care must check
+        explicitly rather than treat None as "matches everything"."""
+        return self._settings_fingerprint
+
     # -- persistence -------------------------------------------------------
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -153,6 +179,7 @@ class LocalVectorStore:
                     "vectors": self._vectors,
                     "tokens": self._tokens,
                     "df": self._df,
+                    "settings_fingerprint": self._settings_fingerprint,
                 },
                 fh,
             )
@@ -164,3 +191,5 @@ class LocalVectorStore:
         self._vectors = state["vectors"]
         self._tokens = state["tokens"]
         self._df = state["df"]
+        # get(): stores saved before this guard existed have no key at all.
+        self._settings_fingerprint = state.get("settings_fingerprint")

@@ -73,7 +73,10 @@
     "site_id": "site_us42",
     "region": "AMER",
     "date_format": "%m/%d/%Y",
-    "ambiguous_date_fields": [],
+    "ambiguous_date_fields": [
+      "lines[10].promised_date",
+      "lines[20].promised_date"
+    ],
     "n_lines": 2,
     "n_pages": 1,
     "wraps_pages": false,

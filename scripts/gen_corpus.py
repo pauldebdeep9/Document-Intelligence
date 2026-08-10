@@ -337,9 +337,20 @@ def _gold(record: dict[str, Any], raw: dict[str, Any], doc_name: str,
           n_pages: int) -> dict[str, Any]:
     site = record["_site"]
     dfmt = site["date_format"]
+    # Every date field on the record, not just the header: a line item's
+    # promised_date is exactly as ambiguous as po_date under the same site
+    # format, and there are far more of them per document. Undercounting
+    # here understated the corpus's own difficulty -- a P1-03 eval run
+    # found 42 ambiguous-date extraction errors against this field
+    # reporting only 3, because it never looked at line items at all.
     ambiguous = [
         f for f, v in (("po_date", record["po_date"]),)
         if v is not None and _is_ambiguous(v, dfmt)
+    ]
+    ambiguous += [
+        f"lines[{ln['line_number']}].promised_date"
+        for ln in record["lines"]
+        if ln["promised_date"] is not None and _is_ambiguous(ln["promised_date"], dfmt)
     ]
     return {
         "document": doc_name,

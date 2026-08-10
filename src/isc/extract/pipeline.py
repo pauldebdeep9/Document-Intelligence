@@ -8,7 +8,8 @@ caller (cli.py) decides what a non-empty failure list means for the exit code.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import json
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from isc.common.confidence import Thresholds
@@ -48,10 +49,27 @@ def run(
                     raise RuntimeError(f"{doc_id} vanished from the docstore mid-run")
                 if doc.parse_confidence is None:
                     raise RuntimeError(f"{doc_id} has no parse_confidence; run `isc parse` first")
-                record, llm_result = extract_one(
+                record, raw, llm_result = extract_one(
                     doc, model, docs, thresholds, doc.parse_confidence, masters_dir
                 )
-                (out_dir / f"{doc_id}.json").write_text(record.model_dump_json(indent=2))
+                # `raw` (the model's structured output, pre-wrap) is persisted
+                # next to `record` so eval/ scores the extraction axis against
+                # the exact bytes this run produced -- see
+                # eval/extraction.py's load_artifact(). Re-running extraction
+                # to get raw output for eval would make the eval depend on a
+                # second, unreproducible inference pass.
+                artifact = {
+                    "doc_type": doc.doc_type.value,
+                    "record": record.model_dump(mode="json"),
+                    "raw": raw.model_dump(mode="json"),
+                    "llm": {
+                        "model": llm_result.model,
+                        "finish_reason": llm_result.finish_reason,
+                        "mean_logprob": llm_result.mean_logprob,
+                        "usage": asdict(llm_result.usage),
+                    },
+                }
+                (out_dir / f"{doc_id}.json").write_text(json.dumps(artifact, indent=2))
                 docs.upsert_record(doc_id, doc.doc_type.value, record.model_dump(mode="json"))
         except Exception as exc:  # noqa: BLE001 - batch isolation boundary, by design
             log.warning("extract failed for %s: %s", doc_id, exc)

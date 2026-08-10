@@ -26,7 +26,15 @@ chunk:
   target_tokens: 512
   overlap_tokens: 64
   keep_tables_whole: true
-  max_table_tokens: 1500
+  # Measured against the real 20-doc corpus, not guessed: per-row cost is
+  # ~43 tokens (median), and the four 42-line documents' page-1 table
+  # portions run 1733-1883 tokens. At the original 1500 the largest tables
+  # split into as few as 2 parts -- "rows 10-1180" is barely more useful as
+  # a citation than "the table". 800 forces 3-4 parts of ~15-18 rows each,
+  # matching prose chunks' retrieval-unit scale at target_tokens=512, while
+  # leaving the common case (almost every table is under 250 tokens) whole.
+  # See docs/adr/0007.
+  max_table_tokens: 800
 
 retrieval:
   top_k_dense: 20

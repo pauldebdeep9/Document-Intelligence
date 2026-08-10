@@ -133,7 +133,9 @@
     "site_id": "site_sg01",
     "region": "APAC",
     "date_format": "%d/%m/%Y",
-    "ambiguous_date_fields": [],
+    "ambiguous_date_fields": [
+      "lines[10].promised_date"
+    ],
     "n_lines": 5,
     "n_pages": 1,
     "wraps_pages": false,

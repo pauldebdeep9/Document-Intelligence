@@ -63,6 +63,21 @@ class ExtractedField(BaseModel, Generic[T]):
             Confidence.corroborate(self.confidence, Confidence.of(signal, score, detail)),
         )
 
+    def discount(self, signal: Signal, score: float, detail: str = "") -> None:
+        """Fold in a check that could not confirm the value either way --
+        genuine uncertainty (e.g. an ambiguous date format resolved only
+        partway), not a conflict. independent() so it can only lower
+        confidence, never raise it the way corroborate_with() would -- the
+        bug this exists to prevent is an expression of doubt getting read as
+        support. Not appended to `conflicts`: nothing actually disagreed,
+        the check just could not fully confirm, and a reviewer reading
+        `conflicts` should see checks that failed, not ones that merely
+        couldn't."""
+        object.__setattr__(
+            self, "confidence",
+            Confidence.independent(self.confidence, Confidence.of(signal, score, detail)),
+        )
+
     def flag_conflict(self, signal: Signal, message: str, penalty: float = 0.5) -> None:
         """Fold in a check that disagreed with the value (failed regex,
         master-data miss, arithmetic disagreement). `signal` must name the

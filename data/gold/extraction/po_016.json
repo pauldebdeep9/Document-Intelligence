@@ -114,7 +114,10 @@
     "region": "AMER",
     "date_format": "%m/%d/%Y",
     "ambiguous_date_fields": [
-      "po_date"
+      "po_date",
+      "lines[10].promised_date",
+      "lines[20].promised_date",
+      "lines[30].promised_date"
     ],
     "n_lines": 4,
     "n_pages": 1,

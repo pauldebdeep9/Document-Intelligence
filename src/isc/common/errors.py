@@ -54,5 +54,20 @@ class AclViolation(IscError):
     """
 
 
+class ChunkSettingsMismatch(IscError):
+    """An index artifact's chunks were built under different ChunkSettings
+    than the caller is currently using (see index/chunker.py's
+    settings_fingerprint()).
+
+    Chunk ids are a function of chunking settings via chunk text; a later
+    target_tokens/overlap_tokens/max_table_tokens change silently
+    invalidates every chunk boundary retrieval gold (P1-08) was built
+    against, with no error and no visible symptom other than recall numbers
+    that are quietly wrong. Never caught and downgraded, same discipline as
+    AclViolation: a settings mismatch here is a bug in the run, not a
+    condition to route around.
+    """
+
+
 class ProviderError(IscError):
     """Upstream model provider failed in a way retry did not fix."""

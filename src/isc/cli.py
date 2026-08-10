@@ -133,9 +133,38 @@ def review(limit: int = 20) -> None:
 
 @app.command()
 def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
-         run_id: str | None = typer.Option(None)) -> None:
-    """Run the dual harness and write report.json + report.md."""
-    raise typer.Exit(code=_todo("eval"))
+         run_id: str = typer.Option(..., help="existing run with an extract/ stage")) -> None:
+    """Score a completed extract run against gold and write report.json + report.md.
+
+    No LLM calls: reads runs/<run_id>/extract/*.json (raw + record, written by
+    `isc extract`) and data/gold/extraction/*.json side by side.
+    """
+    from isc.eval.report import write
+    from isc.storage.sqlite_docstore import SqliteDocStore
+
+    s = get_settings()
+    run = start_run(s.paths.runs, run_id)
+    docs = SqliteDocStore(s.paths.data / "docstore.sqlite")
+
+    extraction_report = None
+    if harness in {"extraction", "both"}:
+        from isc.eval.pipeline import run as run_extraction_eval
+
+        result = run_extraction_eval(run, docs, s.paths.data / "gold" / "extraction")
+        extraction_report = result.report
+        console.print(f"[green]scored[/] {len(result.scored)} documents  run={run.run_id}")
+        if result.skipped:
+            console.print(f"[yellow]skipped[/] {len(result.skipped)} artifacts:")
+            for name, reason in result.skipped:
+                console.print(f"  {name}: {reason}")
+
+    if harness in {"retrieval", "both"}:
+        console.print("[yellow]retrieval harness[/] not wired yet")
+
+    out = write(run.artifact_dir("eval"), extraction_report, None,
+                threshold=s.thresholds.auto_accept, review_threshold=s.thresholds.review)
+    console.print(f"[green]report written[/] {out}")
+    run.summarise()
 
 
 def _todo(stage: str) -> int:
