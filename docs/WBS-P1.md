@@ -174,6 +174,20 @@ correctness rule in the item.
 **Watch** chunk ids feed P1-08's gold. Changing chunking settings after the gold set
 exists silently invalidates every recall number.
 
+**Log** step 1's table reconstruction fixed the P1-03 description truncations at the
+source (14/14 recovered) — and, verified against a live model re-run rather than
+assumed, also eliminated both of P1-03's genuine extraction errors: `po_008`'s
+dropped line 380 and `po_010`'s line 270 price misattribution. Both were reading
+errors caused by harder-to-parse text (a continuation the model never saw; a less
+legible table), not extraction-logic bugs, and better table text was enough to fix
+them with no prompt or extractor change. The corpus's error surface is now one
+unrelated single-value digit slip (`po_010` line 20 `extended_price`, caught cleanly
+at confidence 0.02) — effectively zero. **`auto_accept_error_rate`/detection rate are
+no longer meaningful numbers on this corpus**: at n=1 real error, a ratio is not a
+measurement of the routing signals' ability to catch errors, and should not be quoted
+as one going forward without a corpus change that reintroduces real difficulty. See
+`docs/adr/0007`.
+
 ---
 
 ## P1-05 — Index pipeline wiring ☐
@@ -271,6 +285,15 @@ circular when you then use it to evaluate that model.
 
 **Watch** if a restricted question happens to be answerable from a document the
 restricted user *can* see, it silently tests nothing. Verify both directions.
+
+**Watch** extraction's own error surface is now close to zero (see P1-04's log line) —
+the parse fix that recovered P1-03's description truncations also removed both of its
+genuine extraction errors as a side effect. That was not deliberate difficulty and
+should not be treated as evidence the pipeline is easy. **This gold set is now the
+only place left where real difficulty gets introduced on purpose**: lean on the
+unanswerable and restricted classes, and on multi-hop questions that stress retrieval
+and citation binding rather than extraction correctness, or P1-09's eval runner will
+be measuring a corpus with almost nothing left to get wrong.
 
 ---
 

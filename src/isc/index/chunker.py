@@ -182,34 +182,40 @@ def _prose_chunk(
 def _table_parts(table: Table, max_table_tokens: int) -> list[Table]:
     """Whole under max_table_tokens; otherwise split between whole rows,
     header repeated on every part. Never splits a row -- the header and each
-    data row are the only units this ever moves as a whole."""
+    data row are the only units this ever moves as a whole.
+
+    Measured against Table.to_markdown() -- the text the chunk actually
+    ships as (see _table_chunk()) -- not some cheaper internal
+    representation. Markdown's `| cell | cell |` pipes and the separator
+    row are real, non-trivial overhead that scales with column count, and
+    a budget enforced against a shorter representation ships chunks over
+    it: measured on the real corpus, 10 of 34 table chunks exceeded
+    max_table_tokens by up to 11.6% before this fix, all in the widest
+    (8-column) tables. See docs/adr/0007.
+    """
     header = table.rows[: table.header_rows]
     data_rows = table.rows[table.header_rows :]
-    header_tokens = estimate_tokens(_rows_text(header))
 
-    if estimate_tokens(_rows_text(table.rows)) <= max_table_tokens:
+    def make(rows: list[list[str]]) -> Table:
+        return Table(rows=rows, header_rows=table.header_rows,
+                     caption=table.caption, ocr_confidence=table.ocr_confidence)
+
+    if estimate_tokens(table.to_markdown()) <= max_table_tokens:
         return [table]
 
     parts: list[Table] = []
-    current = list(header)
-    current_tokens = header_tokens
+    current_rows = list(header)
     for row in data_rows:
-        row_tokens = estimate_tokens(_rows_text([row]))
-        if len(current) > len(header) and current_tokens + row_tokens > max_table_tokens:
-            parts.append(Table(rows=current, header_rows=table.header_rows,
-                                caption=table.caption, ocr_confidence=table.ocr_confidence))
-            current = list(header)
-            current_tokens = header_tokens
-        current.append(row)
-        current_tokens += row_tokens
-    if len(current) > len(header):
-        parts.append(Table(rows=current, header_rows=table.header_rows,
-                            caption=table.caption, ocr_confidence=table.ocr_confidence))
+        trial_rows = current_rows + [row]
+        if (len(current_rows) > len(header)
+                and estimate_tokens(make(trial_rows).to_markdown()) > max_table_tokens):
+            parts.append(make(current_rows))
+            current_rows = [*header, row]
+        else:
+            current_rows = trial_rows
+    if len(current_rows) > len(header):
+        parts.append(make(current_rows))
     return parts
-
-
-def _rows_text(rows: list[list[str]]) -> str:
-    return "\n".join("  ".join(row) for row in rows)
 
 
 def _table_chunk(

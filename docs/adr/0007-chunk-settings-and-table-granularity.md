@@ -85,6 +85,53 @@ The trade-off is more chunks (and therefore more embedding calls) for the
 four largest documents specifically — 16 documents are entirely unaffected,
 since their tables are 62–244 tokens and stay whole either way.
 
+### Budget enforcement corrected: measure the text the chunk ships, not a cheaper stand-in
+
+`_table_parts()`'s first version decided where to split by measuring
+`estimate_tokens()` against the rows joined with a flat two spaces — an
+internal representation never shown to anyone — while the chunk actually
+ships `Table.to_markdown()` (see `_table_chunk()`). Markdown's `| cell |`
+pipes and the `|---|` separator row are real tokens with a real cost that
+scales with column count, and they were not in the number the split
+decision was made against. Measured on the real corpus: **10 of 34 table
+chunks shipped over `max_table_tokens=800` once rendered, by 28–93 tokens
+(3.5–11.6%)** — all the largest parts of the four 8-column, 42-row tables.
+
+This gets worse, not better, as a fixed absolute overhead: the next
+document type is not guaranteed eight columns, and every additional column
+adds another `| ` `| ` pair to every row. A budget enforced against a
+narrower column count than the shipped table will overshoot by more, not
+less.
+
+**Fixed:** `_table_parts()` now builds each candidate part and measures
+`estimate_tokens(candidate.to_markdown())` directly against
+`max_table_tokens`, rather than reasoning about markdown overhead
+separately from the plain-text row cost. `_rows_text()` (the internal
+join) is gone — nothing needs it once the shipped text is the only text
+measured.
+
+**Re-verified, not assumed, after the fix:**
+- **Zero table chunks over `max_table_tokens=800`** across all 34 (was 10).
+  New table token range: 83–797 (was 83–893).
+- **Chunk counts per document did not change** — this is worth stating
+  precisely because the opposite was predicted before measuring. All 6
+  documents that split before still split into the same number of parts
+  (4 parts for the four 42-line documents, 2 for the two 30-line ones);
+  what changed is the row boundary *within* that same part count (e.g.
+  `po_008.pdf`'s first two parts moved from 17+17 rows to 16+16 — one
+  fewer row each, not an additional part). The markdown overhead this
+  fix accounts for was large enough to matter for staying under budget,
+  but not large enough to push any part over a row-count threshold that
+  would force a fifth or third part. Total table chunks: still 34.
+- `chunk_id`s for every affected table chunk changed (text content
+  changed with the row boundaries), confirmed by construction — nothing
+  downstream depends on them yet, which is exactly why this was worth
+  fixing now rather than after P1-08 exists.
+- `line_range` coverage re-verified across all 20 documents: still exact,
+  no gaps, no overlaps, no duplicates against gold's line_number sequence.
+- Determinism re-verified: two independent `chunk_document()` runs over
+  all 20 documents produce identical `chunk_id` sequences.
+
 ### `keep_tables_whole=True` — kept, given a real meaning
 
 Rather than a dead boolean, `False` routes a TABLE block through ordinary
@@ -229,15 +276,48 @@ exist yet.** `settings_fingerprint()` is the function P1-08 is expected to
 call and compare against; wiring that comparison in is P1-08's own work,
 not retrofitted here.
 
+## Which settings actually do anything on this corpus — stated plainly
+
+Measured across all 74 chunks from all 20 documents: **prose chunks max out
+at 94 tokens against a `target_tokens=512` budget.** Not one prose chunk
+in this corpus gets within half the budget, let alone closes a window
+because of it. `overlap_tokens=64` follows from the same fact — a second
+window is never opened for prose here, so there is nothing for it to
+overlap with.
+
+**`target_tokens` and `overlap_tokens` are inert on this corpus.**
+`max_table_tokens` is the only one of the three settings that does any
+observable work: it is the sole reason 6 of 20 documents produce more than
+3 chunks at all, and the only one a real change to (1500 vs. 800) produces
+a measurably different corpus.
+
+This narrows the actual risk the settings-fingerprint guard exists for. It
+was framed as protecting against a change to any of `target_tokens`,
+`overlap_tokens`, or `max_table_tokens` silently invalidating P1-08's gold
+— true as stated, but on *this* corpus specifically, only a
+`max_table_tokens` change would ever produce a different set of chunk
+boundaries to invalidate against. The guard still earns its place: it is
+cheap, it is general (it does not know or care which setting changed), and
+"inert here" is a fact about this corpus's current documents, not a
+property of the settings that a future document type is bound to share
+(see "Revisit if" — denser prose is exactly the case that would make
+`target_tokens` live). But the number worth carrying forward is narrower
+than the original framing: **the freeze that actually matters today is on
+`max_table_tokens`**, and it is the one setting this ADR changed on
+evidence, not the two it left alone.
+
 ## Consequences
 
 - `config/default.yaml`'s `chunk.max_table_tokens` changed 1500 → 800.
   Nothing downstream depends on the old value yet (P1-05/P1-08 unbuilt), so
   this costs nothing today and would cost a full gold regeneration after
   P1-08 ships.
-- The four 42-line documents now produce more, smaller table chunks (embedding
-  cost scales with chunk count, not token volume, so this is a real if small
-  cost increase for those four documents specifically).
+- Measured, not assumed (see "Budget enforcement corrected" above): the
+  `max_table_tokens` change does **not** change chunk counts per document
+  on this corpus — the same 6 documents split into the same number of
+  parts before and after. What changed is which rows land in which part,
+  and, once the markdown-measurement fix above is included, whether every
+  part actually respects the configured budget.
 - `LocalVectorStore.add()`'s `settings_fingerprint` parameter is optional and
   defaults to `None` (no check) — existing/manual callers are not broken,
   but also not protected until they pass one.
