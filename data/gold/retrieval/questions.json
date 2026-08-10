@@ -1,0 +1,957 @@
+{
+  "provenance": {
+    "seed": 2608,
+    "settings_fingerprint": "chunk_settings:5d85347052438cbb",
+    "corpus_generated_at": "2000-01-01T00:43:28+00:00"
+  },
+  "counts": {
+    "by_class": {
+      "answerable": 35,
+      "unanswerable": 8,
+      "restricted": 9
+    },
+    "by_subtype": {
+      "single_hop": 10,
+      "header_lookup": 5,
+      "line_item": 8,
+      "cross_document": 8,
+      "ambiguous": 4,
+      "absent": 3,
+      "out_of_scope": 3,
+      "underspecified": 2,
+      "restricted": 8,
+      "no_reader": 1
+    },
+    "total": 52
+  },
+  "questions": [
+    {
+      "id": "q_sh_01",
+      "text": "Who is the buyer contact on PO 4513180299?",
+      "question_class": "answerable",
+      "subtype": "single_hop",
+      "gold_chunk_ids": [
+        "chk_25b88b5c2c19a74c"
+      ],
+      "gold_answer": "A. Tan",
+      "source_documents": [
+        "po_001.pdf"
+      ],
+      "principal": "u_alice"
+    },
+    {
+      "id": "q_sh_02",
+      "text": "What is the PO date on PO 4573479065?",
+      "question_class": "answerable",
+      "subtype": "single_hop",
+      "gold_chunk_ids": [
+        "chk_adaac9868c4e8c9b"
+      ],
+      "gold_answer": "15.03.2025",
+      "source_documents": [
+        "po_004.pdf"
+      ],
+      "principal": "u_chen"
+    },
+    {
+      "id": "q_sh_03",
+      "text": "Who is the supplier on PO 4573479065?",
+      "question_class": "answerable",
+      "subtype": "single_hop",
+      "gold_chunk_ids": [
+        "chk_adaac9868c4e8c9b"
+      ],
+      "gold_answer": "Bosch Rexroth Pneumatics GmbH",
+      "source_documents": [
+        "po_004.pdf"
+      ],
+      "principal": "u_chen"
+    },
+    {
+      "id": "q_sh_04",
+      "text": "What currency is PO 4536969136 denominated in?",
+      "question_class": "answerable",
+      "subtype": "single_hop",
+      "gold_chunk_ids": [
+        "chk_bf3f8eacd5eb1527"
+      ],
+      "gold_answer": "EUR",
+      "source_documents": [
+        "po_005.pdf"
+      ],
+      "principal": "u_chen"
+    },
+    {
+      "id": "q_sh_05",
+      "text": "Who is the buyer contact on PO 4512472645?",
+      "question_class": "answerable",
+      "subtype": "single_hop",
+      "gold_chunk_ids": [
+        "chk_1581dd6726869b67"
+      ],
+      "gold_answer": "J. Ruiz",
+      "source_documents": [
+        "po_007.pdf"
+      ],
+      "principal": "u_chen"
+    },
+    {
+      "id": "q_sh_06",
+      "text": "What is the PO date on PO 4553021889?",
+      "question_class": "answerable",
+      "subtype": "single_hop",
+      "gold_chunk_ids": [
+        "chk_7fc39370f7b3d895"
+      ],
+      "gold_answer": "12/25/2025",
+      "source_documents": [
+        "po_010.pdf"
+      ],
+      "principal": "u_ewan"
+    },
+    {
+      "id": "q_sh_07",
+      "text": "Who is the buyer contact on PO 4557830886?",
+      "question_class": "answerable",
+      "subtype": "single_hop",
+      "gold_chunk_ids": [
+        "chk_959b8af3e51880ef"
+      ],
+      "gold_answer": "P. Osei",
+      "source_documents": [
+        "po_012.pdf"
+      ],
+      "principal": "u_ewan"
+    },
+    {
+      "id": "q_sh_08",
+      "text": "What is the total order amount on PO 4527194073?",
+      "question_class": "answerable",
+      "subtype": "single_hop",
+      "gold_chunk_ids": [
+        "chk_b7249cc82c4c3f23"
+      ],
+      "gold_answer": "96,702.90",
+      "source_documents": [
+        "po_015.pdf"
+      ],
+      "principal": "u_gita"
+    },
+    {
+      "id": "q_sh_09",
+      "text": "Who is the buyer contact on PO 4591786279?",
+      "question_class": "answerable",
+      "subtype": "single_hop",
+      "gold_chunk_ids": [
+        "chk_b1db8e92ddced322"
+      ],
+      "gold_answer": "M. Weber",
+      "source_documents": [
+        "po_017.pdf"
+      ],
+      "principal": "u_alice"
+    },
+    {
+      "id": "q_sh_10",
+      "text": "What is the supplier's vendor code on PO 4582333324?",
+      "question_class": "answerable",
+      "subtype": "single_hop",
+      "gold_chunk_ids": [
+        "chk_f9b54b38d95917c8"
+      ],
+      "gold_answer": "V101450",
+      "source_documents": [
+        "po_006.pdf"
+      ],
+      "principal": "u_alice"
+    },
+    {
+      "id": "q_hl_01",
+      "text": "What incoterms apply to PO 4582333324?",
+      "question_class": "answerable",
+      "subtype": "header_lookup",
+      "gold_chunk_ids": [
+        "chk_f9b54b38d95917c8"
+      ],
+      "gold_answer": "DAP",
+      "source_documents": [
+        "po_006.pdf"
+      ],
+      "principal": "u_alice"
+    },
+    {
+      "id": "q_hl_02",
+      "text": "What are the payment terms on PO 4578072508?",
+      "question_class": "answerable",
+      "subtype": "header_lookup",
+      "gold_chunk_ids": [
+        "chk_e06883ad0c696d2d"
+      ],
+      "gold_answer": "Net 45",
+      "source_documents": [
+        "po_016.pdf"
+      ],
+      "principal": "u_ewan"
+    },
+    {
+      "id": "q_hl_03",
+      "text": "What is the ship-to site for PO 4542555435?",
+      "question_class": "answerable",
+      "subtype": "header_lookup",
+      "gold_chunk_ids": [
+        "chk_853224c8b042a7cc"
+      ],
+      "gold_answer": "Stuttgart Werk 07",
+      "source_documents": [
+        "po_011.pdf"
+      ],
+      "principal": "u_chen"
+    },
+    {
+      "id": "q_hl_04",
+      "text": "What incoterms apply to PO 4580799032?",
+      "question_class": "answerable",
+      "subtype": "header_lookup",
+      "gold_chunk_ids": [
+        "chk_1bbde5292ca0f91a"
+      ],
+      "gold_answer": "CIP",
+      "source_documents": [
+        "po_013.pdf"
+      ],
+      "principal": "u_ewan"
+    },
+    {
+      "id": "q_hl_05",
+      "text": "What are the payment terms on PO 4547294316?",
+      "question_class": "answerable",
+      "subtype": "header_lookup",
+      "gold_chunk_ids": [
+        "chk_a8f4645a7650e475"
+      ],
+      "gold_answer": "2/10 Net 30",
+      "source_documents": [
+        "po_003.pdf"
+      ],
+      "principal": "u_chen"
+    },
+    {
+      "id": "q_li_01",
+      "text": "What is the unit price of line 10 on PO 4591914574?",
+      "question_class": "answerable",
+      "subtype": "line_item",
+      "gold_chunk_ids": [
+        "chk_956bcbd260bc9c09"
+      ],
+      "gold_answer": "1,769.03",
+      "source_documents": [
+        "po_008.pdf"
+      ],
+      "principal": "u_alice"
+    },
+    {
+      "id": "q_li_02",
+      "text": "What is the unit price of line 420 on PO 4591914574?",
+      "question_class": "answerable",
+      "subtype": "line_item",
+      "gold_chunk_ids": [
+        "chk_7a0a1846134b9526"
+      ],
+      "gold_answer": "2,179.45",
+      "source_documents": [
+        "po_008.pdf"
+      ],
+      "principal": "u_alice"
+    },
+    {
+      "id": "q_li_03",
+      "text": "What is the description of line 20 on PO 4553021889?",
+      "question_class": "answerable",
+      "subtype": "line_item",
+      "gold_chunk_ids": [
+        "chk_46ea685734b025f4"
+      ],
+      "gold_answer": "Temporary tooling fixture XR-91",
+      "source_documents": [
+        "po_010.pdf"
+      ],
+      "principal": "u_ewan"
+    },
+    {
+      "id": "q_li_04",
+      "text": "What is the unit price of line 410 on PO 4553021889?",
+      "question_class": "answerable",
+      "subtype": "line_item",
+      "gold_chunk_ids": [
+        "chk_3ec71ae673e7d70d"
+      ],
+      "gold_answer": "2,180.40",
+      "source_documents": [
+        "po_010.pdf"
+      ],
+      "principal": "u_ewan"
+    },
+    {
+      "id": "q_li_05",
+      "text": "What is the unit price of line 20 on PO 4582333324?",
+      "question_class": "answerable",
+      "subtype": "line_item",
+      "gold_chunk_ids": [
+        "chk_4ef36b60e0e3d4df"
+      ],
+      "gold_answer": "442.10",
+      "source_documents": [
+        "po_006.pdf"
+      ],
+      "principal": "u_alice"
+    },
+    {
+      "id": "q_li_06",
+      "text": "What is the unit price of line 20 on PO 4542555435?",
+      "question_class": "answerable",
+      "subtype": "line_item",
+      "gold_chunk_ids": [
+        "chk_c7f8477dd6ff5f43"
+      ],
+      "gold_answer": "1,751.75",
+      "source_documents": [
+        "po_011.pdf"
+      ],
+      "principal": "u_chen"
+    },
+    {
+      "id": "q_li_07",
+      "text": "What quantity was ordered on line 20 of PO 4557830886?",
+      "question_class": "answerable",
+      "subtype": "line_item",
+      "gold_chunk_ids": [
+        "chk_96e67b05c71e5e60"
+      ],
+      "gold_answer": "1",
+      "source_documents": [
+        "po_012.pdf"
+      ],
+      "principal": "u_ewan"
+    },
+    {
+      "id": "q_li_08",
+      "text": "What is the unit price of line 30 on PO 4578072508?",
+      "question_class": "answerable",
+      "subtype": "line_item",
+      "gold_chunk_ids": [
+        "chk_2dc9bc07ca95c8a9"
+      ],
+      "gold_answer": "690.78",
+      "source_documents": [
+        "po_016.pdf"
+      ],
+      "principal": "u_ewan"
+    },
+    {
+      "id": "q_cd_01",
+      "text": "What did we spend with Omron Electronics Asia in total, in SGD?",
+      "question_class": "answerable",
+      "subtype": "cross_document",
+      "gold_chunk_ids": [
+        "chk_47de1a51aa515e3c",
+        "chk_b1db8e92ddced322"
+      ],
+      "gold_answer": {
+        "total": "2,972,338.10",
+        "currency": "SGD",
+        "breakdown": [
+          {
+            "document": "po_000.pdf",
+            "total_amount": "392,589.57"
+          },
+          {
+            "document": "po_017.pdf",
+            "total_amount": "2,579,748.53"
+          }
+        ]
+      },
+      "source_documents": [
+        "po_000.pdf",
+        "po_017.pdf"
+      ],
+      "principal": "u_alice"
+    },
+    {
+      "id": "q_cd_02",
+      "text": "What did we spend with Keyence Singapore Pte Ltd in total, in SGD?",
+      "question_class": "answerable",
+      "subtype": "cross_document",
+      "gold_chunk_ids": [
+        "chk_25b88b5c2c19a74c",
+        "chk_9ab121b5d4beef78"
+      ],
+      "gold_answer": {
+        "total": "2,813,892.30",
+        "currency": "SGD",
+        "breakdown": [
+          {
+            "document": "po_001.pdf",
+            "total_amount": "2,675,022.29"
+          },
+          {
+            "document": "po_018.pdf",
+            "total_amount": "138,870.01"
+          }
+        ]
+      },
+      "source_documents": [
+        "po_001.pdf",
+        "po_018.pdf"
+      ],
+      "principal": "u_alice"
+    },
+    {
+      "id": "q_cd_03",
+      "text": "What did we spend with Keyence Singapore Pte Ltd in total, in USD?",
+      "question_class": "answerable",
+      "subtype": "cross_document",
+      "gold_chunk_ids": [
+        "chk_7fc39370f7b3d895",
+        "chk_1bbde5292ca0f91a"
+      ],
+      "gold_answer": {
+        "total": "2,617,828.43",
+        "currency": "USD",
+        "breakdown": [
+          {
+            "document": "po_010.pdf",
+            "total_amount": "2,602,642.83"
+          },
+          {
+            "document": "po_013.pdf",
+            "total_amount": "15,185.60"
+          }
+        ]
+      },
+      "source_documents": [
+        "po_010.pdf",
+        "po_013.pdf"
+      ],
+      "principal": "u_ewan"
+    },
+    {
+      "id": "q_cd_04",
+      "text": "What did we spend with Bosch Rexroth AG in total, in USD?",
+      "question_class": "answerable",
+      "subtype": "cross_document",
+      "gold_chunk_ids": [
+        "chk_434ab848c832e116",
+        "chk_e06883ad0c696d2d"
+      ],
+      "gold_answer": {
+        "total": "2,346,933.69",
+        "currency": "USD",
+        "breakdown": [
+          {
+            "document": "po_009.pdf",
+            "total_amount": "2,283,006.79"
+          },
+          {
+            "document": "po_016.pdf",
+            "total_amount": "63,926.90"
+          }
+        ]
+      },
+      "source_documents": [
+        "po_009.pdf",
+        "po_016.pdf"
+      ],
+      "principal": "u_ewan"
+    },
+    {
+      "id": "q_cd_05",
+      "text": "What did we pay for part PLC-1756-L83 across our purchase orders?",
+      "question_class": "answerable",
+      "subtype": "cross_document",
+      "gold_chunk_ids": [
+        "chk_ec9884ca1d80c866",
+        "chk_2127b3c6d1ccbfee"
+      ],
+      "gold_answer": [
+        {
+          "document": "po_000.pdf",
+          "line_number": 10,
+          "unit_price": "1,536.37",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_014.pdf",
+          "line_number": 30,
+          "unit_price": "174.53",
+          "currency": "SGD"
+        }
+      ],
+      "source_documents": [
+        "po_000.pdf",
+        "po_014.pdf"
+      ],
+      "principal": "u_alice"
+    },
+    {
+      "id": "q_cd_06",
+      "text": "What did we pay for part TRM-BLK-2P5 across our purchase orders?",
+      "question_class": "answerable",
+      "subtype": "cross_document",
+      "gold_chunk_ids": [
+        "chk_9385e34d2a9e89ad",
+        "chk_50aa7080e1ebc57a"
+      ],
+      "gold_answer": [
+        {
+          "document": "po_001.pdf",
+          "line_number": 30,
+          "unit_price": "2,106.20",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_017.pdf",
+          "line_number": 80,
+          "unit_price": "1,227.80",
+          "currency": "SGD"
+        }
+      ],
+      "source_documents": [
+        "po_001.pdf",
+        "po_017.pdf"
+      ],
+      "principal": "u_alice"
+    },
+    {
+      "id": "q_cd_07",
+      "text": "What did we pay for part ENC-INC-1024 across our purchase orders?",
+      "question_class": "answerable",
+      "subtype": "cross_document",
+      "gold_chunk_ids": [
+        "chk_a3f25e8e975f20bd",
+        "chk_bea65f266227925b"
+      ],
+      "gold_answer": [
+        {
+          "document": "po_003.pdf",
+          "line_number": 30,
+          "unit_price": "656.20",
+          "currency": "EUR"
+        },
+        {
+          "document": "po_004.pdf",
+          "line_number": 80,
+          "unit_price": "319.78",
+          "currency": "EUR"
+        }
+      ],
+      "source_documents": [
+        "po_003.pdf",
+        "po_004.pdf"
+      ],
+      "principal": "u_chen"
+    },
+    {
+      "id": "q_cd_08",
+      "text": "What did we pay for part TRM-BLK-2P5 across our purchase orders?",
+      "question_class": "answerable",
+      "subtype": "cross_document",
+      "gold_chunk_ids": [
+        "chk_734b992e23cf9d51",
+        "chk_609dd67ab57a4d44"
+      ],
+      "gold_answer": [
+        {
+          "document": "po_013.pdf",
+          "line_number": 10,
+          "unit_price": "1,319.71",
+          "currency": "USD"
+        },
+        {
+          "document": "po_009.pdf",
+          "line_number": 10,
+          "unit_price": "1,757.16",
+          "currency": "USD"
+        }
+      ],
+      "source_documents": [
+        "po_013.pdf",
+        "po_009.pdf"
+      ],
+      "principal": "u_ewan"
+    },
+    {
+      "id": "q_am_01",
+      "text": "What did we order from Bosch Rexroth?",
+      "question_class": "answerable",
+      "subtype": "ambiguous",
+      "gold_chunk_ids": [
+        "chk_adaac9868c4e8c9b",
+        "chk_1581dd6726869b67"
+      ],
+      "gold_answer": {
+        "note": "two distinct Bosch Rexroth entities placed orders",
+        "suppliers": [
+          {
+            "supplier_name": "Bosch Rexroth Pneumatics GmbH",
+            "document": "po_004.pdf"
+          },
+          {
+            "supplier_name": "Bosch Rexroth AG",
+            "document": "po_007.pdf"
+          }
+        ]
+      },
+      "source_documents": [
+        "po_004.pdf",
+        "po_007.pdf"
+      ],
+      "principal": "u_chen",
+      "note": "spans two distinct, confusable suppliers -- correct behaviour is to surface both, not silently pick one"
+    },
+    {
+      "id": "q_am_02",
+      "text": "What is Bosch Rexroth's vendor code?",
+      "question_class": "answerable",
+      "subtype": "ambiguous",
+      "gold_chunk_ids": [
+        "chk_adaac9868c4e8c9b",
+        "chk_1581dd6726869b67"
+      ],
+      "gold_answer": [
+        {
+          "supplier_name": "Bosch Rexroth Pneumatics GmbH",
+          "supplier_id": "V100782",
+          "document": "po_004.pdf"
+        },
+        {
+          "supplier_name": "Bosch Rexroth AG",
+          "supplier_id": "V100781",
+          "document": "po_007.pdf"
+        }
+      ],
+      "source_documents": [
+        "po_004.pdf",
+        "po_007.pdf"
+      ],
+      "principal": "u_chen",
+      "note": "spans two distinct, confusable suppliers -- correct behaviour is to surface both, not silently pick one"
+    },
+    {
+      "id": "q_am_03",
+      "text": "What are the payment terms on the Bosch Rexroth order?",
+      "question_class": "answerable",
+      "subtype": "ambiguous",
+      "gold_chunk_ids": [
+        "chk_adaac9868c4e8c9b",
+        "chk_1581dd6726869b67"
+      ],
+      "gold_answer": [
+        {
+          "supplier_name": "Bosch Rexroth Pneumatics GmbH",
+          "payment_terms": "Net 60",
+          "document": "po_004.pdf"
+        },
+        {
+          "supplier_name": "Bosch Rexroth AG",
+          "payment_terms": "Net 45",
+          "document": "po_007.pdf"
+        }
+      ],
+      "source_documents": [
+        "po_004.pdf",
+        "po_007.pdf"
+      ],
+      "principal": "u_chen",
+      "note": "spans two distinct, confusable suppliers -- correct behaviour is to surface both, not silently pick one"
+    },
+    {
+      "id": "q_am_04",
+      "text": "How much did we spend with Bosch Rexroth in total?",
+      "question_class": "answerable",
+      "subtype": "ambiguous",
+      "gold_chunk_ids": [
+        "chk_adaac9868c4e8c9b",
+        "chk_1581dd6726869b67"
+      ],
+      "gold_answer": [
+        {
+          "supplier_name": "Bosch Rexroth Pneumatics GmbH",
+          "total_amount": "1,325,721.35",
+          "currency": "EUR",
+          "document": "po_004.pdf"
+        },
+        {
+          "supplier_name": "Bosch Rexroth AG",
+          "total_amount": "20,298.30",
+          "currency": "EUR",
+          "document": "po_007.pdf"
+        }
+      ],
+      "source_documents": [
+        "po_004.pdf",
+        "po_007.pdf"
+      ],
+      "principal": "u_chen",
+      "note": "spans two distinct, confusable suppliers -- correct behaviour is to surface both, not silently pick one"
+    },
+    {
+      "id": "q_ua_01",
+      "text": "Who is the buyer contact on PO 4573479065?",
+      "question_class": "unanswerable",
+      "subtype": "absent",
+      "gold_chunk_ids": [],
+      "gold_answer": null,
+      "source_documents": [
+        "po_004.pdf"
+      ],
+      "principal": "u_chen",
+      "note": "buyer_contact is not present on po_004.pdf (see meta.absent_fields)",
+      "expected_behavior": "abstain"
+    },
+    {
+      "id": "q_ua_02",
+      "text": "What are the payment terms on PO 4536969136?",
+      "question_class": "unanswerable",
+      "subtype": "absent",
+      "gold_chunk_ids": [],
+      "gold_answer": null,
+      "source_documents": [
+        "po_005.pdf"
+      ],
+      "principal": "u_chen",
+      "note": "payment_terms is not present on po_005.pdf",
+      "expected_behavior": "abstain"
+    },
+    {
+      "id": "q_ua_03",
+      "text": "What incoterms apply to PO 4512916338?",
+      "question_class": "unanswerable",
+      "subtype": "absent",
+      "gold_chunk_ids": [],
+      "gold_answer": null,
+      "source_documents": [
+        "po_014.pdf"
+      ],
+      "principal": "u_alice",
+      "note": "incoterms is not present on po_014.pdf",
+      "expected_behavior": "abstain"
+    },
+    {
+      "id": "q_ua_04",
+      "text": "Has the shipment for PO 4522345741 been confirmed as received?",
+      "question_class": "unanswerable",
+      "subtype": "out_of_scope",
+      "gold_chunk_ids": [],
+      "gold_answer": null,
+      "source_documents": [
+        "po_000.pdf"
+      ],
+      "principal": "u_alice",
+      "note": "the corpus has no delivery/receiving records for any PO",
+      "expected_behavior": "abstain"
+    },
+    {
+      "id": "q_ua_05",
+      "text": "Did the goods on PO 4553997652 pass incoming quality inspection?",
+      "question_class": "unanswerable",
+      "subtype": "out_of_scope",
+      "gold_chunk_ids": [],
+      "gold_answer": null,
+      "source_documents": [
+        "po_009.pdf"
+      ],
+      "principal": "u_ewan",
+      "note": "the corpus has no quality-inspection records",
+      "expected_behavior": "abstain"
+    },
+    {
+      "id": "q_ua_06",
+      "text": "What warranty terms apply under the Master Supply Agreement referenced on PO 4512472645?",
+      "question_class": "unanswerable",
+      "subtype": "out_of_scope",
+      "gold_chunk_ids": [],
+      "gold_answer": null,
+      "source_documents": [
+        "po_007.pdf"
+      ],
+      "principal": "u_chen",
+      "note": "the PO references an MSA by name but its terms are not in the corpus",
+      "expected_behavior": "abstain"
+    },
+    {
+      "id": "q_ua_07",
+      "text": "What was the unit price?",
+      "question_class": "unanswerable",
+      "subtype": "underspecified",
+      "gold_chunk_ids": [],
+      "gold_answer": null,
+      "source_documents": [],
+      "principal": "u_alice",
+      "note": "no PO or part number given -- every PO has multiple, different prices",
+      "expected_behavior": "abstain_with_clarification"
+    },
+    {
+      "id": "q_ua_08",
+      "text": "When is delivery promised?",
+      "question_class": "unanswerable",
+      "subtype": "underspecified",
+      "gold_chunk_ids": [],
+      "gold_answer": null,
+      "source_documents": [],
+      "principal": "u_alice",
+      "note": "no PO or line given -- every PO has multiple, different promised dates",
+      "expected_behavior": "abstain_with_clarification"
+    },
+    {
+      "id": "q_re_01",
+      "text": "What is the total order amount on PO 4522345741?",
+      "question_class": "restricted",
+      "subtype": "restricted",
+      "gold_chunk_ids": [
+        "chk_47de1a51aa515e3c"
+      ],
+      "gold_answer": "392,589.57",
+      "source_documents": [
+        "po_000.pdf"
+      ],
+      "principal": "u_alice",
+      "principal_b": "u_ben",
+      "expected_b": "empty"
+    },
+    {
+      "id": "q_re_02",
+      "text": "What is the unit price of line 10 on PO 4522345741?",
+      "question_class": "restricted",
+      "subtype": "restricted",
+      "gold_chunk_ids": [
+        "chk_ec9884ca1d80c866"
+      ],
+      "gold_answer": "1,536.37",
+      "source_documents": [
+        "po_000.pdf"
+      ],
+      "principal": "u_alice",
+      "principal_b": "u_ben",
+      "expected_b": "empty"
+    },
+    {
+      "id": "q_re_03",
+      "text": "What is the PO date on PO 4512916338?",
+      "question_class": "restricted",
+      "subtype": "restricted",
+      "gold_chunk_ids": [
+        "chk_18ed6f0e46e2234f"
+      ],
+      "gold_answer": "26/04/2025",
+      "source_documents": [
+        "po_014.pdf"
+      ],
+      "principal": "u_alice",
+      "principal_b": "u_ben",
+      "expected_b": "empty"
+    },
+    {
+      "id": "q_re_04",
+      "text": "What is the unit price of line 10 on PO 4512916338?",
+      "question_class": "restricted",
+      "subtype": "restricted",
+      "gold_chunk_ids": [
+        "chk_2127b3c6d1ccbfee"
+      ],
+      "gold_answer": "979.93",
+      "source_documents": [
+        "po_014.pdf"
+      ],
+      "principal": "u_alice",
+      "principal_b": "u_ben",
+      "expected_b": "empty"
+    },
+    {
+      "id": "q_re_05",
+      "text": "What is the unit price of line 40 on PO 4512916338?",
+      "question_class": "restricted",
+      "subtype": "restricted",
+      "gold_chunk_ids": [
+        "chk_2127b3c6d1ccbfee"
+      ],
+      "gold_answer": "1,701.85",
+      "source_documents": [
+        "po_014.pdf"
+      ],
+      "principal": "u_alice",
+      "principal_b": "u_ben",
+      "expected_b": "empty"
+    },
+    {
+      "id": "q_re_06",
+      "text": "What part number is on line 40 of PO 4569044139?",
+      "question_class": "restricted",
+      "subtype": "restricted",
+      "gold_chunk_ids": [
+        "chk_52ca3d0c662a1274"
+      ],
+      "gold_answer": "VLV-5-2-24V",
+      "source_documents": [
+        "po_018.pdf"
+      ],
+      "principal": "u_alice",
+      "principal_b": "u_ben",
+      "expected_b": "empty"
+    },
+    {
+      "id": "q_re_07",
+      "text": "What is the unit price of line 20 on PO 4569044139?",
+      "question_class": "restricted",
+      "subtype": "restricted",
+      "gold_chunk_ids": [
+        "chk_52ca3d0c662a1274"
+      ],
+      "gold_answer": "1,922.89",
+      "source_documents": [
+        "po_018.pdf"
+      ],
+      "principal": "u_alice",
+      "principal_b": "u_ben",
+      "expected_b": "empty"
+    },
+    {
+      "id": "q_re_08",
+      "text": "What is the total order amount on PO 4569044139?",
+      "question_class": "restricted",
+      "subtype": "restricted",
+      "gold_chunk_ids": [
+        "chk_9ab121b5d4beef78"
+      ],
+      "gold_answer": "138,870.01",
+      "source_documents": [
+        "po_018.pdf"
+      ],
+      "principal": "u_alice",
+      "principal_b": "u_ben",
+      "expected_b": "empty"
+    },
+    {
+      "id": "q_re_09",
+      "text": "What is the total order amount on PO 4594564683?",
+      "question_class": "restricted",
+      "subtype": "no_reader",
+      "gold_chunk_ids": [],
+      "gold_answer": null,
+      "source_documents": [
+        "po_002.pdf"
+      ],
+      "principal": null,
+      "principals_checked": [
+        "u_alice",
+        "u_ben",
+        "u_chen",
+        "u_dara",
+        "u_ewan",
+        "u_frank",
+        "u_gita"
+      ],
+      "expected": "empty",
+      "note": "po_002.pdf is export_controlled with allow_terms requiring group:buyers-emea + site:site_de07; no named principal holds both that grant and export_controlled clearance with a matching jurisdiction. Exercises the export-control path nothing else in this gold set touches: field 'total_amount' has a real value ('320,101.24') but is unreachable by anyone."
+    }
+  ]
+}
