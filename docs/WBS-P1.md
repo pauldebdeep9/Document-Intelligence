@@ -204,6 +204,46 @@ as one going forward without a corpus change that reintroduces real difficulty. 
 - [ ] Embeddings cache — second run makes no API calls
 - [ ] The index-time `AclViolation` guard is exercised by a test
 
+**Log** found in P1-05's step-2 verification, originated in P1-04:
+`LocalVectorStore.add()` had no dedup/upsert semantics, so running `isc index`
+twice over the same 20 documents produced 148 chunks (74 exact duplicates)
+instead of 74. Fixed by making chunk ids — already content-addressed since
+P1-04 — the upsert key: `add()` now replaces an existing id's vector, text and
+token counts in place and reports inserted vs. replaced counts; a new
+`remove_document()` purges chunks a smaller re-chunk no longer produces.
+Ordering matters and is documented on both methods: `add()` must run before
+`remove_document()`, or every replace looks like a fresh insert, and a
+mismatch inside `add()` never triggers a removal, so a document's prior
+chunks survive a failed re-index untouched. Re-verified live: two `isc index`
+runs over the 20 stay at 74 chunks / 74 unique ids, and a relay-module query
+returns identical top-5 ids and byte-identical scores before and after the
+second run — confirming BM25 df doesn't drift on a replace. Left uncaught,
+duplicate chunks with identical scores would have inflated recall@k at
+P1-09: the same passage taking two of five slots looks like retrieval
+success while quietly halving result diversity.
+
+**Log** a reproducibility check run to justify untracking `docstore.sqlite`/
+`vector_store.pkl` (both regenerated wholesale, and the latter a `pickle.load()`
+target — a standing InfoSec flag if committed) found a second, unrelated bug:
+`gen_corpus.py`'s PDFs were not byte-reproducible under a fixed `--seed`.
+reportlab stamps `/CreationDate`/`/ModDate` from the wall clock and folds that
+timestamp into the PDF's `/ID`, so two `--seed 2608` runs produced
+semantically-identical but byte-different PDFs — different content hash,
+different doc_id, every time, on a pipeline where everything downstream is
+content-addressed. **Determinism was verified at the wrong layer**: the
+existing check (`test_corpus_fidelity.py`) compares gold JSON and extracted
+text against the corpus already on disk, both of which were genuinely
+deterministic — it never regenerated the corpus and compared bytes, so it had
+no way to see this. Fixed by pinning `SOURCE_DATE_EPOCH` (derived from
+`--seed`, not a shared constant, so distinct seeds stay visibly distinct) and
+explicit `creator`/`producer` metadata, so a future reportlab upgrade can't
+reintroduce this via its own default strings. New
+`tests/integration/test_corpus_determinism.py` regenerates the corpus twice
+and asserts byte-identical PDFs, so this can't regress silently again.
+`data/blobs/` (derived from `data/synthetic` by `isc ingest`) was untracked
+alongside the other two for the same reason, now that its content hashes are
+actually stable.
+
 ---
 
 ## P1-06 — Retriever completion ☐

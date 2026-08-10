@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 from datetime import date, timedelta
 from decimal import Decimal
@@ -52,6 +53,20 @@ INCOTERMS = ["FOB", "DDP", "EXW", "CIP", "DAP"]
 PAYMENT_TERMS = ["Net 30", "Net 45", "Net 60", "2/10 Net 30"]
 CURRENCY_BY_REGION = {"APAC": "SGD", "AMER": "USD", "EMEA": "EUR"}
 BUYERS = ["A. Tan", "M. Weber", "J. Ruiz", "K. Nakamura", "P. Osei"]
+
+# reportlab stamps /CreationDate and /ModDate from the wall clock unless told
+# otherwise, and folds that timestamp into the PDF's /ID -- so two runs with
+# the identical --seed produced byte-different PDFs (different content hash,
+# different doc_id) despite every gold field matching. SOURCE_DATE_EPOCH is
+# reportlab's (and the wider reproducible-builds ecosystem's) documented hook
+# for this; deriving it from the seed, not hardcoding one constant, means two
+# different seeds stay visibly distinguishable while the same seed is always
+# byte-identical. 946684800 = 2000-01-01T00:00:00Z, an arbitrary fixed base.
+_PDF_EPOCH_BASE = 946684800
+
+
+def _pin_pdf_timestamps(seed: int) -> None:
+    os.environ["SOURCE_DATE_EPOCH"] = str(_PDF_EPOCH_BASE + seed)
 
 # Omission rates for optional fields. Tuned so most documents have at least one
 # absent field; otherwise 'correct_absent' never fires in the harness.
@@ -171,6 +186,14 @@ def _render_pdf(record: dict[str, Any], path: Path) -> dict[str, Any]:
         leftMargin=18 * mm, rightMargin=18 * mm,
         topMargin=16 * mm, bottomMargin=16 * mm,
         title=f"Purchase Order {record['po_number']}",
+        # invariant=True (on top of SOURCE_DATE_EPOCH, set by
+        # _pin_pdf_timestamps) also suppresses reportlab's per-build PDF
+        # comments. creator/producer are pinned explicitly so a reportlab
+        # version bump -- which could change its default producer string --
+        # can never change the corpus hash on its own.
+        invariant=True,
+        creator="isc-docint gen_corpus.py",
+        producer="isc-docint synthetic corpus",
     )
     flow: list[Any] = []
     raw: dict[str, Any] = {}
@@ -407,6 +430,7 @@ def main() -> None:
 
     args.out.mkdir(parents=True, exist_ok=True)
     args.gold.mkdir(parents=True, exist_ok=True)
+    _pin_pdf_timestamps(args.seed)
     rng = random.Random(args.seed)
 
     plan = sensitivity_plan(args.n)

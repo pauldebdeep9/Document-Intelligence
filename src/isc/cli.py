@@ -100,7 +100,26 @@ def extract(doc_type: str = typer.Option(..., "--doc-type"),
 @app.command()
 def index(run_id: str | None = typer.Option(None)) -> None:
     """Documents -> chunks -> embeddings, with ACL projected onto every chunk."""
-    raise typer.Exit(code=_todo("index"))
+    from isc.index.pipeline import run as do_index
+    from isc.llm.registry import get_embedding_model
+    from isc.storage.local_vector import LocalVectorStore
+    from isc.storage.sqlite_docstore import SqliteDocStore
+
+    s = get_settings()
+    run = start_run(s.paths.runs, run_id)
+    docs = SqliteDocStore(s.paths.data / "docstore.sqlite")
+    store = LocalVectorStore(s.paths.data / "vector_store.pkl")
+
+    result = do_index(run, docs, get_embedding_model(), store, s)
+    console.print(f"[green]indexed[/] {len(result.indexed)} documents "
+                  f"({result.chunks} chunks)  run={run.run_id}")
+    if result.failed:
+        console.print(f"[red]failed[/] {len(result.failed)} documents:")
+        for doc_id, reason in result.failed:
+            console.print(f"  {doc_id}: {reason}")
+    run.summarise()
+    if result.failed:
+        raise typer.Exit(code=1)
 
 
 @app.command()

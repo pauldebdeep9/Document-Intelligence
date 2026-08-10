@@ -12,6 +12,7 @@ import math
 import pickle
 import re
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
@@ -29,9 +30,21 @@ def _tokenize(text: str) -> list[str]:
     return _TOKEN.findall(text.lower())
 
 
+@dataclass
+class UpsertResult:
+    inserted: int = 0
+    replaced: int = 0
+
+
 class LocalVectorStore:
     def __init__(self, path: Path) -> None:
         self.path = path
+        # Source of truth for mutation. id -> (chunk, normalized vector, token
+        # counts). self._chunks/_vectors/_tokens/_df below are index-aligned
+        # views rebuilt wholesale from this dict on every add()/remove_document()
+        # -- see _rebuild_indexes for why that (not incremental patching) is
+        # what keeps df from ever going stale on a replace or removal.
+        self._by_id: dict[str, tuple[Chunk, np.ndarray, Counter[str]]] = {}
         self._chunks: list[Chunk] = []
         self._vectors: np.ndarray | None = None
         self._tokens: list[Counter[str]] = []
@@ -42,13 +55,38 @@ class LocalVectorStore:
         if path.exists():
             self.load()
 
+    def _rebuild_indexes(self) -> None:
+        """Recompute the search-facing, index-aligned structures (including df)
+        from self._by_id wholesale rather than patching them in place. A
+        replace or removal that only patched df incrementally is exactly the
+        kind of bookkeeping that goes quietly wrong (a stale count for a term
+        that no longer appears anywhere skews idf across the whole index, and
+        nothing surfaces it); recomputing from the current chunk set can't
+        drift because there is no persisted delta to get wrong."""
+        self._chunks = []
+        self._tokens = []
+        self._df = Counter()
+        vectors: list[np.ndarray] = []
+        for chunk, vec, counts in self._by_id.values():
+            self._chunks.append(chunk)
+            self._tokens.append(counts)
+            self._df.update(counts.keys())
+            vectors.append(vec)
+        self._vectors = np.vstack(vectors) if vectors else None
+
     # -- write -------------------------------------------------------------
     def add(
         self,
         chunks: Sequence[Chunk],
         vectors: Sequence[Sequence[float]],
         settings_fingerprint: str | None = None,
-    ) -> None:
+    ) -> UpsertResult:
+        """Upserts by chunk id. Chunk ids are content-addressed (a hash of
+        document id, ordinal and text -- see common/ids.py's chunk_id), so a
+        chunk whose text or position changed gets a new id and lands as an
+        insert; a chunk re-embedded unchanged lands as a byte-identical
+        replace. This is what makes re-running the index pipeline over the
+        same documents idempotent instead of duplicating every chunk."""
         if len(chunks) != len(vectors):
             raise ValueError("chunks and vectors length mismatch")
         for c in chunks:
@@ -71,12 +109,45 @@ class LocalVectorStore:
 
         arr = np.asarray(vectors, dtype=np.float32)
         arr /= np.linalg.norm(arr, axis=1, keepdims=True) + 1e-9
-        self._vectors = arr if self._vectors is None else np.vstack([self._vectors, arr])
-        self._chunks.extend(chunks)
-        for c in chunks:
-            counts = Counter(_tokenize(c.text))
-            self._tokens.append(counts)
-            self._df.update(counts.keys())
+
+        result = UpsertResult()
+        for c, vec in zip(chunks, arr, strict=True):
+            if c.id in self._by_id:
+                result.replaced += 1
+            else:
+                result.inserted += 1
+            self._by_id[c.id] = (c, vec, Counter(_tokenize(c.text)))
+        self._rebuild_indexes()
+        return result
+
+    def remove_document(
+        self, document_id: str, *, keep_ids: frozenset[str] = frozenset()
+    ) -> int:
+        """Removes chunks belonging to `document_id`, except any whose id is
+        in keep_ids. Upsert by id alone leaves orphans behind when a document
+        is re-chunked into FEWER chunks than it had before -- ordinals/ids no
+        longer produced by the new chunking are simply never touched by add().
+
+        Call this AFTER add()-ing a document's freshly computed chunks, with
+        keep_ids set to those chunks' ids -- not before. add()'s own
+        replace-vs-insert bookkeeping (see UpsertResult) depends on a
+        document's previous chunk ids still being present in the store when
+        add() runs; removing them first would make every upsert look like a
+        fresh insert even when nothing changed, and would also mean a failure
+        inside add() (fingerprint mismatch, a bad chunk) leaves that
+        document's prior chunks already gone with nothing put back. Calling
+        this after, scoped to exactly the ids add() did NOT just write, keeps
+        both the reporting and the failure mode correct. Returns the number
+        of chunks removed."""
+        to_remove = [
+            cid for cid, (c, _, _) in self._by_id.items()
+            if c.document_id == document_id and cid not in keep_ids
+        ]
+        for cid in to_remove:
+            del self._by_id[cid]
+        if to_remove:
+            self._rebuild_indexes()
+        return len(to_remove)
 
     # -- read --------------------------------------------------------------
     def _permitted(
@@ -187,9 +258,21 @@ class LocalVectorStore:
     def load(self) -> None:
         with self.path.open("rb") as fh:
             state = pickle.load(fh)
-        self._chunks = [Chunk.model_validate(c) for c in state["chunks"]]
-        self._vectors = state["vectors"]
-        self._tokens = state["tokens"]
-        self._df = state["df"]
+        chunks = [Chunk.model_validate(c) for c in state["chunks"]]
+        vectors = state["vectors"]
+        tokens = state["tokens"]
         # get(): stores saved before this guard existed have no key at all.
         self._settings_fingerprint = state.get("settings_fingerprint")
+        # Rebuild _by_id (the mutation source of truth) from the persisted
+        # parallel arrays, then derive _chunks/_vectors/_tokens/_df from it --
+        # df is never trusted from disk, only ever recomputed from tokens, so
+        # a store saved by a pre-upsert version self-heals on load rather than
+        # carrying forward whatever was pickled. A duplicate id from an old,
+        # pre-upsert store (back when add() could not replace) collapses to
+        # last-one-wins here, same as it would from a fresh add().
+        self._by_id = {}
+        for chunk, vec, counts in zip(
+            chunks, vectors if vectors is not None else [], tokens, strict=True
+        ):
+            self._by_id[chunk.id] = (chunk, vec, counts)
+        self._rebuild_indexes()
