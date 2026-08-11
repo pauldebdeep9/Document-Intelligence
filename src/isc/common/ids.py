@@ -53,6 +53,25 @@ def cache_key(namespace: str, payload: Any) -> str:
     return f"{namespace}:{_h(blob)}"
 
 
+def corpus_fingerprint(content_hashes: Any) -> str:
+    """Deterministic id for one corpus snapshot -- every ingested document's
+    content_sha256, order-independent (sorted before hashing, so iteration
+    order off SqliteDocStore never changes the result).
+
+    Complements settings_fingerprint() (index/chunker.py), which is a hash of
+    ChunkSettings alone and therefore blind to the corpus's own content: a
+    supplier-name rename or any other edit confined to a single document
+    changes that document's content_sha256/doc_id/chunk_ids without moving
+    settings_fingerprint at all. Chunk-id resolution
+    (test_every_gold_chunk_id_resolves_against_the_index) only catches a
+    change like that for a document some gold question's gold_chunk_ids
+    actually names -- docs/adr/0007 measured po_002.pdf and po_019.pdf as the
+    two documents no question names, so a content change confined to either
+    is invisible to that check. corpus_fingerprint() covers every document
+    regardless of whether the gold references it."""
+    return cache_key("corpus", sorted(content_hashes))
+
+
 def new_run_id(prefix: str = "run") -> str:
     """Not deterministic by design: identifies one execution, not one input."""
     return f"{prefix}_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}"

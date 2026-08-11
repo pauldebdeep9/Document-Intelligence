@@ -81,6 +81,13 @@ class SqliteDocStore:
             "SELECT 1 FROM documents WHERE content_sha256=? LIMIT 1", (sha,)
         ).fetchone() is not None
 
+    def content_hashes(self) -> list[str]:
+        """content_sha256 of every ingested document -- the input to
+        common.ids.corpus_fingerprint(). Order is whatever SQLite returns;
+        corpus_fingerprint() sorts internally, so callers never need to."""
+        rows = self._conn.execute("SELECT content_sha256 FROM documents").fetchall()
+        return [r["content_sha256"] for r in rows]
+
     def upsert_record(self, doc_id: str, doc_type: str, payload: dict[str, Any]) -> None:
         self._conn.execute(
             "INSERT INTO records (document_id, doc_type, payload) VALUES (?,?,?) "

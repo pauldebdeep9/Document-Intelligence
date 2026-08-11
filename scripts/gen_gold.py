@@ -40,6 +40,7 @@ from typing import Any
 
 from isc.common.config import Settings, get_settings
 from isc.common.errors import ChunkSettingsMismatch
+from isc.common.ids import corpus_fingerprint
 from isc.index.chunker import chunk_document, filters_from_record, settings_fingerprint
 from isc.models.acl import AclSet, Principal, Sensitivity
 from isc.models.chunk import Chunk
@@ -292,7 +293,22 @@ def _unanswerable(qid: str, text: str, subtype: str, note: str, principal: str,
 
 
 def _restricted(qid: str, name: str, field: str | None, line_number: int | None, text: str,
-                 chunks: dict[str, list[Chunk]], gold: dict[str, Any]) -> dict[str, Any]:
+                 subtype: str, chunks: dict[str, list[Chunk]], gold: dict[str, Any]) -> dict[str, Any]:
+    """subtype is "restricted_filtered" (text carries the PO number, so
+    infer_filters() narrows retrieval to that one document before ACL is
+    even applied -- ben's empty result is decided against a pool the size of
+    one document's own chunks) or "restricted_unfiltered" (text deliberately
+    carries no PO number, so infer_filters() returns {} and retrieval runs
+    against the WHOLE corpus -- ben's empty result has to hold up against
+    every chunk he is entitled to read, not just the ones from this one
+    document). Split into two subtypes, not left as one, so P1-09 can report
+    permission enforcement separately for each path: a leak that only shows
+    up when a ranking path bypasses the filter (corpus-wide retrieval) would
+    pass every filtered question and look clean. See
+    test_restricted_filtered_questions_produce_a_po_number_filter /
+    test_restricted_unfiltered_questions_produce_no_filter in
+    test_gold_fidelity.py, which pin this by construction rather than by
+    convention."""
     g = gold[name]
     if line_number is not None:
         ln = _line(gold, name, line_number)
@@ -303,7 +319,7 @@ def _restricted(qid: str, name: str, field: str | None, line_number: int | None,
         answer = g["raw"][field]  # type: ignore[index]
     return {
         "id": qid, "text": text.format(po=g["raw"]["po_number"]),
-        "question_class": "restricted", "subtype": "restricted",
+        "question_class": "restricted", "subtype": subtype,
         "gold_chunk_ids": gold_chunk_ids, "gold_answer": answer,
         "source_documents": [name], "principal": "u_alice",
         "principal_b": "u_ben",
@@ -426,7 +442,7 @@ def _build_questions(chunks: dict[str, list[Chunk]], gold: dict[str, Any]) -> li
         "q_cd_03", "What did we spend with Keyence Singapore Pte Ltd in total, in USD?",
         ["po_010.pdf", "po_013.pdf"], "USD", "u_ewan", chunks, gold))
     q.append(_cross_doc_total(
-        "q_cd_04", "What did we spend with Bosch Rexroth AG in total, in USD?",
+        "q_cd_04", "What did we spend with Kestrel Industrial AG in total, in USD?",
         ["po_009.pdf", "po_016.pdf"], "USD", "u_ewan", chunks, gold))
     q.append(_cross_doc_part(
         "q_cd_05", "What did we pay for part PLC-1756-L83 across our purchase orders?",
@@ -441,7 +457,7 @@ def _build_questions(chunks: dict[str, list[Chunk]], gold: dict[str, Any]) -> li
         "q_cd_08", "What did we pay for part TRM-BLK-2P5 across our purchase orders?",
         "TRM-BLK-2P5", [("po_013.pdf", 10), ("po_009.pdf", 10)], "u_ewan", chunks, gold))
 
-    # -- ambiguous (~4): Bosch Rexroth AG (V100781) vs Bosch Rexroth
+    # -- ambiguous (~4): Kestrel Industrial AG (V100781) vs Kestrel Industrial
     # Pneumatics GmbH (V100782) -- the corpus's one genuinely confusable
     # supplier pair actually represented on both sides (Fastenal's other
     # entity, "...Supply Pte Ltd", never appears in this 20-document corpus,
@@ -449,8 +465,8 @@ def _build_questions(chunks: dict[str, list[Chunk]], gold: dict[str, Any]) -> li
     # report). po_004 (Pneumatics GmbH) and po_007 (AG) are both readable by
     # u_chen, so one principal can genuinely be asked all four.
     q.append(_ambiguous(
-        "q_am_01", "What did we order from Bosch Rexroth?",
-        {"note": "two distinct Bosch Rexroth entities placed orders",
+        "q_am_01", "What did we order from Kestrel Industrial?",
+        {"note": "two distinct Kestrel Industrial entities placed orders",
          "suppliers": [
              {"supplier_name": gold["po_004.pdf"]["raw"]["supplier_name"],
               "document": "po_004.pdf"},
@@ -459,21 +475,21 @@ def _build_questions(chunks: dict[str, list[Chunk]], gold: dict[str, Any]) -> li
          ]},
         [("po_004.pdf", "header"), ("po_007.pdf", "header")], "u_chen", chunks))
     q.append(_ambiguous(
-        "q_am_02", "What is Bosch Rexroth's vendor code?",
+        "q_am_02", "What is Kestrel Industrial's vendor code?",
         [{"supplier_name": gold["po_004.pdf"]["raw"]["supplier_name"],
           "supplier_id": gold["po_004.pdf"]["raw"]["supplier_id"], "document": "po_004.pdf"},
          {"supplier_name": gold["po_007.pdf"]["raw"]["supplier_name"],
           "supplier_id": gold["po_007.pdf"]["raw"]["supplier_id"], "document": "po_007.pdf"}],
         [("po_004.pdf", "header"), ("po_007.pdf", "header")], "u_chen", chunks))
     q.append(_ambiguous(
-        "q_am_03", "What are the payment terms on the Bosch Rexroth order?",
+        "q_am_03", "What are the payment terms on the Kestrel Industrial order?",
         [{"supplier_name": gold["po_004.pdf"]["raw"]["supplier_name"],
           "payment_terms": gold["po_004.pdf"]["raw"]["payment_terms"], "document": "po_004.pdf"},
          {"supplier_name": gold["po_007.pdf"]["raw"]["supplier_name"],
           "payment_terms": gold["po_007.pdf"]["raw"]["payment_terms"], "document": "po_007.pdf"}],
         [("po_004.pdf", "header"), ("po_007.pdf", "header")], "u_chen", chunks))
     q.append(_ambiguous(
-        "q_am_04", "How much did we spend with Bosch Rexroth in total?",
+        "q_am_04", "How much did we spend with Kestrel Industrial in total?",
         [{"supplier_name": gold["po_004.pdf"]["raw"]["supplier_name"],
           "total_amount": gold["po_004.pdf"]["raw"]["total_amount"],
           "currency": gold["po_004.pdf"]["raw"]["currency"], "document": "po_004.pdf"},
@@ -519,12 +535,12 @@ def _build_questions(chunks: dict[str, list[Chunk]], gold: dict[str, Any]) -> li
         "underspecified", "no PO or line given -- every PO has multiple, different promised dates",
         "u_alice", []))
 
-    # -- restricted (~8): u_alice / u_ben, same group+site, differing
-    # clearance. po_000/po_014/po_018 are the only PURCHASE_ORDER documents
-    # in this corpus where alice's confidential clearance (vs. ben's
-    # internal) is the sole reason she can read it and he cannot -- verified
-    # via _readable_by() against the real per-document ACL, not assumed from
-    # the sensitivity label alone.
+    # -- restricted_filtered (~8) + restricted_unfiltered (~4): u_alice /
+    # u_ben, same group+site, differing clearance. po_000/po_014/po_018 are
+    # the only PURCHASE_ORDER documents in this corpus where alice's
+    # confidential clearance (vs. ben's internal) is the sole reason she can
+    # read it and he cannot -- verified via _readable_by() against the real
+    # per-document ACL, not assumed from the sensitivity label alone.
     #
     # Every question here asks for a SPECIFIC value (a price, a date, a part
     # number) rather than a vague one: abstention is trivially achievable by
@@ -533,21 +549,62 @@ def _build_questions(chunks: dict[str, list[Chunk]], gold: dict[str, Any]) -> li
     # enough that "ben got nothing" and "alice got the right value" are two
     # separately checkable assertions, not one.
     q.append(_restricted("q_re_01", "po_000.pdf", "total_amount", None,
-                          "What is the total order amount on PO {po}?", chunks, gold))
+                          "What is the total order amount on PO {po}?",
+                          "restricted_filtered", chunks, gold))
     q.append(_restricted("q_re_02", "po_000.pdf", "unit_price", 10,
-                          "What is the unit price of line 10 on PO {po}?", chunks, gold))
+                          "What is the unit price of line 10 on PO {po}?",
+                          "restricted_filtered", chunks, gold))
     q.append(_restricted("q_re_03", "po_014.pdf", "po_date", None,
-                          "What is the PO date on PO {po}?", chunks, gold))
+                          "What is the PO date on PO {po}?",
+                          "restricted_filtered", chunks, gold))
     q.append(_restricted("q_re_04", "po_014.pdf", "unit_price", 10,
-                          "What is the unit price of line 10 on PO {po}?", chunks, gold))
+                          "What is the unit price of line 10 on PO {po}?",
+                          "restricted_filtered", chunks, gold))
     q.append(_restricted("q_re_05", "po_014.pdf", "unit_price", 40,
-                          "What is the unit price of line 40 on PO {po}?", chunks, gold))
+                          "What is the unit price of line 40 on PO {po}?",
+                          "restricted_filtered", chunks, gold))
     q.append(_restricted("q_re_06", "po_018.pdf", "part_number", 40,
-                          "What part number is on line 40 of PO {po}?", chunks, gold))
+                          "What part number is on line 40 of PO {po}?",
+                          "restricted_filtered", chunks, gold))
     q.append(_restricted("q_re_07", "po_018.pdf", "unit_price", 20,
-                          "What is the unit price of line 20 on PO {po}?", chunks, gold))
+                          "What is the unit price of line 20 on PO {po}?",
+                          "restricted_filtered", chunks, gold))
     q.append(_restricted("q_re_08", "po_018.pdf", "total_amount", None,
-                          "What is the total order amount on PO {po}?", chunks, gold))
+                          "What is the total order amount on PO {po}?",
+                          "restricted_filtered", chunks, gold))
+
+    # -- restricted_unfiltered (4): same alice/ben pair, same specific-value
+    # requirement, but the question text deliberately carries NO PO number --
+    # infer_filters() returns {} for every one of these (pinned by
+    # test_restricted_unfiltered_questions_produce_no_filter), so retrieval
+    # runs against the whole corpus rather than a single document's ~3-chunk
+    # pool. All 8 restricted_filtered questions above are decided with the
+    # filter already narrowing the field; a ranking path that bypasses the
+    # filter (or a permission check applied only after filtering) could pass
+    # every one of them and still leak corpus-wide. Phrased on
+    # supplier name + a line's description rather than the PO number or part
+    # number -- both of which repeat verbatim across many other documents in
+    # this corpus, so the supplier name is what actually disambiguates which
+    # document (and which principal's access) the question is asking about.
+    q.append(_restricted(
+        "q_re_10", "po_000.pdf", "unit_price", 10,
+        "What did we pay per unit for the ControlLogix processor module on "
+        "the Omron Electronics Asia order?",
+        "restricted_unfiltered", chunks, gold))
+    q.append(_restricted(
+        "q_re_11", "po_014.pdf", "unit_price", 40,
+        "What did we pay per unit for the 24VDC relay module on the SKF "
+        "Bearings Manufacturing order?",
+        "restricted_unfiltered", chunks, gold))
+    q.append(_restricted(
+        "q_re_12", "po_014.pdf", "po_date", None,
+        "When was the SKF Bearings Manufacturing purchase order dated?",
+        "restricted_unfiltered", chunks, gold))
+    q.append(_restricted(
+        "q_re_13", "po_018.pdf", "unit_price", 30,
+        "What did we pay per unit for the incremental encoder on the "
+        "Keyence Singapore order?",
+        "restricted_unfiltered", chunks, gold))
 
     # -- no_reader (1): po_002 -- export_controlled + EMEA, zero readers in
     # the named identity graph. Not excluded as a gap; recorded as the
@@ -623,6 +680,10 @@ def main() -> None:
     gold = _load_extraction_gold(args.extraction_gold)
     users = _load_users(args.acl)
     docs = SqliteDocStore(settings.paths.data / "docstore.sqlite")
+    # Every ingested document, not just the POs this gold set indexes (see
+    # _build_chunk_index) -- corpus_fingerprint()'s whole point is catching
+    # drift regardless of which documents the gold happens to reference.
+    corpus_fp = corpus_fingerprint(docs.content_hashes())
     chunks, doc_ids = _build_chunk_index(docs, settings, gold)
 
     questions = _build_questions(chunks, gold)
@@ -641,6 +702,7 @@ def main() -> None:
         "provenance": {
             "seed": args.seed,
             "settings_fingerprint": fingerprint,
+            "corpus_fingerprint": corpus_fp,
             # Deterministic and seed-derived, matching gen_corpus.py's own
             # SOURCE_DATE_EPOCH convention -- not datetime.now(), which would
             # make this file (and the "generate twice, diff bytes" test)

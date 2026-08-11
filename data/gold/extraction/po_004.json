@@ -4,7 +4,7 @@
   "raw": {
     "po_number": "4573479065",
     "po_date": "15.03.2025",
-    "supplier_name": "Bosch Rexroth Pneumatics GmbH",
+    "supplier_name": "Kestrel Industrial Pneumatics GmbH",
     "supplier_id": "V100782",
     "ship_to_site": "Stuttgart Werk 07",
     "incoterms": "EXW",
@@ -318,7 +318,7 @@
   "normalised": {
     "po_number": "4573479065",
     "po_date": "2025-03-15",
-    "supplier_name": "Bosch Rexroth Pneumatics GmbH",
+    "supplier_name": "Kestrel Industrial Pneumatics GmbH",
     "supplier_id": "V100782",
     "ship_to_site": "Stuttgart Werk 07",
     "incoterms": "EXW",

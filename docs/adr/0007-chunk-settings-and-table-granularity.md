@@ -276,6 +276,74 @@ exist yet.** `settings_fingerprint()` is the function P1-08 is expected to
 call and compare against; wiring that comparison in is P1-08's own work,
 not retrofitted here.
 
+### A provenance guard only protects against the inputs it actually covers
+
+Renaming a supplier in the master data (the "Kestrel" rename) changed the
+printed text on 5 PDFs, and therefore their content hashes, `doc_id`s, and
+every `chunk_id` derived from them — a real, complete corpus-identity
+change. `settings_fingerprint` did not move: it is a hash of `ChunkSettings`
+alone, and none of those fields changed. A gold set built against the
+pre-rename corpus would have passed the fingerprint check cleanly against
+the post-rename index, right up until someone tried to resolve one of its
+`gold_chunk_ids` and found the chunk gone. The fingerprint guard was never
+meant to catch this and does not claim to — but it is worth stating
+plainly, because "the provenance check passed" is exactly the kind of
+signal that invites trusting a gold set the check was never built to
+validate.
+
+The check that *does* cover this is `test_gold_fidelity.py`'s
+`test_every_gold_chunk_id_resolves_against_the_index` — but its coverage is
+bounded by which documents the gold's questions happen to name, not the
+whole corpus. Measured directly: of the 20 documents, 18 are referenced by
+at least one question's non-empty `gold_chunk_ids`; **`po_002.pdf` and
+`po_019.pdf` are not** (`po_002` by design — its only question is the
+`no_reader` case, whose `gold_chunk_ids` is deliberately empty; `po_019`
+simply isn't named by any question). A content change to either of those
+two documents would be invisible to this check, the same way the rename
+would have been invisible to the fingerprint check.
+
+Proved, not asserted: fed the pre-rename gold snapshot (`git show
+383abed:data/gold/retrieval/questions.json`, untouched, read from git
+history into a temp path — the real gold file on disk was never modified)
+against the live post-rename index. **19 of 55 `gold_chunk_id` references,
+across 14 of 52 questions, failed to resolve** — and the 14 affected
+questions are exactly the ones naming one of the 5 renamed documents (all
+4 `ambiguous` questions among them, since both anchor documents were
+renamed). The check fired robustly here because those 5 documents happen
+to be heavily referenced, not because the check guarantees it always will
+be: a corpus edit confined to `po_002`/`po_019` would pass both guards
+clean.
+
+## Chunk-level filters are single-valued by design
+
+P1-06's `Retriever.infer_filters()` detects part numbers in a question
+(reusing `extract/validators.py`'s `PART_NUMBER`, not a second copy) but
+deliberately never adds one to the returned filter dict. Checked against
+the live index before deciding, not assumed: `Chunk.filters` carries only
+`po_number` and `supplier_id` across all 74 chunks — `filters_from_record()`
+only ever populates those two. A table chunk covers many rows, each with
+its own part number, so there is no single value a chunk-level exact
+filter could hold for it; a `part_number` filter would zero out every
+chunk regardless of whether the part is actually in the corpus, which is
+worse than not filtering at all — `search_lexical`'s BM25 already surfaces
+part numbers well from the query text itself, and a broken exact filter on
+top would silently suppress that too.
+
+The obvious fix — a multi-valued `part_numbers` filter — was rejected, not
+deferred: it would change `Chunk`, `filters_from_record()`, and therefore
+`settings_fingerprint()`, invalidating the gold set P1-08 just built for a
+capability BM25 already provides. Real cost, no benefit.
+
+**The general rule, not just a part-number special case:** a field can
+only be a chunk-level exact-match filter if its value is constant across
+the whole chunk. `po_number` and `supplier_id` qualify because a chunk
+belongs to exactly one document. Any field that varies *within* a
+chunk — a table row's own `part_number`, its `line_number`, its
+`promised_date` — cannot be represented this way without either exploding
+one chunk into one-row chunks (defeating the point of table chunking) or
+moving to a multi-valued filter schema, which is the fingerprint-breaking
+change above. `part_number` is just the first field this came up for.
+
 ## Which settings actually do anything on this corpus — stated plainly
 
 Measured across all 74 chunks from all 20 documents: **prose chunks max out
@@ -345,3 +413,9 @@ evidence, not the two it left alone.
   above. A structural diff against gold is not sufficient for a change
   that alters what the model reads, only for one that alters what
   information exists.
+- A future retrieval feature wants to filter on `line_number` or
+  `promised_date` — it will hit the same wall `part_number` did (see
+  "Chunk-level filters are single-valued by design"), for the same reason:
+  both vary within a table chunk. Re-derive the cost/benefit against
+  BM25's existing lexical coverage before extending the schema; do not
+  assume the part-number conclusion carries over without checking.

@@ -7,7 +7,7 @@ Not a plain ID lookup. Two things the corpus deliberately makes hard:
     exact name, then normalised name (casefold, collapsed whitespace, common
     legal suffixes stripped), never further than that.
   * The masters contain confusable pairs on purpose ("Fastenal Industrial
-    Supply Pte Ltd" vs "...Services Pte Ltd"; two Bosch Rexroth entities).
+    Supply Pte Ltd" vs "...Services Pte Ltd"; two Kestrel Industrial entities).
     Resolution is exact-match-after-normalisation only, never fuzzy/edit-
     distance. An ambiguous near-match resolves to a miss with a conflict, not
     to whichever candidate scores highest -- picking a plausible-but-wrong

@@ -4,7 +4,7 @@
   "raw": {
     "po_number": "4512472645",
     "po_date": "16.06.2026",
-    "supplier_name": "Bosch Rexroth AG",
+    "supplier_name": "Kestrel Industrial AG",
     "supplier_id": "V100781",
     "ship_to_site": "Stuttgart Werk 07",
     "incoterms": "CIP",
@@ -48,7 +48,7 @@
   "normalised": {
     "po_number": "4512472645",
     "po_date": "2026-06-16",
-    "supplier_name": "Bosch Rexroth AG",
+    "supplier_name": "Kestrel Industrial AG",
     "supplier_id": "V100781",
     "ship_to_site": "Stuttgart Werk 07",
     "incoterms": "CIP",

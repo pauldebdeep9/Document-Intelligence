@@ -2,13 +2,14 @@
   "provenance": {
     "seed": 2608,
     "settings_fingerprint": "chunk_settings:5d85347052438cbb",
+    "corpus_fingerprint": "corpus:a3f7d5b1c873c8ac",
     "corpus_generated_at": "2000-01-01T00:43:28+00:00"
   },
   "counts": {
     "by_class": {
       "answerable": 35,
       "unanswerable": 8,
-      "restricted": 9
+      "restricted": 13
     },
     "by_subtype": {
       "single_hop": 10,
@@ -19,10 +20,11 @@
       "absent": 3,
       "out_of_scope": 3,
       "underspecified": 2,
-      "restricted": 8,
+      "restricted_filtered": 8,
+      "restricted_unfiltered": 4,
       "no_reader": 1
     },
-    "total": 52
+    "total": 56
   },
   "questions": [
     {
@@ -45,7 +47,7 @@
       "question_class": "answerable",
       "subtype": "single_hop",
       "gold_chunk_ids": [
-        "chk_adaac9868c4e8c9b"
+        "chk_bea2f36c1d5c6104"
       ],
       "gold_answer": "15.03.2025",
       "source_documents": [
@@ -59,9 +61,9 @@
       "question_class": "answerable",
       "subtype": "single_hop",
       "gold_chunk_ids": [
-        "chk_adaac9868c4e8c9b"
+        "chk_bea2f36c1d5c6104"
       ],
-      "gold_answer": "Bosch Rexroth Pneumatics GmbH",
+      "gold_answer": "Kestrel Industrial Pneumatics GmbH",
       "source_documents": [
         "po_004.pdf"
       ],
@@ -87,7 +89,7 @@
       "question_class": "answerable",
       "subtype": "single_hop",
       "gold_chunk_ids": [
-        "chk_1581dd6726869b67"
+        "chk_4e01b7406300768c"
       ],
       "gold_answer": "J. Ruiz",
       "source_documents": [
@@ -115,7 +117,7 @@
       "question_class": "answerable",
       "subtype": "single_hop",
       "gold_chunk_ids": [
-        "chk_959b8af3e51880ef"
+        "chk_5305a1603705c1b7"
       ],
       "gold_answer": "P. Osei",
       "source_documents": [
@@ -185,7 +187,7 @@
       "question_class": "answerable",
       "subtype": "header_lookup",
       "gold_chunk_ids": [
-        "chk_e06883ad0c696d2d"
+        "chk_a9f6a3b43c364fc2"
       ],
       "gold_answer": "Net 45",
       "source_documents": [
@@ -325,7 +327,7 @@
       "question_class": "answerable",
       "subtype": "line_item",
       "gold_chunk_ids": [
-        "chk_96e67b05c71e5e60"
+        "chk_2ff3cc82ddb0d190"
       ],
       "gold_answer": "1",
       "source_documents": [
@@ -339,7 +341,7 @@
       "question_class": "answerable",
       "subtype": "line_item",
       "gold_chunk_ids": [
-        "chk_2dc9bc07ca95c8a9"
+        "chk_a4459097192e9164"
       ],
       "gold_answer": "690.78",
       "source_documents": [
@@ -436,12 +438,12 @@
     },
     {
       "id": "q_cd_04",
-      "text": "What did we spend with Bosch Rexroth AG in total, in USD?",
+      "text": "What did we spend with Kestrel Industrial AG in total, in USD?",
       "question_class": "answerable",
       "subtype": "cross_document",
       "gold_chunk_ids": [
-        "chk_434ab848c832e116",
-        "chk_e06883ad0c696d2d"
+        "chk_ea0e8ffacac6032f",
+        "chk_a9f6a3b43c364fc2"
       ],
       "gold_answer": {
         "total": "2,346,933.69",
@@ -528,7 +530,7 @@
       "subtype": "cross_document",
       "gold_chunk_ids": [
         "chk_a3f25e8e975f20bd",
-        "chk_bea65f266227925b"
+        "chk_99d28ef03fffb471"
       ],
       "gold_answer": [
         {
@@ -557,7 +559,7 @@
       "subtype": "cross_document",
       "gold_chunk_ids": [
         "chk_734b992e23cf9d51",
-        "chk_609dd67ab57a4d44"
+        "chk_c0432b0dbb84161b"
       ],
       "gold_answer": [
         {
@@ -581,22 +583,22 @@
     },
     {
       "id": "q_am_01",
-      "text": "What did we order from Bosch Rexroth?",
+      "text": "What did we order from Kestrel Industrial?",
       "question_class": "answerable",
       "subtype": "ambiguous",
       "gold_chunk_ids": [
-        "chk_adaac9868c4e8c9b",
-        "chk_1581dd6726869b67"
+        "chk_bea2f36c1d5c6104",
+        "chk_4e01b7406300768c"
       ],
       "gold_answer": {
-        "note": "two distinct Bosch Rexroth entities placed orders",
+        "note": "two distinct Kestrel Industrial entities placed orders",
         "suppliers": [
           {
-            "supplier_name": "Bosch Rexroth Pneumatics GmbH",
+            "supplier_name": "Kestrel Industrial Pneumatics GmbH",
             "document": "po_004.pdf"
           },
           {
-            "supplier_name": "Bosch Rexroth AG",
+            "supplier_name": "Kestrel Industrial AG",
             "document": "po_007.pdf"
           }
         ]
@@ -610,21 +612,21 @@
     },
     {
       "id": "q_am_02",
-      "text": "What is Bosch Rexroth's vendor code?",
+      "text": "What is Kestrel Industrial's vendor code?",
       "question_class": "answerable",
       "subtype": "ambiguous",
       "gold_chunk_ids": [
-        "chk_adaac9868c4e8c9b",
-        "chk_1581dd6726869b67"
+        "chk_bea2f36c1d5c6104",
+        "chk_4e01b7406300768c"
       ],
       "gold_answer": [
         {
-          "supplier_name": "Bosch Rexroth Pneumatics GmbH",
+          "supplier_name": "Kestrel Industrial Pneumatics GmbH",
           "supplier_id": "V100782",
           "document": "po_004.pdf"
         },
         {
-          "supplier_name": "Bosch Rexroth AG",
+          "supplier_name": "Kestrel Industrial AG",
           "supplier_id": "V100781",
           "document": "po_007.pdf"
         }
@@ -638,21 +640,21 @@
     },
     {
       "id": "q_am_03",
-      "text": "What are the payment terms on the Bosch Rexroth order?",
+      "text": "What are the payment terms on the Kestrel Industrial order?",
       "question_class": "answerable",
       "subtype": "ambiguous",
       "gold_chunk_ids": [
-        "chk_adaac9868c4e8c9b",
-        "chk_1581dd6726869b67"
+        "chk_bea2f36c1d5c6104",
+        "chk_4e01b7406300768c"
       ],
       "gold_answer": [
         {
-          "supplier_name": "Bosch Rexroth Pneumatics GmbH",
+          "supplier_name": "Kestrel Industrial Pneumatics GmbH",
           "payment_terms": "Net 60",
           "document": "po_004.pdf"
         },
         {
-          "supplier_name": "Bosch Rexroth AG",
+          "supplier_name": "Kestrel Industrial AG",
           "payment_terms": "Net 45",
           "document": "po_007.pdf"
         }
@@ -666,22 +668,22 @@
     },
     {
       "id": "q_am_04",
-      "text": "How much did we spend with Bosch Rexroth in total?",
+      "text": "How much did we spend with Kestrel Industrial in total?",
       "question_class": "answerable",
       "subtype": "ambiguous",
       "gold_chunk_ids": [
-        "chk_adaac9868c4e8c9b",
-        "chk_1581dd6726869b67"
+        "chk_bea2f36c1d5c6104",
+        "chk_4e01b7406300768c"
       ],
       "gold_answer": [
         {
-          "supplier_name": "Bosch Rexroth Pneumatics GmbH",
+          "supplier_name": "Kestrel Industrial Pneumatics GmbH",
           "total_amount": "1,325,721.35",
           "currency": "EUR",
           "document": "po_004.pdf"
         },
         {
-          "supplier_name": "Bosch Rexroth AG",
+          "supplier_name": "Kestrel Industrial AG",
           "total_amount": "20,298.30",
           "currency": "EUR",
           "document": "po_007.pdf"
@@ -806,7 +808,7 @@
       "id": "q_re_01",
       "text": "What is the total order amount on PO 4522345741?",
       "question_class": "restricted",
-      "subtype": "restricted",
+      "subtype": "restricted_filtered",
       "gold_chunk_ids": [
         "chk_47de1a51aa515e3c"
       ],
@@ -822,7 +824,7 @@
       "id": "q_re_02",
       "text": "What is the unit price of line 10 on PO 4522345741?",
       "question_class": "restricted",
-      "subtype": "restricted",
+      "subtype": "restricted_filtered",
       "gold_chunk_ids": [
         "chk_ec9884ca1d80c866"
       ],
@@ -838,7 +840,7 @@
       "id": "q_re_03",
       "text": "What is the PO date on PO 4512916338?",
       "question_class": "restricted",
-      "subtype": "restricted",
+      "subtype": "restricted_filtered",
       "gold_chunk_ids": [
         "chk_18ed6f0e46e2234f"
       ],
@@ -854,7 +856,7 @@
       "id": "q_re_04",
       "text": "What is the unit price of line 10 on PO 4512916338?",
       "question_class": "restricted",
-      "subtype": "restricted",
+      "subtype": "restricted_filtered",
       "gold_chunk_ids": [
         "chk_2127b3c6d1ccbfee"
       ],
@@ -870,7 +872,7 @@
       "id": "q_re_05",
       "text": "What is the unit price of line 40 on PO 4512916338?",
       "question_class": "restricted",
-      "subtype": "restricted",
+      "subtype": "restricted_filtered",
       "gold_chunk_ids": [
         "chk_2127b3c6d1ccbfee"
       ],
@@ -886,7 +888,7 @@
       "id": "q_re_06",
       "text": "What part number is on line 40 of PO 4569044139?",
       "question_class": "restricted",
-      "subtype": "restricted",
+      "subtype": "restricted_filtered",
       "gold_chunk_ids": [
         "chk_52ca3d0c662a1274"
       ],
@@ -902,7 +904,7 @@
       "id": "q_re_07",
       "text": "What is the unit price of line 20 on PO 4569044139?",
       "question_class": "restricted",
-      "subtype": "restricted",
+      "subtype": "restricted_filtered",
       "gold_chunk_ids": [
         "chk_52ca3d0c662a1274"
       ],
@@ -918,11 +920,75 @@
       "id": "q_re_08",
       "text": "What is the total order amount on PO 4569044139?",
       "question_class": "restricted",
-      "subtype": "restricted",
+      "subtype": "restricted_filtered",
       "gold_chunk_ids": [
         "chk_9ab121b5d4beef78"
       ],
       "gold_answer": "138,870.01",
+      "source_documents": [
+        "po_018.pdf"
+      ],
+      "principal": "u_alice",
+      "principal_b": "u_ben",
+      "expected_b": "empty"
+    },
+    {
+      "id": "q_re_10",
+      "text": "What did we pay per unit for the ControlLogix processor module on the Omron Electronics Asia order?",
+      "question_class": "restricted",
+      "subtype": "restricted_unfiltered",
+      "gold_chunk_ids": [
+        "chk_ec9884ca1d80c866"
+      ],
+      "gold_answer": "1,536.37",
+      "source_documents": [
+        "po_000.pdf"
+      ],
+      "principal": "u_alice",
+      "principal_b": "u_ben",
+      "expected_b": "empty"
+    },
+    {
+      "id": "q_re_11",
+      "text": "What did we pay per unit for the 24VDC relay module on the SKF Bearings Manufacturing order?",
+      "question_class": "restricted",
+      "subtype": "restricted_unfiltered",
+      "gold_chunk_ids": [
+        "chk_2127b3c6d1ccbfee"
+      ],
+      "gold_answer": "1,701.85",
+      "source_documents": [
+        "po_014.pdf"
+      ],
+      "principal": "u_alice",
+      "principal_b": "u_ben",
+      "expected_b": "empty"
+    },
+    {
+      "id": "q_re_12",
+      "text": "When was the SKF Bearings Manufacturing purchase order dated?",
+      "question_class": "restricted",
+      "subtype": "restricted_unfiltered",
+      "gold_chunk_ids": [
+        "chk_18ed6f0e46e2234f"
+      ],
+      "gold_answer": "26/04/2025",
+      "source_documents": [
+        "po_014.pdf"
+      ],
+      "principal": "u_alice",
+      "principal_b": "u_ben",
+      "expected_b": "empty"
+    },
+    {
+      "id": "q_re_13",
+      "text": "What did we pay per unit for the incremental encoder on the Keyence Singapore order?",
+      "question_class": "restricted",
+      "subtype": "restricted_unfiltered",
+      "gold_chunk_ids": [
+        "chk_52ca3d0c662a1274"
+      ],
+      "gold_answer": "383.76",
       "source_documents": [
         "po_018.pdf"
       ],

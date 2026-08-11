@@ -15,6 +15,7 @@ import pytest
 from isc.common.confidence import Confidence
 from isc.common.config import ChunkSettings, Settings
 from isc.common.errors import ChunkSettingsMismatch
+from isc.common.ids import corpus_fingerprint
 from isc.common.tracing import Run
 from isc.index.chunker import settings_fingerprint
 from isc.index.pipeline import run as run_index
@@ -105,6 +106,7 @@ def test_indexes_a_document_and_writes_the_manifest(tmp_path):
     assert manifest["documents_failed"] == 0
     assert manifest["chunks"] == result.chunks
     assert manifest["settings_fingerprint"] == settings_fingerprint(settings.chunk)
+    assert manifest["corpus_fingerprint"] == corpus_fingerprint(docs.content_hashes())
     assert manifest["embed_model"] == "fake-embed"
     assert manifest["embed_dimensions"] == 4
 
@@ -186,6 +188,36 @@ def test_store_save_round_trips_in_a_fresh_instance(tmp_path):
     reloaded = LocalVectorStore(path)
     assert reloaded.count() == result.chunks
     assert reloaded.settings_fingerprint() == store.settings_fingerprint()
+
+
+def test_corpus_fingerprint_changes_when_a_documents_content_changes(tmp_path):
+    """A document's content changing gives it a new content_sha256 (and, in
+    the real pipeline, a new doc_id -- see common/ids.py's doc_id()) --
+    simulated here with two independent docstores rather than re-upserting
+    the same id, since SqliteDocStore.upsert_document() does not overwrite
+    content_sha256 on conflict. doc_2 stands in for a document like
+    po_019.pdf in the real corpus (docs/adr/0007): nothing else in this test
+    reads doc_2's own chunks or filters, so this pins that the corpus
+    fingerprint catches a change there anyway -- the property
+    settings_fingerprint and gold chunk-id resolution don't have."""
+    settings = _settings(tmp_path)
+
+    docs_a = SqliteDocStore(tmp_path / "a" / "docstore.sqlite")
+    docs_a.upsert_document(_doc("doc_1"))
+    docs_a.upsert_document(_doc("doc_2"))
+    run_index(Run("a", tmp_path / "runs"), docs_a, FakeEmbedder(),
+              LocalVectorStore(tmp_path / "a" / "store.pkl"), settings)
+    manifest_a = json.loads((tmp_path / "runs" / "a" / "index" / "manifest.json").read_text())
+
+    docs_b = SqliteDocStore(tmp_path / "b" / "docstore.sqlite")
+    docs_b.upsert_document(_doc("doc_1"))
+    doc_2_changed = _doc("doc_2").model_copy(update={"content_sha256": "different-hash"})
+    docs_b.upsert_document(doc_2_changed)
+    run_index(Run("b", tmp_path / "runs"), docs_b, FakeEmbedder(),
+              LocalVectorStore(tmp_path / "b" / "store.pkl"), settings)
+    manifest_b = json.loads((tmp_path / "runs" / "b" / "index" / "manifest.json").read_text())
+
+    assert manifest_a["corpus_fingerprint"] != manifest_b["corpus_fingerprint"]
 
 
 def test_settings_fingerprint_mismatch_is_recorded_in_manifest_and_store(tmp_path):

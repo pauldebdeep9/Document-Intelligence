@@ -15,10 +15,13 @@ from pathlib import Path
 import pytest
 
 from isc.common.config import get_settings
+from isc.common.ids import corpus_fingerprint
 from isc.index.chunker import settings_fingerprint
 from isc.models.acl import AclSet, Principal, Sensitivity
 from isc.models.records.purchase_order import PurchaseOrder
+from isc.retrieve.retriever import Retriever
 from isc.storage.local_vector import LocalVectorStore
+from isc.storage.sqlite_docstore import SqliteDocStore
 
 ROOT = Path(__file__).resolve().parents[2]
 GOLD_PATH = ROOT / "data" / "gold" / "retrieval" / "questions.json"
@@ -60,6 +63,10 @@ def _live_store() -> LocalVectorStore:
     return LocalVectorStore(settings.paths.data / "vector_store.pkl")
 
 
+def _live_docstore() -> SqliteDocStore:
+    return SqliteDocStore(get_settings().paths.data / "docstore.sqlite")
+
+
 # -- the check this whole gold set exists to satisfy --------------------------
 
 def test_every_gold_chunk_id_resolves_against_the_index():
@@ -81,6 +88,36 @@ def test_fingerprint_matches_the_current_index():
     assert recorded == store_fp
 
 
+def test_corpus_fingerprint_matches_the_current_corpus():
+    """settings_fingerprint (above) is blind to the corpus's own content --
+    it is a hash of ChunkSettings alone. corpus_fingerprint covers the gap:
+    a hash over every ingested document's content_sha256, independent of
+    which documents the gold's questions happen to reference."""
+    d = _load()
+    recorded = d["provenance"]["corpus_fingerprint"]
+    assert recorded == corpus_fingerprint(_live_docstore().content_hashes())
+
+
+def test_corpus_fingerprint_changes_if_po_019_content_changes():
+    """po_019.pdf is the one document no gold question's gold_chunk_ids ever
+    names (see docs/adr/0007's "A provenance guard only protects against the
+    inputs it actually covers") -- test_every_gold_chunk_id_resolves_against_
+    the_index has zero power to catch a content change confined to it.
+    corpus_fingerprint has to catch it anyway, regardless of corpus order."""
+    docs = _live_docstore()
+    ids = docs.list_documents()
+    po_019_id = next(
+        (doc_id for doc_id in ids if docs.get_document(doc_id).source_uri.endswith("po_019.pdf")),
+        None,
+    )
+    assert po_019_id is not None, "po_019.pdf not found in the live docstore"
+    base_hashes = [docs.get_document(doc_id).content_sha256 for doc_id in ids]
+    mutated_hashes = [
+        "0" * 64 if doc_id == po_019_id else h for doc_id, h in zip(ids, base_hashes)
+    ]
+    assert corpus_fingerprint(mutated_hashes) != corpus_fingerprint(base_hashes)
+
+
 # -- structure: counts, uniqueness, principal validity -----------------------
 
 def test_subtype_counts_match_targets():
@@ -95,12 +132,13 @@ def test_subtype_counts_match_targets():
     assert by_subtype["absent"] == 3
     assert by_subtype["out_of_scope"] == 3
     assert by_subtype["underspecified"] == 2
-    assert by_subtype["restricted"] == 8  # alice/ben pairs
+    assert by_subtype["restricted_filtered"] == 8  # alice/ben pairs, PO number in the text
+    assert by_subtype["restricted_unfiltered"] == 4  # same pairs, no PO number in the text
     assert by_subtype["no_reader"] == 1  # po_002 -- zero readers in the graph
     assert by_class["answerable"] == 35
     assert by_class["unanswerable"] == 8
-    assert by_class["restricted"] == 9  # 8 pairs + po_002
-    assert d["counts"]["total"] == 52
+    assert by_class["restricted"] == 13  # 8 filtered + 4 unfiltered + po_002
+    assert d["counts"]["total"] == 56
 
 
 def test_every_question_id_is_unique():
@@ -188,12 +226,15 @@ def test_unanswerable_expected_behavior_is_explicit_and_consistent():
 
 # -- restricted: verified both directions, and alice's answer is specific ----
 
+_RESTRICTED_SUBTYPES = {"restricted_filtered", "restricted_unfiltered"}
+
+
 def test_restricted_pairs_verified_both_directions():
     d = _load()
     users = _users()
     alice, ben = users["u_alice"], users["u_ben"]
-    pairs = [q for q in d["questions"] if q["subtype"] == "restricted"]
-    assert len(pairs) == 8
+    pairs = [q for q in d["questions"] if q["subtype"] in _RESTRICTED_SUBTYPES]
+    assert len(pairs) == 12
     for q in pairs:
         name = q["source_documents"][0]
         acl = _doc_acl(name)
@@ -211,11 +252,47 @@ def test_restricted_questions_have_a_specific_gold_answer():
     assertions, not one vague one."""
     d = _load()
     for q in d["questions"]:
-        if q["subtype"] != "restricted":
+        if q["subtype"] not in _RESTRICTED_SUBTYPES:
             continue
         answer = q["gold_answer"]
         assert answer not in (None, "", [], {}), f"{q['id']}: gold_answer is not a specific value"
         assert len(q["gold_chunk_ids"]) == 1
+
+
+# -- restricted: filtered vs. unfiltered actually differ at the retriever ----
+
+def test_restricted_filtered_questions_produce_a_po_number_filter():
+    """The whole point of the filtered/unfiltered split: without this, all 8
+    filtered questions are decided against a single document's ~3-chunk
+    pool, and a permission bug that only shows up under corpus-wide
+    retrieval (a ranking path that bypasses the filter) would never be
+    exercised. Pinned here so a later rephrasing that quietly drops the PO
+    number from the text can't silently reclassify a question without the
+    counts test catching a mismatch."""
+    d = _load()
+    retriever = Retriever(store=None, embedder=None, chat=None, settings=None)  # type: ignore[arg-type]
+    filtered = [q for q in d["questions"] if q["subtype"] == "restricted_filtered"]
+    assert len(filtered) == 8
+    for q in filtered:
+        assert retriever.infer_filters(q["text"]) != {}, (
+            f"{q['id']}: expected a po_number filter, got none -- {q['text']!r}"
+        )
+
+
+def test_restricted_unfiltered_questions_produce_no_filter():
+    """The other half of the split: these 4 must resolve to {} from
+    infer_filters(), so retrieval genuinely runs against the whole corpus,
+    not just a smaller version of the same single-document pool the filtered
+    questions already exercise."""
+    d = _load()
+    retriever = Retriever(store=None, embedder=None, chat=None, settings=None)  # type: ignore[arg-type]
+    unfiltered = [q for q in d["questions"] if q["subtype"] == "restricted_unfiltered"]
+    assert len(unfiltered) == 4
+    for q in unfiltered:
+        assert retriever.infer_filters(q["text"]) == {}, (
+            f"{q['id']}: expected no filters (corpus-wide retrieval), "
+            f"got {retriever.infer_filters(q['text'])} -- {q['text']!r}"
+        )
 
 
 def test_no_reader_question_has_zero_readers_across_the_whole_identity_graph():

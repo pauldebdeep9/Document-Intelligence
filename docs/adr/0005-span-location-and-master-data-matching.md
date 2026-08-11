@@ -15,8 +15,8 @@ parser flattened the page. Both had to be designed for deliberately rather than
 discovered as bugs later.
 
 Master-data resolution (supplier, part) has a parallel problem: the corpus
-deliberately contains confusable pairs (two Fastenal entities, two Bosch
-Rexroth entities) to test whether resolution can tell them apart, and 9/20
+deliberately contains confusable pairs (two Fastenal entities, two Kestrel
+Industrial entities) to test whether resolution can tell them apart, and 9/20
 documents omit `supplier_id` entirely, so ID-only lookup was never viable.
 
 ## Decision

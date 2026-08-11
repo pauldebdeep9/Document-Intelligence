@@ -4,7 +4,7 @@
   "raw": {
     "po_number": "4578072508",
     "po_date": "03/10/2026",
-    "supplier_name": "Bosch Rexroth AG",
+    "supplier_name": "Kestrel Industrial AG",
     "supplier_id": null,
     "ship_to_site": "Milwaukee Plant 42",
     "incoterms": "FOB",
@@ -58,7 +58,7 @@
   "normalised": {
     "po_number": "4578072508",
     "po_date": "2026-03-10",
-    "supplier_name": "Bosch Rexroth AG",
+    "supplier_name": "Kestrel Industrial AG",
     "supplier_id": null,
     "ship_to_site": "Milwaukee Plant 42",
     "incoterms": "FOB",

@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 
 from isc.common.config import Settings
 from isc.common.errors import ChunkSettingsMismatch
+from isc.common.ids import corpus_fingerprint
 from isc.common.logging import get_logger
 from isc.common.tracing import Run, span
 from isc.index.chunker import chunk_document, filters_from_record, settings_fingerprint
@@ -54,6 +55,16 @@ def run(
     # store is what P1-09 actually queries at eval time; the manifest is
     # what P1-08's gold generation reads without loading vectors into memory.
     fingerprint = settings_fingerprint(settings.chunk)
+
+    # Corpus fingerprint: content_sha256 of every ingested document,
+    # order-independent -- catches the corpus itself changing (a rename, an
+    # edit) regardless of settings, and regardless of which documents a gold
+    # set's questions happen to reference (settings_fingerprint and gold
+    # chunk-id resolution are both blind to that -- see common/ids.py's
+    # corpus_fingerprint() docstring and docs/adr/0007). Recorded in the
+    # manifest below; gen_gold.py records the same value into gold
+    # provenance for P1-09 to compare against.
+    corpus_fp = corpus_fingerprint(docs.content_hashes())
 
     # Whole-run guard, in addition to store.add()'s own per-call guard below.
     # Every document in this run shares one fingerprint, so if it mismatches
@@ -144,6 +155,7 @@ def run(
         "documents_failed": len(result.failed),
         "chunks": result.chunks,
         "settings_fingerprint": fingerprint,
+        "corpus_fingerprint": corpus_fp,
         "embed_model": getattr(embedder, "model", None),
         "embed_dimensions": embedder.dimensions,
         "store_path": str(store.path),
