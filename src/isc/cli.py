@@ -7,6 +7,7 @@ cheap and makes a failure attributable to one stage rather than to "the pipeline
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import typer
@@ -16,7 +17,7 @@ from rich.table import Table
 from isc.common.config import get_settings
 from isc.common.logging import setup
 from isc.common.tracing import start_run
-from isc.models.acl import Principal
+from isc.models.acl import Principal, Sensitivity
 
 app = typer.Typer(add_completion=False, help="ISC Document Intelligence")
 console = Console()
@@ -122,18 +123,55 @@ def index(run_id: str | None = typer.Option(None)) -> None:
         raise typer.Exit(code=1)
 
 
+def _resolve_principal(as_user: str, groups: str, acl_dir: Path) -> Principal:
+    """Prefer the real ACL graph (data/acl/users.json) over the bare
+    --as/--groups flags: a named user like u_alice carries site, clearance
+    and jurisdiction the flags alone cannot express, and without them she is
+    indistinguishable from u_ben against every restricted document in this
+    corpus -- clearance is the ONLY thing that differs between them. Falls
+    back to flags-only construction for an id not in the graph, so asking as
+    an ad hoc/synthetic principal still works for testing."""
+    users_path = acl_dir / "users.json"
+    if users_path.exists():
+        users = json.loads(users_path.read_text())
+        if as_user in users:
+            u = users[as_user]
+            return Principal(
+                id=as_user, group_ids=frozenset(u["groups"]), site_ids=frozenset(u["sites"]),
+                clearance=Sensitivity(u["clearance"]), jurisdictions=frozenset(u["jurisdictions"]),
+            )
+    return Principal(id=as_user, group_ids=frozenset(g for g in groups.split(",") if g))
+
+
 @app.command()
 def ask(question: str, as_user: str = typer.Option(..., "--as"),
         groups: str = typer.Option("", "--groups", help="comma separated")) -> None:
     """Ask a question AS a specific principal. There is no unauthenticated mode."""
+    from isc.answer.orchestrator import AnswerOrchestrator
+    from isc.llm.registry import get_chat_model, get_embedding_model
+    from isc.retrieve.retriever import Retriever
+    from isc.storage.local_vector import LocalVectorStore
+
     s = get_settings()
     run = start_run(s.paths.runs)
-    principal = Principal(
-        id=as_user,
-        group_ids=frozenset(g for g in groups.split(",") if g),
-    )
-    from isc.answer.orchestrator import AnswerOrchestrator  # noqa: F401
-    console.print(f"[yellow]not wired yet[/] — would ask as {principal.id}")
+    principal = _resolve_principal(as_user, groups, s.paths.data / "acl")
+
+    store = LocalVectorStore(s.paths.data / "vector_store.pkl")
+    chat = get_chat_model()
+    retriever = Retriever(store, get_embedding_model(), chat, s)
+    orchestrator = AnswerOrchestrator(retriever, chat, s)
+
+    answer = orchestrator.ask(question, principal)
+
+    if answer.abstained:
+        console.print(f"[yellow]abstained[/] ({answer.abstention_reason.value}): {answer.text}")
+    else:
+        console.print(answer.text)
+        console.print()
+        t = Table("citation", "label")
+        for c in answer.citations:
+            t.add_row(c.chunk_id, c.label)
+        console.print(t)
     run.summarise()
 
 

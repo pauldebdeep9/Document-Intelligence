@@ -326,6 +326,12 @@ def _restricted(qid: str, name: str, field: str | None, line_number: int | None,
         "expected_b": "empty",  # ben's search must come back with zero chunks --
         # indistinguishable from the document not existing at all, not a
         # partial or redacted view. See test_gold_fidelity.py.
+        # None for a header-field question. Carried through so
+        # test_gold_fidelity.py can re-derive exactly which line's quantity
+        # a restricted_unfiltered question's disambiguation depends on,
+        # without re-parsing it back out of the question text -- see
+        # test_restricted_unfiltered_questions_resolve_to_one_alice_readable_document.
+        "line_number": line_number,
     }
 
 
@@ -581,15 +587,31 @@ def _build_questions(chunks: dict[str, list[Chunk]], gold: dict[str, Any]) -> li
     # pool. All 8 restricted_filtered questions above are decided with the
     # filter already narrowing the field; a ranking path that bypasses the
     # filter (or a permission check applied only after filtering) could pass
-    # every one of them and still leak corpus-wide. Phrased on
-    # supplier name + a line's description rather than the PO number or part
-    # number -- both of which repeat verbatim across many other documents in
-    # this corpus, so the supplier name is what actually disambiguates which
-    # document (and which principal's access) the question is asking about.
+    # every one of them and still leak corpus-wide. Phrased on supplier name
+    # + a line's description rather than the PO number or part number --
+    # both of which repeat verbatim across many other documents in this
+    # corpus.
+    #
+    # Supplier name ALONE is not always enough to disambiguate, and this was
+    # found the hard way, not assumed: Omron Electronics Asia and Keyence
+    # Singapore Pte Ltd each place multiple orders in this corpus, and
+    # u_alice -- not just u_ben -- can read more than one of them (Omron:
+    # po_000 confidential + po_017 internal; Keyence Singapore: po_018
+    # confidential + po_001 internal). A first version of q_re_10 asked "the
+    # ControlLogix processor module on the Omron Electronics Asia order" as
+    # if there were only one -- u_ben answered it correctly and confidently
+    # from po_017, which he can legitimately read; not an ACL leak, but not
+    # a question with a unique gold answer either. SKF Bearings Manufacturing
+    # (q_re_11/12's supplier) places only one order in this corpus, so it
+    # never had this problem. Where supplier alone collides, the line's
+    # quantity is folded into the question text as the second disambiguating
+    # fact -- verified, not assumed, against every OTHER alice-readable
+    # document from the same supplier: see
+    # test_restricted_unfiltered_questions_resolve_to_one_alice_readable_document.
     q.append(_restricted(
         "q_re_10", "po_000.pdf", "unit_price", 10,
-        "What did we pay per unit for the ControlLogix processor module on "
-        "the Omron Electronics Asia order?",
+        "What did we pay per unit for the 250-unit order of ControlLogix "
+        "processor modules from Omron Electronics Asia?",
         "restricted_unfiltered", chunks, gold))
     q.append(_restricted(
         "q_re_11", "po_014.pdf", "unit_price", 40,
@@ -602,8 +624,8 @@ def _build_questions(chunks: dict[str, list[Chunk]], gold: dict[str, Any]) -> li
         "restricted_unfiltered", chunks, gold))
     q.append(_restricted(
         "q_re_13", "po_018.pdf", "unit_price", 30,
-        "What did we pay per unit for the incremental encoder on the "
-        "Keyence Singapore order?",
+        "What did we pay per unit for the 100-unit order of incremental "
+        "encoders from Keyence Singapore?",
         "restricted_unfiltered", chunks, gold))
 
     # -- no_reader (1): po_002 -- export_controlled + EMEA, zero readers in
@@ -662,6 +684,74 @@ def _verify_restricted_pairs(questions: list[dict[str, Any]], users: dict[str, P
             raise RuntimeError(f"{q['id']}: u_ben CAN read {name} -- restriction does not fire")
 
 
+def _verify_restricted_unfiltered_disambiguation(
+    questions: list[dict[str, Any]], users: dict[str, Principal],
+    synthetic_dir: Path, gold: dict[str, Any],
+) -> None:
+    """A restricted_unfiltered question carries no PO number by design, so
+    its supplier name is the only thing standing between retrieval and the
+    right document -- if u_alice herself can read a SECOND document from
+    that supplier, the question does not have a unique answer even though
+    nothing about the ACL is wrong. This is exactly how q_re_10 broke the
+    first time: Omron Electronics Asia places 4 orders in this corpus, and
+    u_alice can read 2 of them (po_000 confidential, po_017 internal) --
+    u_ben answered from po_017, which he can legitimately read, not a leak.
+
+    Supplier name alone is enough when only one alice-readable document
+    shares it (true for SKF Bearings Manufacturing, q_re_11/12's supplier --
+    it places a single order in this corpus). Where it collides, the
+    question folds the line's quantity in as a second disambiguating fact
+    (see q_re_10/13's text) -- checked here against every OTHER
+    alice-readable same-supplier document's matching-part lines, not
+    assumed from the question's own wording.
+    """
+    alice = users["u_alice"]
+    for q in questions:
+        if q["subtype"] != "restricted_unfiltered":
+            continue
+        name = q["source_documents"][0]
+        supplier = gold[name]["raw"]["supplier_name"]
+        same_supplier = [
+            other for other in gold
+            if gold[other]["raw"]["supplier_name"] == supplier
+            and alice.may_read(_doc_acl(synthetic_dir, other))
+        ]
+        others = [o for o in same_supplier if o != name]
+        if not others:
+            continue  # supplier alone is unique among what u_alice can read
+
+        line_number = q["line_number"]
+        if line_number is None:
+            raise RuntimeError(
+                f"{q['id']}: supplier {supplier!r} is alice-readable across "
+                f"{sorted(same_supplier)}, and this is a header-field question "
+                "with no line-level fact available to disambiguate it"
+            )
+        target_line = _line(gold, name, line_number)
+        part, qty = target_line["part_number"], target_line["quantity"]
+        colliding = [
+            other for other in others
+            if any(ln["part_number"] == part and ln["quantity"] == qty
+                   for ln in gold[other]["raw"]["lines"])
+        ]
+        if colliding:
+            raise RuntimeError(
+                f"{q['id']}: part {part!r} qty {qty!r} also appears on "
+                f"alice-readable {sorted(colliding)} from the same supplier "
+                f"{supplier!r} -- the question does not uniquely resolve"
+            )
+        # The quantity has to disambiguate in the TEXT, not just in the
+        # data behind it -- a question whose wording never mentions it
+        # reads exactly like the original, broken q_re_10, even if this
+        # specific line's quantity happens to be structurally unique.
+        if str(qty) not in q["text"]:
+            raise RuntimeError(
+                f"{q['id']}: supplier {supplier!r} needs quantity {qty!r} to "
+                f"disambiguate from {sorted(others)}, but the question text "
+                f"never states it: {q['text']!r}"
+            )
+
+
 # ---------------------------------------------------------------------------
 
 def main() -> None:
@@ -691,6 +781,7 @@ def main() -> None:
     store = LocalVectorStore(settings.paths.data / "vector_store.pkl")
     _verify_against_index(questions, store, fingerprint)
     _verify_restricted_pairs(questions, users, args.corpus, gold)
+    _verify_restricted_unfiltered_disambiguation(questions, users, args.corpus, gold)
 
     by_class: dict[str, int] = {}
     by_subtype: dict[str, int] = {}

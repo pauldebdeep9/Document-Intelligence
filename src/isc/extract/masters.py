@@ -63,6 +63,18 @@ def _suppliers(masters_dir: Path) -> tuple[dict[str, str], ...]:
     return tuple(json.loads((masters_dir / "suppliers.json").read_text()))
 
 
+def supplier_ids_by_name(masters_dir: Path) -> dict[str, str]:
+    """Every master supplier's canonical printed name -> its supplier_id,
+    exact form -- the same names resolve_supplier() matches against.
+    Public (unlike _suppliers()) because answer/citations.py's entity
+    verification resolves a supplier NAMED in a draft sentence straight to
+    the supplier_id Chunk.filters actually carries, rather than matching
+    printed text a table or footer chunk structurally never repeats (see
+    docs/adr/0009) -- reuses this loader (and its @lru_cache) rather than
+    reading suppliers.json a second way."""
+    return {s["name"]: s["supplier_id"] for s in _suppliers(masters_dir)}
+
+
 @lru_cache(maxsize=1)
 def _parts(masters_dir: Path) -> dict[str, str]:
     """part_number -> canonical description."""

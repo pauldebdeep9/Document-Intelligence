@@ -818,7 +818,8 @@
       ],
       "principal": "u_alice",
       "principal_b": "u_ben",
-      "expected_b": "empty"
+      "expected_b": "empty",
+      "line_number": null
     },
     {
       "id": "q_re_02",
@@ -834,7 +835,8 @@
       ],
       "principal": "u_alice",
       "principal_b": "u_ben",
-      "expected_b": "empty"
+      "expected_b": "empty",
+      "line_number": 10
     },
     {
       "id": "q_re_03",
@@ -850,7 +852,8 @@
       ],
       "principal": "u_alice",
       "principal_b": "u_ben",
-      "expected_b": "empty"
+      "expected_b": "empty",
+      "line_number": null
     },
     {
       "id": "q_re_04",
@@ -866,7 +869,8 @@
       ],
       "principal": "u_alice",
       "principal_b": "u_ben",
-      "expected_b": "empty"
+      "expected_b": "empty",
+      "line_number": 10
     },
     {
       "id": "q_re_05",
@@ -882,7 +886,8 @@
       ],
       "principal": "u_alice",
       "principal_b": "u_ben",
-      "expected_b": "empty"
+      "expected_b": "empty",
+      "line_number": 40
     },
     {
       "id": "q_re_06",
@@ -898,7 +903,8 @@
       ],
       "principal": "u_alice",
       "principal_b": "u_ben",
-      "expected_b": "empty"
+      "expected_b": "empty",
+      "line_number": 40
     },
     {
       "id": "q_re_07",
@@ -914,7 +920,8 @@
       ],
       "principal": "u_alice",
       "principal_b": "u_ben",
-      "expected_b": "empty"
+      "expected_b": "empty",
+      "line_number": 20
     },
     {
       "id": "q_re_08",
@@ -930,11 +937,12 @@
       ],
       "principal": "u_alice",
       "principal_b": "u_ben",
-      "expected_b": "empty"
+      "expected_b": "empty",
+      "line_number": null
     },
     {
       "id": "q_re_10",
-      "text": "What did we pay per unit for the ControlLogix processor module on the Omron Electronics Asia order?",
+      "text": "What did we pay per unit for the 250-unit order of ControlLogix processor modules from Omron Electronics Asia?",
       "question_class": "restricted",
       "subtype": "restricted_unfiltered",
       "gold_chunk_ids": [
@@ -946,7 +954,8 @@
       ],
       "principal": "u_alice",
       "principal_b": "u_ben",
-      "expected_b": "empty"
+      "expected_b": "empty",
+      "line_number": 10
     },
     {
       "id": "q_re_11",
@@ -962,7 +971,8 @@
       ],
       "principal": "u_alice",
       "principal_b": "u_ben",
-      "expected_b": "empty"
+      "expected_b": "empty",
+      "line_number": 40
     },
     {
       "id": "q_re_12",
@@ -978,11 +988,12 @@
       ],
       "principal": "u_alice",
       "principal_b": "u_ben",
-      "expected_b": "empty"
+      "expected_b": "empty",
+      "line_number": null
     },
     {
       "id": "q_re_13",
-      "text": "What did we pay per unit for the incremental encoder on the Keyence Singapore order?",
+      "text": "What did we pay per unit for the 100-unit order of incremental encoders from Keyence Singapore?",
       "question_class": "restricted",
       "subtype": "restricted_unfiltered",
       "gold_chunk_ids": [
@@ -994,7 +1005,8 @@
       ],
       "principal": "u_alice",
       "principal_b": "u_ben",
-      "expected_b": "empty"
+      "expected_b": "empty",
+      "line_number": 30
     },
     {
       "id": "q_re_09",

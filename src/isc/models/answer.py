@@ -15,7 +15,24 @@ class AbstentionReason(StrEnum):
     NO_PERMITTED_RESULTS = "no_permitted"      # matched, but not for this principal
     LOW_SUPPORT = "low_support"                # retrieved, but weakly relevant
     CONFLICTING_SOURCES = "conflicting"        # sources disagree
+    # The model read the context and explicitly said the answer is not in
+    # it -- correct behaviour on an unanswerable question, and a PASS at
+    # P1-09. Distinct from UNGROUNDED_DRAFT below: that one is a model that
+    # DID produce an answer and could not be tied to any source, a suspected
+    # fabrication and a FAILURE regardless of question class. Collapsing the
+    # two would make abstention precision on the unanswerable slice
+    # unmeasurable -- P1-09 could not tell "abstained correctly" from "tried
+    # to fabricate and got caught".
+    INSUFFICIENT_CONTEXT = "insufficient_context"
     UNGROUNDED_DRAFT = "ungrounded"            # draft failed citation binding
+    # A cited claim names a supplier or PO number that does not appear in
+    # any chunk that claim cites -- the citation marker resolves to a real,
+    # permitted chunk, so UNGROUNDED_DRAFT's check (does [n] exist) passes;
+    # what fails is that the PROSE does not match what is IN the chunk. A
+    # confidently wrong supplier attribution is worse than an abstention in
+    # a supply-chain context, so the whole answer is discarded, not just the
+    # offending sentence -- see answer/citations.py's verify_attribution().
+    ATTRIBUTION_MISMATCH = "attribution_mismatch"
 
 
 class Citation(BaseModel):

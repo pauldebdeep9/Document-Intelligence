@@ -295,6 +295,77 @@ def test_restricted_unfiltered_questions_produce_no_filter():
         )
 
 
+def _all_extraction_gold() -> dict[str, dict]:
+    return {
+        g["document"]: g
+        for g in (json.loads(p.read_text()) for p in EXTRACTION_GOLD.glob("*.json"))
+    }
+
+
+def test_restricted_unfiltered_questions_resolve_to_one_alice_readable_document():
+    """The test that would have caught q_re_10's original bug: it asked
+    about "the ControlLogix processor module on the Omron Electronics Asia
+    order" as if there were only one, but this corpus has four Omron orders
+    and u_alice herself can read two of them (po_000 confidential, po_017
+    internal). u_ben then answered correctly and confidently from po_017,
+    which he can legitimately read -- not an ACL leak, just a question
+    without a unique answer.
+
+    Re-derives the check independently from gen_gold.py's own
+    _verify_restricted_unfiltered_disambiguation, against the live gold and
+    ACL data, not by trusting that generation-time check ran: supplier name
+    alone must be alice-readable on exactly one document, UNLESS the
+    question's own line (via its carried line_number) has a quantity that
+    does not collide with the same part on any other alice-readable
+    same-supplier document.
+    """
+    d = _load()
+    users = _users()
+    alice = users["u_alice"]
+    gold = _all_extraction_gold()
+
+    unfiltered = [q for q in d["questions"] if q["subtype"] == "restricted_unfiltered"]
+    assert len(unfiltered) == 4
+    for q in unfiltered:
+        name = q["source_documents"][0]
+        supplier = gold[name]["raw"]["supplier_name"]
+        same_supplier_readable = [
+            other for other, g in gold.items()
+            if g["raw"]["supplier_name"] == supplier and alice.may_read(_doc_acl(other))
+        ]
+        others = [o for o in same_supplier_readable if o != name]
+        if not others:
+            continue  # supplier alone is unique among what u_alice can read
+
+        assert q["line_number"] is not None, (
+            f"{q['id']}: supplier {supplier!r} is alice-readable on "
+            f"{sorted(same_supplier_readable)}, and this header-field question "
+            "has no line-level fact to disambiguate it"
+        )
+        target_lines = gold[name]["raw"]["lines"]
+        target_line = next(ln for ln in target_lines if ln["line_number"] == q["line_number"])
+        part, qty = target_line["part_number"], target_line["quantity"]
+        colliding = [
+            other for other in others
+            if any(ln["part_number"] == part and ln["quantity"] == qty
+                   for ln in gold[other]["raw"]["lines"])
+        ]
+        assert not colliding, (
+            f"{q['id']}: part {part!r} qty {qty!r} also appears on alice-readable "
+            f"{colliding} from the same supplier {supplier!r} -- does not "
+            "uniquely resolve"
+        )
+        # The disambiguating quantity has to be IN THE TEXT, not just true
+        # of the data behind it -- this is what actually distinguishes the
+        # fixed question from the original broken one: q_re_10 always
+        # targeted a structurally-unique (part, qty) pair on po_000, even
+        # before the fix; what was missing was the question ever saying so.
+        assert str(qty) in q["text"], (
+            f"{q['id']}: needs quantity {qty!r} to disambiguate from {others}, "
+            f"but the text never states it: {q['text']!r}"
+        )
+
+
 def test_no_reader_question_has_zero_readers_across_the_whole_identity_graph():
     """po_002: export-controlled + EMEA, and no named principal holds both
     the group/site grant and the required clearance+jurisdiction. Every

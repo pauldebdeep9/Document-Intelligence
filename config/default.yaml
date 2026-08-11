@@ -41,7 +41,23 @@ retrieval:
   top_k_lexical: 20
   rrf_k: 60
   final_k: 8
-  min_support_score: 0.35
+  # 0.0 disables the gate deliberately, not a placeholder -- measured, not
+  # guessed. hits[0].score is retrieve()'s RRF-fused score, rank-bounded to
+  # ~2/(rrf_k+1) = 0.033 (one query, 2 lists) regardless of relevance: a
+  # perfect match and a bad one land in the same narrow band, so no
+  # threshold on this field can express "weak support" at any value.
+  # dense_score doesn't separate either -- measured across all 56 P1-08 gold
+  # questions, answerable top-hit dense_score (p25=0.464, median=0.533)
+  # overlaps unanswerable (median=0.473, max=0.539) enough that any cutoff
+  # in the crossover band fails one whole answerable subtype (line_item,
+  # which clusters at the low end of dense_score against a prose query) while
+  # still letting several unanswerable questions through. See docs/adr/0008.
+  # The code path stays live -- it becomes real again once a reranker
+  # produces a score built to express relevance, which is out of scope here.
+  # Abstention on unanswerable questions currently comes from
+  # AbstentionReason.INSUFFICIENT_CONTEXT instead, which the P1-07 sample
+  # run showed working.
+  min_support_score: 0.0
 
 # Routing policy for extracted fields. These are the numbers a process owner
 # argues with, so they live in config and are justified by eval/calibration.

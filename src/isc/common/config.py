@@ -69,7 +69,14 @@ class RetrievalSettings(BaseModel):
     top_k_lexical: int = 20
     rrf_k: int = 60
     final_k: int = 8
-    min_support_score: float = 0.35   # below this, answer/ abstains
+    # 0.0 disables the LOW_SUPPORT gate -- measured, not guessed: it compares
+    # against an RRF-fused score that is rank-bounded (~0.033 ceiling under
+    # these settings, regardless of relevance) and against dense_score, whose
+    # answerable/unanswerable distributions overlap too much on this corpus
+    # to support any cutoff. See config/default.yaml's own comment and
+    # docs/adr/0008. Kept as a real field, not removed: it becomes live again
+    # with a reranker score built to express relevance.
+    min_support_score: float = 0.0
 
 
 class ThresholdSettings(BaseModel):
