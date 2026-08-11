@@ -18,7 +18,9 @@ Design commitments, all of which are load-bearing:
 
 from __future__ import annotations
 
+import json
 from enum import StrEnum
+from pathlib import Path
 from typing import Iterable
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -144,3 +146,20 @@ class AclSet(BaseModel):
             jurisdictions=frozenset(jurisdictions),
             source_uri=source_uri,
         )
+
+
+def load_principals(acl_dir: Path) -> dict[str, Principal]:
+    """Every named principal in the identity graph (data/acl/users.json),
+    keyed by id. One reader for that file, not three: gen_gold.py's own
+    _load_users(), cli.py's _resolve_principal() (a single-id lookup, still
+    reads the same file shape) and eval/retrieval.py's runner -- which
+    needs every principal at once (no_reader questions check up to 7 of
+    them) rather than one at a time -- all draw from the same JSON shape."""
+    raw = json.loads((acl_dir / "users.json").read_text())
+    return {
+        uid: Principal(
+            id=uid, group_ids=frozenset(u["groups"]), site_ids=frozenset(u["sites"]),
+            clearance=Sensitivity(u["clearance"]), jurisdictions=frozenset(u["jurisdictions"]),
+        )
+        for uid, u in raw.items()
+    }

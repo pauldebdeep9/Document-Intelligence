@@ -191,10 +191,20 @@ def review(limit: int = 20) -> None:
 @app.command()
 def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
          run_id: str = typer.Option(..., help="existing run with an extract/ stage")) -> None:
-    """Score a completed extract run against gold and write report.json + report.md.
+    """Score a completed extract run against gold, and/or run the P1-08
+    retrieval gold set live against the current index, and write
+    report.json + report.md.
 
-    No LLM calls: reads runs/<run_id>/extract/*.json (raw + record, written by
-    `isc extract`) and data/gold/extraction/*.json side by side.
+    Extraction: no LLM calls -- reads runs/<run_id>/extract/*.json (raw +
+    record, written by `isc extract`) and data/gold/extraction/*.json side
+    by side.
+
+    Retrieval: real embedding + chat calls, one per gold question (each
+    asked as its own gold principal -- see eval/retrieval.py's run()).
+    Refuses to run if either fingerprint in the gold's provenance disagrees
+    with the live index or corpus (check_provenance()) -- see docs/adr/0007
+    and docs/adr/0008. A single ACL leak fails the run: non-zero exit,
+    regardless of every other metric.
     """
     from isc.eval.report import write
     from isc.storage.sqlite_docstore import SqliteDocStore
@@ -215,13 +225,74 @@ def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
             for name, reason in result.skipped:
                 console.print(f"  {name}: {reason}")
 
+    retrieval_report = None
     if harness in {"retrieval", "both"}:
-        console.print("[yellow]retrieval harness[/] not wired yet")
+        from isc.answer.orchestrator import AnswerOrchestrator
+        from isc.eval.retrieval import check_provenance
+        from isc.eval.retrieval import run as run_retrieval_eval
+        from isc.llm.registry import get_chat_model, get_embedding_model
+        from isc.models.acl import load_principals
+        from isc.retrieve.retriever import Retriever
+        from isc.storage.local_vector import LocalVectorStore
 
-    out = write(run.artifact_dir("eval"), extraction_report, None,
+        gold = json.loads((s.paths.data / "gold" / "retrieval" / "questions.json").read_text())
+        store = LocalVectorStore(s.paths.data / "vector_store.pkl")
+        check_provenance(gold["provenance"], s, store, docs)  # raises loudly on mismatch
+
+        chat = get_chat_model()
+        orchestrator = AnswerOrchestrator(Retriever(store, get_embedding_model(), chat, s), chat, s)
+        users = load_principals(s.paths.data / "acl")
+
+        retrieval_result = run_retrieval_eval(gold["questions"], users, orchestrator)
+        retrieval_report = retrieval_result.report
+        console.print(f"[green]scored[/] {len(retrieval_report.outcomes)} retrieval outcomes  "
+                      f"run={run.run_id}")
+        if retrieval_result.failed:
+            console.print(f"[yellow]failed[/] {len(retrieval_result.failed)} (question, principal):")
+            for qid, principal_id, reason in retrieval_result.failed:
+                console.print(f"  {qid} as {principal_id}: {reason}")
+        if not retrieval_report.passed():
+            console.print(f"[red]ACL LEAK[/] in {len(retrieval_report.leaks())} outcome(s): "
+                           f"{[o.question_id for o in retrieval_report.leaks()]}")
+
+    out = write(run.artifact_dir("eval"), extraction_report, retrieval_report,
                 threshold=s.thresholds.auto_accept, review_threshold=s.thresholds.review)
     console.print(f"[green]report written[/] {out}")
-    run.summarise()
+    summary_path = run.summarise()
+
+    # Slice summary: only when both harnesses just ran (`make slice`'s own
+    # `isc eval --harness both`) is there enough context for one -- an
+    # extraction-only or retrieval-only invocation has half the picture.
+    # totals come from summary.json, not run.totals directly, so this
+    # reflects EVERY stage that shared this run id (ingest/parse/extract/
+    # index too -- see common/tracing.py's Run), not just this process's
+    # own embedding+chat calls.
+    if harness == "both":
+        totals = json.loads(summary_path.read_text())["totals"]
+        cost = totals.get("usd", 0.0)
+        tokens = sum(v for k, v in totals.items() if k.startswith("tokens."))
+        n_chunks = store.count() if retrieval_report is not None else 0
+        n_questions = len(gold["questions"]) if retrieval_report is not None else 0
+        console.print()
+        console.print(f"[bold]Slice summary[/]  run={run.run_id}")
+        console.print(f"  documents:  {len(docs.list_documents())}")
+        console.print(f"  chunks:     {n_chunks}")
+        console.print(f"  questions:  {n_questions}")
+        if extraction_report is not None:
+            rate = extraction_report.auto_accept_error_rate(s.thresholds.auto_accept)
+            console.print(f"  extraction: auto-accept error rate {rate:.3%}")
+        if retrieval_report is not None:
+            acc = retrieval_report.answer_accuracy()
+            console.print(
+                f"  retrieval:  recall@8={retrieval_report.recall_at(8):.3f}  "
+                f"mrr={retrieval_report.mean_mrr():.3f}  "
+                f"answer_accuracy={acc['correct']}/{acc['n']} ({acc['accuracy']:.1%})  "
+                f"passed={retrieval_report.passed()}"
+            )
+        console.print(f"  cost:       ${cost:.4f}  ({int(tokens)} tokens)")
+
+    if retrieval_report is not None and not retrieval_report.passed():
+        raise typer.Exit(code=1)
 
 
 def _todo(stage: str) -> int:

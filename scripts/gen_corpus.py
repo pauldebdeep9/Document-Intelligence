@@ -452,7 +452,7 @@ def main() -> None:
 
         n_pages = len(PdfReader(str(pdf_path)).pages)
         gold = _gold(record, raw, f"{name}.pdf", n_pages)
-        (args.gold / f"{name}.json").write_text(json.dumps(gold, indent=2))
+        (args.gold / f"{name}.json").write_text(json.dumps(gold, indent=2) + "\n")
         manifest.append({
             "name": name, "site": record["_site"]["site_id"],
             "sensitivity": acl["sensitivity"], "n_lines": len(record["lines"]),

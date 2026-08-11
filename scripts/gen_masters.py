@@ -22,8 +22,8 @@ from pathlib import Path
 SUPPLIERS = [
     {"supplier_id": "V100234", "name": "Fastenal Industrial Supply Pte Ltd", "country": "SG"},
     {"supplier_id": "V100235", "name": "Fastenal Industrial Services Pte Ltd", "country": "SG"},
-    {"supplier_id": "V100781", "name": "Bosch Rexroth AG", "country": "DE"},
-    {"supplier_id": "V100782", "name": "Bosch Rexroth Pneumatics GmbH", "country": "DE"},
+    {"supplier_id": "V100781", "name": "Kestrel Industrial AG", "country": "DE"},
+    {"supplier_id": "V100782", "name": "Kestrel Industrial Pneumatics GmbH", "country": "DE"},
     {"supplier_id": "V101450", "name": "Molex Interconnect LLC", "country": "US"},
     {"supplier_id": "V101902", "name": "TE Connectivity Solutions", "country": "US"},
     {"supplier_id": "V102337", "name": "Omron Electronics Asia", "country": "SG"},

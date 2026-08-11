@@ -71,3 +71,17 @@ class ChunkSettingsMismatch(IscError):
 
 class ProviderError(IscError):
     """Upstream model provider failed in a way retry did not fix."""
+
+
+class GoldProvenanceMismatch(IscError):
+    """P1-08's retrieval gold set recorded a settings_fingerprint and a
+    corpus_fingerprint at generation time (see index/chunker.py's
+    settings_fingerprint() and common/ids.py's corpus_fingerprint(),
+    docs/adr/0007 and docs/adr/0008). Either drifting from the live index
+    or the live corpus means gold_chunk_ids and gold_answer values may no
+    longer correspond to what a question would actually retrieve -- a
+    recall number computed against stale ids is not a low score, it is a
+    meaningless one that looks like a real measurement. Checked once,
+    before any question runs, and never caught and downgraded: reporting
+    nothing is strictly better than reporting a number that means nothing.
+    """

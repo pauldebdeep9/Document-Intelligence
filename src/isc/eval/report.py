@@ -125,21 +125,135 @@ def write(out_dir: Path, extraction: ExtractionReport | None,
         lines += [""]
 
     if retrieval:
+        recall_by_subtype = retrieval.recall_by_subtype()
+        answer_accuracy = retrieval.answer_accuracy()
+        answerable_failures = retrieval.answerable_failures()
+        abstention_by_subtype = retrieval.abstention_by_subtype()
+        restricted_summary = retrieval.restricted_summary()
+        no_reader_summary = retrieval.no_reader_summary()
+        leaks_by_subtype = retrieval.leaks_by_subtype()
+        n_answerable = sum(v["n"] for v in recall_by_subtype.values())
+
         payload["retrieval"] = {
             "recall@5": retrieval.recall_at(5),
             "recall@8": retrieval.recall_at(8),
             "mrr": retrieval.mean_mrr(),
             "ndcg@8": retrieval.ndcg(8),
+            "n_answerable": n_answerable,
+            "recall_by_subtype": recall_by_subtype,
+            "answer_accuracy": answer_accuracy,
+            "answerable_failures": answerable_failures,
             "abstention_precision": retrieval.abstention_precision(),
             "abstention_recall": retrieval.abstention_recall(),
+            "abstention_by_subtype": abstention_by_subtype,
+            "restricted": restricted_summary,
+            "no_reader": no_reader_summary,
             "acl_leaks": len(retrieval.leaks()),
+            "leaks_by_subtype": leaks_by_subtype,
             "passed": retrieval.passed(),
         }
-        r = payload["retrieval"]
+
         lines += ["## Retrieval", ""]
-        lines += [f"- {k}: {v}" for k, v in r.items()]
+        lines += [
+            f"n={n_answerable} answerable questions over 20 documents. At this sample size a "
+            "single flipped outcome moves any per-subtype figure by several percentage points "
+            "-- these numbers are indicative of where the system is weak, not a tight estimate "
+            "of by how much. The extraction harness measures a corpus with almost no errors "
+            "left (docs/adr/0007); retrieval is not that -- treat these as a first honest "
+            "reading, not a converged benchmark.",
+            "",
+        ]
+
+        lines += [
+            f"- recall@5: {retrieval.recall_at(5):.3f}",
+            f"- recall@8: {retrieval.recall_at(8):.3f}",
+            f"- mrr: {retrieval.mean_mrr():.3f}",
+            f"- ndcg@8: {retrieval.ndcg(8):.3f}",
+            f"- answer accuracy: {answer_accuracy['correct']}/{answer_accuracy['n']} "
+            f"({answer_accuracy['accuracy']:.1%})",
+            f"- abstention precision: {retrieval.abstention_precision():.3f}",
+            f"- abstention recall (reason-aware): {retrieval.abstention_recall():.3f}",
+            f"- acl_leaks: {len(retrieval.leaks())}",
+            f"- passed: {retrieval.passed()}",
+            "",
+        ]
         if not retrieval.passed():
-            lines += ["", "**RUN FAILED: ACL leak detected.**"]
+            lines += ["**RUN FAILED: ACL leak detected.**", ""]
+
+        # Per-subtype recall: cross_document and line_item called out
+        # first and explicitly -- the two subtypes P1-08's gold set was
+        # built to stress (cross_document needs chunks from 2+ documents
+        # surviving one RRF fusion; line_item needs the right slice of a
+        # split table), so a reader should not have to hunt for them in an
+        # alphabetical table.
+        lines += ["### Recall by subtype (answerable)", ""]
+        for headline in ("cross_document", "line_item"):
+            if headline in recall_by_subtype:
+                v = recall_by_subtype[headline]
+                lines += [
+                    f"**{headline}** (n={v['n']}): recall@5={v['recall@5']:.3f}, "
+                    f"recall@8={v['recall@8']:.3f}, mrr={v['mrr']:.3f}, ndcg@8={v['ndcg@8']:.3f}",
+                    "",
+                ]
+        lines += ["| subtype | n | recall@5 | recall@8 | mrr | ndcg@8 |", "|---|---|---|---|---|---|"]
+        lines += [
+            f"| {subtype} | {v['n']} | {v['recall@5']:.3f} | {v['recall@8']:.3f} | "
+            f"{v['mrr']:.3f} | {v['ndcg@8']:.3f} |"
+            for subtype, v in sorted(recall_by_subtype.items())
+        ]
+        lines += [""]
+
+        # Answer accuracy failures: every one tagged with which stage the
+        # failure implicates, so "answering is weak" is never reported
+        # when the real finding is retrieval never surfaced the evidence.
+        lines += ["### Answerable questions that failed answer accuracy", ""]
+        if answerable_failures:
+            lines += ["| question | subtype | gold chunks retrieved | diagnosis | abstained | reason |",
+                      "|---|---|---|---|---|---|"]
+            lines += [
+                f"| {f['question_id']} | {f['subtype']} | {f['gold_chunks_retrieved']} | "
+                f"{f['diagnosis']} | {f['abstained']} | {f['abstention_reason'] or ''} |"
+                for f in answerable_failures
+            ]
+        else:
+            lines += ["None."]
+        lines += [""]
+
+        # Abstention by subtype: absent/out_of_scope (plain "abstain") vs
+        # underspecified ("abstain_with_clarification", which nothing in
+        # this system can currently produce) -- reported separately so the
+        # one known gap does not drag down the two subtypes that work.
+        lines += ["### Abstention by subtype (unanswerable)", ""]
+        lines += ["| subtype | n | correct | accuracy |", "|---|---|---|---|"]
+        lines += [
+            f"| {subtype} | {v['n']} | {v['correct']} | {v['accuracy']:.1%} |"
+            for subtype, v in sorted(abstention_by_subtype.items())
+        ]
+        lines += [""]
+
+        # Restricted: filtered vs unfiltered, never folded into one number.
+        lines += ["### Restricted (filtered vs unfiltered)", ""]
+        for subtype, v in restricted_summary.items():
+            lines += [
+                f"**{subtype}**: {v['n_pairs']} pairs. Gold-principal side: "
+                f"recall@8={v['primary_recall@8']:.3f}, "
+                f"answer correct {v['primary_answer_correct']}/{v['n_pairs']}. "
+                f"Non-gold-principal side: {v['secondary_correctly_empty_and_abstained']}/"
+                f"{v['secondary_n']} correctly empty-and-abstained, {v['leaks']} leak(s).",
+                "",
+            ]
+        lines += [
+            f"no_reader: {no_reader_summary['n_principals_checked']} principals checked, "
+            f"all empty: {no_reader_summary['all_empty']}"
+            + (f", principals with results: {no_reader_summary['principals_with_results']}"
+               if no_reader_summary["principals_with_results"] else ""),
+            "",
+        ]
+
+        if leaks_by_subtype:
+            lines += ["### Leaks by subtype", ""]
+            lines += [f"- {subtype}: {n}" for subtype, n in sorted(leaks_by_subtype.items())]
+            lines += [""]
 
     (out_dir / "report.json").write_text(json.dumps(payload, indent=2, default=str))
     md = out_dir / "report.md"

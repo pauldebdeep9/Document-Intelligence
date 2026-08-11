@@ -41,7 +41,19 @@ class Span:
 
 
 class Run:
-    """One execution of one or more stages. Owns the trace file."""
+    """One execution of one or more stages. Owns the trace file.
+
+    A run id is not always first touched by this process: `make slice`
+    passes ONE id to five separate `isc <stage>` invocations (five separate
+    processes) so `runs/<id>/` holds the whole pipeline's trace together,
+    not five scattered directories. Both `_counter` and `totals` are seeded
+    from whatever is already on disk for this id, not zero, so a later
+    stage sharing an id with an earlier one does not collide span ids in
+    the same trace.jsonl (each process restarting at s000001 would produce
+    duplicate ids the moment two stages share a run) and does not silently
+    discard the earlier stage's cost the moment its own summarise() call
+    overwrites summary.json with only what THIS process itself spent.
+    """
 
     def __init__(self, run_id: str, root: Path) -> None:
         self.run_id = run_id
@@ -49,8 +61,20 @@ class Run:
         self.dir.mkdir(parents=True, exist_ok=True)
         self._path = self.dir / "trace.jsonl"
         self._lock = threading.Lock()
-        self._counter = 0
-        self.totals: dict[str, float] = {}
+        self._counter = self._count_existing_spans()
+        self.totals: dict[str, float] = self._load_existing_totals()
+
+    def _count_existing_spans(self) -> int:
+        if not self._path.exists():
+            return 0
+        with self._path.open() as fh:
+            return sum(1 for _ in fh)
+
+    def _load_existing_totals(self) -> dict[str, float]:
+        summary_path = self.dir / "summary.json"
+        if not summary_path.exists():
+            return {}
+        return json.loads(summary_path.read_text()).get("totals", {})
 
     def _next_span_id(self) -> str:
         with self._lock:

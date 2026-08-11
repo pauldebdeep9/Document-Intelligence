@@ -62,13 +62,26 @@ class Answer(BaseModel):
     run_id: str = ""
 
     @classmethod
-    def abstain(cls, question: str, reason: AbstentionReason) -> "Answer":
+    def abstain(
+        cls, question: str, reason: AbstentionReason,
+        supporting: list[ScoredChunk] | None = None,
+    ) -> "Answer":
+        """`supporting` defaults to empty (the NO_RESULTS case: there was
+        nothing to carry), but every other abstention path has real hits
+        behind it -- LOW_SUPPORT, INSUFFICIENT_CONTEXT, UNGROUNDED_DRAFT and
+        ATTRIBUTION_MISMATCH all retrieved something before declining to
+        answer. Dropping it here would make it impossible for P1-09 to tell
+        "retrieval found the right chunks but the model wrongly abstained"
+        apart from "retrieval never found them at all" -- exactly the
+        retrieval-vs-answering split the eval harness exists to preserve.
+        """
         return cls(
             question=question,
             abstained=True,
             abstention_reason=reason,
             text="I could not find supporting information for that in the documents "
                  "available to you.",
+            supporting=supporting or [],
         )
 
     def user_facing_reason(self) -> str:

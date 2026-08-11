@@ -56,7 +56,7 @@ class AnswerOrchestrator:
             if not hits:
                 return Answer.abstain(question, AbstentionReason.NO_RESULTS)
             if hits[0].score < self._s.retrieval.min_support_score:
-                return Answer.abstain(question, AbstentionReason.LOW_SUPPORT)
+                return Answer.abstain(question, AbstentionReason.LOW_SUPPORT, supporting=hits)
 
             # hits is passed to BOTH calls below, unmodified and unreordered
             # in between -- _bind_citations() resolves marker [n] to
@@ -78,11 +78,12 @@ class AnswerOrchestrator:
                 # stay identical between them either way, same pattern as
                 # NO_PERMITTED_RESULTS vs NO_RESULTS -- only the recorded
                 # reason differs.
-                return Answer.abstain(question, AbstentionReason.INSUFFICIENT_CONTEXT)
+                return Answer.abstain(question, AbstentionReason.INSUFFICIENT_CONTEXT,
+                                       supporting=hits)
 
             citations = self._bind_citations(draft, hits)
             if not citations:
-                return Answer.abstain(question, AbstentionReason.UNGROUNDED_DRAFT)
+                return Answer.abstain(question, AbstentionReason.UNGROUNDED_DRAFT, supporting=hits)
 
             # Binding above only checked that [n] resolves to a chunk that
             # EXISTS. This checks that the sentence citing it describes
@@ -98,7 +99,8 @@ class AnswerOrchestrator:
             # misattributes one fact is not trustworthy on the others it
             # happened to get right.
             if verify_attribution(draft, hits, self._supplier_ids).mismatches:
-                return Answer.abstain(question, AbstentionReason.ATTRIBUTION_MISMATCH)
+                return Answer.abstain(question, AbstentionReason.ATTRIBUTION_MISMATCH,
+                                       supporting=hits)
 
             return Answer(
                 question=question,
