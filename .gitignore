@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.DS_Store
+runs/
+data/synthetic/
+data/docstore.sqlite
+data/vector_store.pkl
+data/blobs/
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.conda/
