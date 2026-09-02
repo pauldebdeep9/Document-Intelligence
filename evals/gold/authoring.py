@@ -9,7 +9,6 @@ to pass, not a substitute for it.
 """
 
 import json
-from datetime import UTC, datetime
 from pathlib import Path
 
 from evals.corpus.generate import CORPUS_PATH
@@ -439,7 +438,6 @@ def build_goldset(corpus_path: Path = CORPUS_PATH) -> GoldSet:
 
     return GoldSet(
         version=_VERSION,
-        created_utc=datetime.now(UTC).isoformat(),
         items=items,
         chunking=ChunkingConfig(chunk_size=CHUNK_SIZE, overlap=OVERLAP),
     )

@@ -165,7 +165,7 @@ def test_generate_corpus_po010_description_crosses_a_chunk_boundary(tmp_path: Pa
     generate_corpus(pdf_dir=pdf_dir, corpus_path=tmp_path / "corpus.json")
 
     pages = extract_pdf_pages(pdf_dir / "po-010.pdf")
-    chunks = chunk_pages(pages)
+    chunks = chunk_pages(pages, doc_id="po-010")
 
     assert not any(description in chunk.text for chunk in chunks)
     first_chunk_ids = {chunk.chunk_id for chunk in chunks if first_token in chunk.text}

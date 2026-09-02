@@ -1,16 +1,18 @@
-"""Deterministic DEV/TEST/HELD document split, with access guards on TEST and HELD."""
+"""Explicit, hand-assigned DEV/TEST/HELD document split, with access guards on TEST/HELD.
 
-import hashlib
+Hash-based bucketing was tried first and rejected: with only 12 hand-constructed documents
+covering 5 question classes, a handful of which (cross_page, near_duplicate) exist on exactly
+one or two documents by construction, a hash can easily strand a class out of DEV entirely —
+which is exactly what happened (near_duplicate landed 100% in TEST). Coverage per split is a
+requirement here, not an emergent property worth leaving to a hash function.
+"""
+
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
 
 from evals.gold.authoring import GOLDSET_PATH
 from evals.gold.schema import GoldSet
-
-_HASH_SPACE = 2**256
-_TEST_CUTOFF = 0.5
-_HELD_CUTOFF = 0.8
 
 
 class Split(StrEnum):
@@ -21,19 +23,42 @@ class Split(StrEnum):
     HELD = "held"
 
 
-def assign_split(doc_id: str) -> Split:
-    """Deterministically bucket a doc_id via sha256, independent of any other doc_id.
+# Every doc_id must appear exactly once. cross_page (po-006 only) and near_duplicate
+# (po-004/po-005 only) exist on so few documents that they can only ever appear in whichever
+# split holds those specific doc_ids — see tests/evals/test_gold.py's explicit assertion that
+# this is a known corpus limitation, not a design choice, and should be revisited once a
+# second cross_page or near_duplicate document exists.
+_SPLIT_ASSIGNMENTS: dict[str, Split] = {
+    # DEV: the split tuned against during development, so it must carry every class,
+    # including the ones that only exist on one or two documents.
+    "po-001": Split.DEV,  # baseline case; every other split's results are compared to this
+    "po-002": Split.DEV,  # true-null payment_terms/currency; DEV's absent-class coverage
+    "po-004": Split.DEV,  # near_duplicate pair (part number ...56) — must stay with po-005
+    "po-005": Split.DEV,  # near_duplicate pair (part number ...57) — must stay with po-004
+    "po-006": Split.DEV,  # only cross_page document in the corpus
+    "po-010": Split.DEV,  # chunk-boundary-crossing description; DEV's line_item edge case
+    # TEST: header_field/line_item/absent coverage away from DEV.
+    "po-003": Split.TEST,  # ambiguous po_date preserved verbatim
+    "po-007": Split.TEST,  # blank page 2; page-numbering edge case
+    "po-008": Split.TEST,  # printed total inconsistent with line items
+    "po-012": Split.TEST,  # zero line items; TEST's absent-class coverage
+    # HELD: header_field/line_item/absent coverage, held out from routine runs.
+    "po-009": Split.HELD,  # trimmed supplier name with an ampersand
+    "po-011": Split.HELD,  # bare currency symbol; HELD's absent-class coverage
+}
 
-    Normalizes sha256(doc_id) to [0, 1) and splits it 50/30/20: DEV below 0.5, TEST below
-    0.8, HELD above. For the current 12-document corpus this lands on exactly 6/3/3.
+
+def assign_split(doc_id: str) -> Split:
+    """Look up doc_id's split in the explicit, committed assignment above.
+
+    Raises for an unrecognized doc_id rather than silently defaulting it into a split —
+    a new document belongs in _SPLIT_ASSIGNMENTS by deliberate choice, not by falling
+    through.
     """
-    digest = hashlib.sha256(doc_id.encode("utf-8")).hexdigest()
-    fraction = int(digest, 16) / _HASH_SPACE
-    if fraction < _TEST_CUTOFF:
-        return Split.DEV
-    if fraction < _HELD_CUTOFF:
-        return Split.TEST
-    return Split.HELD
+    try:
+        return _SPLIT_ASSIGNMENTS[doc_id]
+    except KeyError:
+        raise ValueError(f"{doc_id} has no split assignment in _SPLIT_ASSIGNMENTS") from None
 
 
 def assert_splits_are_disjoint(doc_ids: Sequence[str]) -> None:

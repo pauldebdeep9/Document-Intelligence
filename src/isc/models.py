@@ -3,9 +3,15 @@
 from decimal import Decimal
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema
+from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema, field_validator
 
 _StructuredDecimal = Annotated[Decimal, WithJsonSchema({"type": "number"})]
+
+
+def _require_non_blank_doc_id(value: str) -> str:
+    if not value.strip():
+        raise ValueError("doc_id must not be blank")
+    return value
 
 
 class PDFPage(BaseModel):
@@ -44,13 +50,21 @@ class PurchaseOrder(BaseModel):
 
 
 class Chunk(BaseModel):
-    """An unscored, page-local text chunk."""
+    """An unscored, page-local text chunk.
+
+    chunk_id is globally unique across a corpus, not just within one document: it embeds
+    doc_id (f"{doc_id}:page-{page:03d}-chunk-{n:03d}"). doc_id is also its own field so
+    provenance is a structured comparison, not something parsed back out of the ID string.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
+    doc_id: str
     chunk_id: str
     page_number: int = Field(ge=1)
     text: str
+
+    _validate_doc_id = field_validator("doc_id")(_require_non_blank_doc_id)
 
 
 class SourceEvidence(BaseModel):
@@ -58,10 +72,13 @@ class SourceEvidence(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    doc_id: str
     chunk_id: str
     page_number: int = Field(ge=1)
     text: str
     score: float
+
+    _validate_doc_id = field_validator("doc_id")(_require_non_blank_doc_id)
 
 
 class GroundedAnswer(BaseModel):

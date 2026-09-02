@@ -5,10 +5,16 @@ from isc.models import Chunk, PDFPage
 
 def chunk_pages(
     pages: list[PDFPage],
+    doc_id: str,
     chunk_size: int = 1200,
     overlap: int = 200,
 ) -> list[Chunk]:
-    """Split each page into deterministic overlapping character windows."""
+    """Split each page into deterministic overlapping character windows.
+
+    doc_id is caller-supplied, never derived here, and is embedded in every chunk_id
+    (f"{doc_id}:page-{page:03d}-chunk-{n:03d}") so chunk IDs stay unique when chunks from
+    multiple documents are pooled into one retrieval candidate set.
+    """
     if chunk_size <= 0:
         raise ValueError("Chunk size must be greater than zero")
     if overlap < 0 or overlap >= chunk_size:
@@ -31,7 +37,8 @@ def chunk_pages(
             if text.strip():
                 chunks.append(
                     Chunk(
-                        chunk_id=f"page-{page.page_number:03d}-chunk-{chunk_number:03d}",
+                        doc_id=doc_id,
+                        chunk_id=f"{doc_id}:page-{page.page_number:03d}-chunk-{chunk_number:03d}",
                         page_number=page.page_number,
                         text=text,
                     )

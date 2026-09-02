@@ -59,9 +59,9 @@ def test_cosine_similarity_rejects_non_finite_component(component: float) -> Non
 
 def test_top_k_chunks_ranks_by_descending_cosine_similarity() -> None:
     chunks = [
-        Chunk(chunk_id="middle", page_number=1, text="Middle"),
-        Chunk(chunk_id="lowest", page_number=1, text="Lowest"),
-        Chunk(chunk_id="highest", page_number=1, text="Highest"),
+        Chunk(doc_id="doc-1", chunk_id="middle", page_number=1, text="Middle"),
+        Chunk(doc_id="doc-1", chunk_id="lowest", page_number=1, text="Lowest"),
+        Chunk(doc_id="doc-1", chunk_id="highest", page_number=1, text="Highest"),
     ]
 
     evidence = top_k_chunks(
@@ -75,7 +75,7 @@ def test_top_k_chunks_ranks_by_descending_cosine_similarity() -> None:
 
 def test_top_k_chunks_defaults_to_three_results() -> None:
     chunks = [
-        Chunk(chunk_id=f"c{index}", page_number=1, text=str(index))
+        Chunk(doc_id="doc-1", chunk_id=f"c{index}", page_number=1, text=str(index))
         for index in range(4)
     ]
 
@@ -90,9 +90,9 @@ def test_top_k_chunks_defaults_to_three_results() -> None:
 
 def test_top_k_chunks_returns_corpus_when_k_is_larger() -> None:
     chunks = [
-        Chunk(chunk_id="c1", page_number=1, text="One"),
-        Chunk(chunk_id="c2", page_number=1, text="Two"),
-        Chunk(chunk_id="c3", page_number=1, text="Three"),
+        Chunk(doc_id="doc-1", chunk_id="c1", page_number=1, text="One"),
+        Chunk(doc_id="doc-1", chunk_id="c2", page_number=1, text="Two"),
+        Chunk(doc_id="doc-1", chunk_id="c3", page_number=1, text="Three"),
     ]
 
     evidence = top_k_chunks(
@@ -107,8 +107,8 @@ def test_top_k_chunks_returns_corpus_when_k_is_larger() -> None:
 
 def test_top_k_chunks_supports_custom_k() -> None:
     chunks = [
-        Chunk(chunk_id="low", page_number=1, text="Low"),
-        Chunk(chunk_id="high", page_number=1, text="High"),
+        Chunk(doc_id="doc-1", chunk_id="low", page_number=1, text="Low"),
+        Chunk(doc_id="doc-1", chunk_id="high", page_number=1, text="High"),
     ]
 
     evidence = top_k_chunks(
@@ -123,7 +123,7 @@ def test_top_k_chunks_supports_custom_k() -> None:
 
 @pytest.mark.parametrize("k", [0, -1])
 def test_top_k_chunks_rejects_invalid_k(k: int) -> None:
-    chunks = [Chunk(chunk_id="c1", page_number=1, text="One")]
+    chunks = [Chunk(doc_id="doc-1", chunk_id="c1", page_number=1, text="One")]
 
     with pytest.raises(ValueError, match="greater than zero"):
         top_k_chunks(chunks, [[1.0]], [1.0], k=k)
@@ -135,7 +135,7 @@ def test_top_k_chunks_rejects_empty_chunks() -> None:
 
 
 def test_top_k_chunks_rejects_chunk_embedding_count_mismatch() -> None:
-    chunks = [Chunk(chunk_id="c1", page_number=1, text="One")]
+    chunks = [Chunk(doc_id="doc-1", chunk_id="c1", page_number=1, text="One")]
 
     with pytest.raises(ValueError, match="counts must match"):
         top_k_chunks(chunks, [], [1.0])
@@ -143,9 +143,9 @@ def test_top_k_chunks_rejects_chunk_embedding_count_mismatch() -> None:
 
 def test_top_k_chunks_preserves_input_order_for_score_ties() -> None:
     chunks = [
-        Chunk(chunk_id="first", page_number=2, text="First"),
-        Chunk(chunk_id="second", page_number=1, text="Second"),
-        Chunk(chunk_id="third", page_number=3, text="Third"),
+        Chunk(doc_id="doc-1", chunk_id="first", page_number=2, text="First"),
+        Chunk(doc_id="doc-1", chunk_id="second", page_number=1, text="Second"),
+        Chunk(doc_id="doc-1", chunk_id="third", page_number=3, text="Third"),
     ]
 
     evidence = top_k_chunks(
@@ -159,11 +159,12 @@ def test_top_k_chunks_preserves_input_order_for_score_ties() -> None:
 
 def test_top_k_chunks_copies_exact_evidence_fields_and_score() -> None:
     text = "  Supplier: Müller Components\nCurrency: €\n"
-    chunk = Chunk(chunk_id="page-004-chunk-002", page_number=4, text=text)
+    chunk = Chunk(doc_id="doc-1", chunk_id="page-004-chunk-002", page_number=4, text=text)
 
     evidence = top_k_chunks([chunk], [[1.0, 1.0]], [1.0, 0.0])
 
     assert isinstance(evidence[0], SourceEvidence)
+    assert evidence[0].doc_id == chunk.doc_id
     assert evidence[0].chunk_id == chunk.chunk_id
     assert evidence[0].page_number == chunk.page_number
     assert evidence[0].text == chunk.text
@@ -172,8 +173,8 @@ def test_top_k_chunks_copies_exact_evidence_fields_and_score() -> None:
 
 def test_top_k_chunks_retains_negative_scores() -> None:
     chunks = [
-        Chunk(chunk_id="positive", page_number=1, text="Positive"),
-        Chunk(chunk_id="negative", page_number=1, text="Negative"),
+        Chunk(doc_id="doc-1", chunk_id="positive", page_number=1, text="Positive"),
+        Chunk(doc_id="doc-1", chunk_id="negative", page_number=1, text="Negative"),
     ]
 
     evidence = top_k_chunks(
@@ -189,8 +190,8 @@ def test_top_k_chunks_retains_negative_scores() -> None:
 
 def test_top_k_chunks_returns_all_when_k_equals_corpus_size() -> None:
     chunks = [
-        Chunk(chunk_id="c1", page_number=1, text="One"),
-        Chunk(chunk_id="c2", page_number=1, text="Two"),
+        Chunk(doc_id="doc-1", chunk_id="c1", page_number=1, text="One"),
+        Chunk(doc_id="doc-1", chunk_id="c2", page_number=1, text="Two"),
     ]
 
     evidence = top_k_chunks(
@@ -205,9 +206,9 @@ def test_top_k_chunks_returns_all_when_k_equals_corpus_size() -> None:
 
 def test_top_k_chunks_ranks_across_pages_without_grouping() -> None:
     chunks = [
-        Chunk(chunk_id="page-ten", page_number=10, text="Lower score"),
-        Chunk(chunk_id="page-one", page_number=1, text="Highest score"),
-        Chunk(chunk_id="page-five", page_number=5, text="Middle score"),
+        Chunk(doc_id="doc-1", chunk_id="page-ten", page_number=10, text="Lower score"),
+        Chunk(doc_id="doc-1", chunk_id="page-one", page_number=1, text="Highest score"),
+        Chunk(doc_id="doc-1", chunk_id="page-five", page_number=5, text="Middle score"),
     ]
 
     evidence = top_k_chunks(
@@ -225,8 +226,8 @@ def test_top_k_chunks_ranks_across_pages_without_grouping() -> None:
 
 def test_top_k_chunks_is_deterministic() -> None:
     chunks = [
-        Chunk(chunk_id="c1", page_number=1, text="One"),
-        Chunk(chunk_id="c2", page_number=2, text="Two"),
+        Chunk(doc_id="doc-1", chunk_id="c1", page_number=1, text="One"),
+        Chunk(doc_id="doc-1", chunk_id="c2", page_number=2, text="Two"),
     ]
     embeddings = [[1.0, 1.0], [1.0, 0.0]]
     query = [1.0, 0.0]
@@ -236,3 +237,20 @@ def test_top_k_chunks_is_deterministic() -> None:
         embeddings,
         query,
     )
+
+
+def test_top_k_chunks_preserves_doc_id_when_pooling_multiple_documents() -> None:
+    # Same chunk_id-shaped strings from two different documents, ranked together in one
+    # call, the way a pooled-split retrieval harness would call this.
+    chunks = [
+        Chunk(doc_id="po-004", chunk_id="po-004:page-001-chunk-001", page_number=1, text="A"),
+        Chunk(doc_id="po-005", chunk_id="po-005:page-001-chunk-001", page_number=1, text="B"),
+    ]
+
+    evidence = top_k_chunks(chunks, [[1.0, 0.0], [0.0, 1.0]], [1.0, 0.0], k=2)
+
+    assert {item.doc_id for item in evidence} == {"po-004", "po-005"}
+    assert {item.chunk_id for item in evidence} == {
+        "po-004:page-001-chunk-001",
+        "po-005:page-001-chunk-001",
+    }

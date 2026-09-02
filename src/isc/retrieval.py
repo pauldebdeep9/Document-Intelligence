@@ -46,6 +46,7 @@ def top_k_chunks(
 
     return [
         SourceEvidence(
+            doc_id=chunk.doc_id,
             chunk_id=chunk.chunk_id,
             page_number=chunk.page_number,
             text=chunk.text,

@@ -111,7 +111,6 @@ class GoldSet(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     version: str
-    created_utc: str
     items: list[GoldItem]
     chunking: ChunkingConfig
 
@@ -138,7 +137,7 @@ def validate_anchors(
     """Raise if any anchor's text is not a substring of a same-page chunk at this config."""
     for item in goldset.items:
         pages = extract_pdf_pages(pdf_dir / f"{item.doc_id}.pdf")
-        chunks = chunk_pages(pages, chunk_size=chunk_size, overlap=overlap)
+        chunks = chunk_pages(pages, doc_id=item.doc_id, chunk_size=chunk_size, overlap=overlap)
         for retrieval in item.retrieval:
             for anchor in retrieval.anchors:
                 page_chunks = [c for c in chunks if c.page_number == anchor.page_number]

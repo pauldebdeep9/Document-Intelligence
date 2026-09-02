@@ -17,11 +17,18 @@ def process_document(
     client: OpenAI,
     chat_model: str,
     embedding_model: str,
+    doc_id: str | None = None,
 ) -> PipelineResult:
-    """Process a PDF and return structured extraction plus grounded evidence."""
+    """Process a PDF and return structured extraction plus grounded evidence.
+
+    doc_id defaults to the PDF path's filename stem when omitted, so single-document
+    interactive use (demo.py) needs no changes; a caller pooling multiple documents (the
+    eval harness) should pass an explicit, corpus-unique doc_id.
+    """
+    resolved_doc_id = doc_id if doc_id is not None else Path(pdf_path).stem
     pages = extract_pdf_pages(pdf_path)
     purchase_order = extract_purchase_order(client, pages, chat_model)
-    chunks = chunk_pages(pages)
+    chunks = chunk_pages(pages, doc_id=resolved_doc_id)
     if not chunks:
         raise ValueError("No chunks available for retrieval")
 

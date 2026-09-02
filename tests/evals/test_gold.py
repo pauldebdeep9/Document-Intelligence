@@ -20,9 +20,9 @@ from evals.gold.schema import (
 from evals.gold.split import Split, assert_splits_are_disjoint, assign_split, load_gold
 from isc.models import PurchaseOrder
 
-_EXPECTED_DEV = {"po-003", "po-005", "po-006", "po-007", "po-011", "po-012"}
-_EXPECTED_TEST = {"po-002", "po-008", "po-010"}
-_EXPECTED_HELD = {"po-001", "po-004", "po-009"}
+_EXPECTED_DEV = {"po-001", "po-002", "po-004", "po-005", "po-006", "po-010"}
+_EXPECTED_TEST = {"po-003", "po-007", "po-008", "po-012"}
+_EXPECTED_HELD = {"po-009", "po-011"}
 
 _NON_ABSENT_CLASSES: list[QuestionClass] = [
     "header_field",
@@ -59,7 +59,6 @@ def _make_gold_item(doc_id: str, retrieval: list[RetrievalGold]) -> GoldItem:
 def _make_goldset(items: list[GoldItem]) -> GoldSet:
     return GoldSet(
         version="test",
-        created_utc="2026-01-01T00:00:00+00:00",
         items=items,
         chunking=ChunkingConfig(chunk_size=1200, overlap=200),
     )
@@ -215,6 +214,64 @@ def test_assign_split_is_stable_across_processes() -> None:
         cwd=Path(__file__).resolve().parents[2],
     )
     assert result.stdout.strip() == assign_split("po-006").value
+
+
+def test_assign_split_keeps_the_near_duplicate_evidence_group_together() -> None:
+    # po-004/po-005 (part numbers 4500123456 vs ...57) only test discrimination if a
+    # near_duplicate evaluation run sees both — if the split ever separated them again, that
+    # slice would silently stop testing anything.
+    assert assign_split("po-004") == assign_split("po-005")
+
+
+def test_split_assignment_satisfies_coverage_requirements() -> None:
+    goldset = build_goldset()
+    doc_ids = [item.doc_id for item in goldset.items]
+
+    # po-004 and po-005 are both in DEV.
+    assert assign_split("po-004") == Split.DEV
+    assert assign_split("po-005") == Split.DEV
+
+    # po-001 (baseline) and po-006 (only cross_page document) are in DEV.
+    assert assign_split("po-001") == Split.DEV
+    assert assign_split("po-006") == Split.DEV
+
+    # No doc_id appears in two splits.
+    assert_splits_are_disjoint(doc_ids)
+
+    classes_by_split: dict[Split, set[QuestionClass]] = {
+        Split.DEV: set(),
+        Split.TEST: set(),
+        Split.HELD: set(),
+    }
+    for item in goldset.items:
+        split = assign_split(item.doc_id)
+        for retrieval in item.retrieval:
+            classes_by_split[split].add(retrieval.question_class)
+
+    # All five question_classes have at least one question in DEV.
+    assert classes_by_split[Split.DEV] == {
+        "header_field",
+        "line_item",
+        "cross_page",
+        "absent",
+        "near_duplicate",
+    }
+
+    # header_field, line_item, and absent each have at least one question in every split.
+    for question_class in ("header_field", "line_item", "absent"):
+        for split in (Split.DEV, Split.TEST, Split.HELD):
+            assert question_class in classes_by_split[split], (
+                f"{question_class} has no question in {split}"
+            )
+
+    # cross_page and near_duplicate appear in DEV only. This is a known corpus limitation,
+    # not a design goal: po-006 is the only cross_page document and po-004/po-005 the only
+    # near_duplicate pair, so these classes can only exist in whichever split holds those
+    # doc_ids. If this assertion ever fails, it means a second cross_page or near_duplicate
+    # document was added — that's the signal to reconsider the split, not to loosen this test.
+    for question_class in ("cross_page", "near_duplicate"):
+        assert question_class not in classes_by_split[Split.TEST]
+        assert question_class not in classes_by_split[Split.HELD]
 
 
 # --- split.assert_splits_are_disjoint -------------------------------------------------------

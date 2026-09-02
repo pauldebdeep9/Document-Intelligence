@@ -116,6 +116,7 @@ def test_grounded_answer_instructions_restrict_ids_and_score_meaning() -> None:
 
 def test_format_sources_formats_single_source_with_original_metadata() -> None:
     source = SourceEvidence(
+        doc_id="po-001",
         chunk_id="page-001-chunk-002",
         page_number=1,
         text="Payment Terms: Net 30",
@@ -131,12 +132,14 @@ def test_format_sources_formats_single_source_with_original_metadata() -> None:
 def test_format_sources_preserves_input_order_for_multiple_sources() -> None:
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-010-chunk-003",
             page_number=10,
             text="Ranked first",
             score=0.8,
         ),
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-002-chunk-001",
             page_number=2,
             text="Ranked second",
@@ -156,6 +159,7 @@ def test_format_sources_preserves_input_order_for_multiple_sources() -> None:
 def test_format_sources_preserves_exact_whitespace_and_unicode() -> None:
     exact_text = "  Supplier: Müller Components\n\nPayment Terms: Net 30\n"
     source = SourceEvidence(
+        doc_id="po-001",
         chunk_id="page-004-chunk-002",
         page_number=4,
         text=exact_text,
@@ -169,6 +173,7 @@ def test_format_sources_preserves_exact_whitespace_and_unicode() -> None:
 
 def test_format_sources_does_not_expose_retrieval_score() -> None:
     source = SourceEvidence(
+        doc_id="po-001",
         chunk_id="page-003-chunk-001",
         page_number=3,
         text="Supplier: Example Components",
@@ -194,6 +199,7 @@ def test_answer_question_returns_structured_grounded_answer_in_one_call() -> Non
     client = FakeClient(parsed=expected)
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-001-chunk-002",
             page_number=1,
             text="Payment Terms: Net 30",
@@ -235,12 +241,14 @@ def test_answer_question_preserves_question_and_ranked_source_context() -> None:
     question = "  Which supplier(s)?  "
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-010-chunk-003",
             page_number=10,
             text="  Supplier: Müller Components\n",
             score=0.731928475,
         ),
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-002-chunk-001",
             page_number=2,
             text="Second supplier: Example Parts",
@@ -268,6 +276,7 @@ def test_answer_question_rejects_blank_question_without_provider_call(
     client = FakeClient()
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-001-chunk-001",
             page_number=1,
             text="Payment Terms: Net 30",
@@ -288,6 +297,7 @@ def test_answer_question_rejects_blank_model_without_provider_call(
     client = FakeClient()
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-001-chunk-001",
             page_number=1,
             text="Payment Terms: Net 30",
@@ -315,6 +325,7 @@ def test_answer_question_propagates_provider_exception_unchanged() -> None:
     client = FakeClient(error=provider_error)
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-001-chunk-001",
             page_number=1,
             text="Payment Terms: Net 30",
@@ -343,6 +354,7 @@ def test_answer_question_rejects_unknown_source_id_without_retry() -> None:
     )
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-001-chunk-001",
             page_number=1,
             text="Payment Terms: Net 30",
@@ -374,12 +386,14 @@ def test_answer_question_deduplicates_source_ids_in_first_occurrence_order() -> 
     )
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-001-chunk-001",
             page_number=1,
             text="Purchase order terms",
             score=0.8,
         ),
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-002-chunk-001",
             page_number=2,
             text="Payment Terms: Net 30",
@@ -411,12 +425,14 @@ def test_answer_question_preserves_valid_source_id_order_and_answer_text() -> No
     )
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-001-chunk-001",
             page_number=1,
             text="Delivery: FOB destination",
             score=-0.1,
         ),
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-002-chunk-001",
             page_number=2,
             text="Payment Terms: Net 30",
@@ -439,6 +455,45 @@ def test_answer_question_preserves_valid_source_id_order_and_answer_text() -> No
     assert len(client.responses.calls) == 1
 
 
+def test_answer_question_disambiguates_pooled_sources_sharing_a_bare_chunk_id() -> None:
+    # Two different documents' page-1-chunk-1: under the old doc-unqualified chunk_id
+    # format these would have been identical strings, and validating a returned ID against
+    # {source.chunk_id for source in sources} would have silently accepted either one's
+    # evidence for the other's ID. Doc-qualified chunk_ids make that collision impossible.
+    client = FakeClient(
+        parsed=GroundedAnswer(
+            answer="4500123457",
+            source_chunk_ids=["po-005:page-001-chunk-001"],
+        )
+    )
+    sources = [
+        SourceEvidence(
+            doc_id="po-004",
+            chunk_id="po-004:page-001-chunk-001",
+            page_number=1,
+            text="Part Number: 4500123456",
+            score=0.4,
+        ),
+        SourceEvidence(
+            doc_id="po-005",
+            chunk_id="po-005:page-001-chunk-001",
+            page_number=1,
+            text="Part Number: 4500123457",
+            score=0.9,
+        ),
+    ]
+
+    answer = answer_question(
+        client,
+        "What is the part number?",
+        sources,
+        model="test-chat-model",
+    )
+
+    assert answer.source_chunk_ids == ["po-005:page-001-chunk-001"]
+    assert answer.answer == "4500123457"
+
+
 def test_answer_question_accepts_exact_insufficiency_without_source_ids() -> None:
     client = FakeClient(
         parsed=GroundedAnswer(
@@ -448,6 +503,7 @@ def test_answer_question_accepts_exact_insufficiency_without_source_ids() -> Non
     )
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-001-chunk-001",
             page_number=1,
             text="Supplier: Example Components",
@@ -475,6 +531,7 @@ def test_answer_question_rejects_insufficiency_with_source_ids() -> None:
     )
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-001-chunk-001",
             page_number=1,
             text="Supplier: Example Components",
@@ -499,6 +556,7 @@ def test_answer_question_rejects_supported_answer_without_source_ids() -> None:
     )
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-001-chunk-001",
             page_number=1,
             text="Payment Terms: Net 30",
@@ -521,6 +579,7 @@ def test_answer_question_rejects_missing_structured_output_without_retry() -> No
     client = FakeClient()
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-001-chunk-001",
             page_number=1,
             text="Payment Terms: Net 30",
@@ -545,6 +604,7 @@ def test_answer_question_reports_explicit_refusal_without_retry() -> None:
     client = FakeClient(output=[message])
     sources = [
         SourceEvidence(
+            doc_id="po-001",
             chunk_id="page-001-chunk-001",
             page_number=1,
             text="Payment Terms: Net 30",

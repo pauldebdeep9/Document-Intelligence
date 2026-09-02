@@ -123,22 +123,43 @@ def test_purchase_order_decimal_fields_parse_provider_numbers_as_decimal() -> No
 
 
 def test_chunk_requires_one_based_page_number() -> None:
-    chunk = Chunk(chunk_id="page-001-chunk-001", page_number=1, text="PO number 42")
+    chunk = Chunk(
+        doc_id="po-001", chunk_id="page-001-chunk-001", page_number=1, text="PO number 42"
+    )
 
     assert chunk.page_number == 1
 
     with pytest.raises(ValidationError):
-        Chunk(chunk_id="page-000-chunk-001", page_number=0, text="PO number 42")
+        Chunk(
+            doc_id="po-001", chunk_id="page-000-chunk-001", page_number=0, text="PO number 42"
+        )
+
+
+@pytest.mark.parametrize("blank_doc_id", ["", "   ", "\n"])
+def test_chunk_and_source_evidence_reject_blank_doc_id(blank_doc_id: str) -> None:
+    with pytest.raises(ValidationError, match="doc_id must not be blank"):
+        Chunk(doc_id=blank_doc_id, chunk_id="x:page-001-chunk-001", page_number=1, text="t")
+
+    with pytest.raises(ValidationError, match="doc_id must not be blank"):
+        SourceEvidence(
+            doc_id=blank_doc_id,
+            chunk_id="x:page-001-chunk-001",
+            page_number=1,
+            text="t",
+            score=0.5,
+        )
 
 
 def test_source_evidence_preserves_retrieval_values() -> None:
     source = SourceEvidence(
+        doc_id="po-002",
         chunk_id="page-002-chunk-003",
         page_number=2,
         text="Payment terms: Net 30",
         score=0.875,
     )
 
+    assert source.doc_id == "po-002"
     assert source.chunk_id == "page-002-chunk-003"
     assert source.page_number == 2
     assert source.text == "Payment terms: Net 30"
@@ -159,6 +180,7 @@ def test_pipeline_result_instances_have_independent_source_lists() -> None:
     first = PipelineResult(purchase_order=PurchaseOrder(), answer="Net 30")
     second = PipelineResult(purchase_order=PurchaseOrder(), answer="No answer")
     source = SourceEvidence(
+        doc_id="po-001",
         chunk_id="page-001-chunk-001",
         page_number=1,
         text="Payment terms: Net 30",

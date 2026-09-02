@@ -27,9 +27,9 @@ def test_process_document_orchestrates_primitives_and_resolves_evidence(
     pages = [PDFPage(page_number=1, text="Purchase Order PO-1001")]
     purchase_order = PurchaseOrder(po_number="PO-1001")
     chunks = [
-        Chunk(chunk_id="a", page_number=1, text="Chunk A"),
-        Chunk(chunk_id="b", page_number=1, text="Chunk B"),
-        Chunk(chunk_id="c", page_number=2, text="Chunk C"),
+        Chunk(doc_id="sample", chunk_id="a", page_number=1, text="Chunk A"),
+        Chunk(doc_id="sample", chunk_id="b", page_number=1, text="Chunk B"),
+        Chunk(doc_id="sample", chunk_id="c", page_number=2, text="Chunk C"),
     ]
     vectors = [
         [9.0, 9.0],
@@ -38,9 +38,9 @@ def test_process_document_orchestrates_primitives_and_resolves_evidence(
         [1.0, 1.0],
     ]
     retrieved_sources = [
-        SourceEvidence(chunk_id="a", page_number=1, text="Chunk A", score=0.9),
-        SourceEvidence(chunk_id="b", page_number=1, text="Chunk B", score=0.8),
-        SourceEvidence(chunk_id="c", page_number=2, text="Chunk C", score=0.7),
+        SourceEvidence(doc_id="sample", chunk_id="a", page_number=1, text="Chunk A", score=0.9),
+        SourceEvidence(doc_id="sample", chunk_id="b", page_number=1, text="Chunk B", score=0.8),
+        SourceEvidence(doc_id="sample", chunk_id="c", page_number=2, text="Chunk C", score=0.7),
     ]
     grounded_answer = GroundedAnswer(
         answer="Supported by C and A",
@@ -61,9 +61,10 @@ def test_process_document_orchestrates_primitives_and_resolves_evidence(
         received["purchase_order_args"] = (actual_client, actual_pages, model)
         return purchase_order
 
-    def fake_chunk_pages(actual_pages: list[PDFPage]) -> list[Chunk]:
+    def fake_chunk_pages(actual_pages: list[PDFPage], doc_id: str) -> list[Chunk]:
         call_order.append("chunk_pages")
         received["chunk_pages"] = actual_pages
+        received["chunk_pages_doc_id"] = doc_id
         return chunks
 
     def fake_embed_texts(
@@ -139,6 +140,7 @@ def test_process_document_orchestrates_primitives_and_resolves_evidence(
     assert purchase_order_args[1] is pages
     assert purchase_order_args[2] == "test-chat-model"
     assert received["chunk_pages"] is pages
+    assert received["chunk_pages_doc_id"] == "sample"
 
     embed_args = received["embed_args"]
     assert embed_args[0] is client
@@ -168,9 +170,10 @@ def test_process_document_preserves_insufficiency_without_evidence(
 ) -> None:
     insufficient_answer = "I don't have enough information in the provided sources."
     pages = [PDFPage(page_number=1, text="Purchase Order")]
-    chunks = [Chunk(chunk_id="a", page_number=1, text="Purchase Order")]
+    chunks = [Chunk(doc_id="sample", chunk_id="a", page_number=1, text="Purchase Order")]
     retrieved_sources = [
         SourceEvidence(
+            doc_id="sample",
             chunk_id="a",
             page_number=1,
             text="Purchase Order",
@@ -184,7 +187,7 @@ def test_process_document_preserves_insufficiency_without_evidence(
         "extract_purchase_order",
         lambda client, actual_pages, model: PurchaseOrder(po_number="PO-1001"),
     )
-    monkeypatch.setattr(pipeline, "chunk_pages", lambda actual_pages: chunks)
+    monkeypatch.setattr(pipeline, "chunk_pages", lambda actual_pages, doc_id: chunks)
     monkeypatch.setattr(
         pipeline,
         "embed_texts",
@@ -234,7 +237,7 @@ def test_process_document_rejects_zero_chunks_before_retrieval(
         call_order.append("extract_purchase_order")
         return PurchaseOrder(po_number="PO-1001")
 
-    def fake_chunk_pages(actual_pages: list[PDFPage]) -> list[Chunk]:
+    def fake_chunk_pages(actual_pages: list[PDFPage], doc_id: str) -> list[Chunk]:
         call_order.append("chunk_pages")
         return []
 
@@ -272,9 +275,9 @@ def test_process_document_rejects_impossible_missing_evidence_id(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     pages = [PDFPage(page_number=1, text="Purchase Order")]
-    chunks = [Chunk(chunk_id="a", page_number=1, text="Chunk A")]
+    chunks = [Chunk(doc_id="sample", chunk_id="a", page_number=1, text="Chunk A")]
     retrieved_sources = [
-        SourceEvidence(chunk_id="a", page_number=1, text="Chunk A", score=0.8)
+        SourceEvidence(doc_id="sample", chunk_id="a", page_number=1, text="Chunk A", score=0.8)
     ]
 
     monkeypatch.setattr(pipeline, "extract_pdf_pages", lambda path: pages)
@@ -283,7 +286,7 @@ def test_process_document_rejects_impossible_missing_evidence_id(
         "extract_purchase_order",
         lambda client, actual_pages, model: PurchaseOrder(po_number="PO-1001"),
     )
-    monkeypatch.setattr(pipeline, "chunk_pages", lambda actual_pages: chunks)
+    monkeypatch.setattr(pipeline, "chunk_pages", lambda actual_pages, doc_id: chunks)
     monkeypatch.setattr(
         pipeline,
         "embed_texts",
@@ -314,6 +317,76 @@ def test_process_document_rejects_impossible_missing_evidence_id(
             chat_model="test-chat-model",
             embedding_model="test-embedding-model",
         )
+
+
+def test_process_document_evidence_by_id_drops_no_source_under_pooled_ids(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Two sources whose bare chunk_id would have collided under the old
+    # doc-unqualified format ("page-001-chunk-001" for both); evidence_by_id is a plain
+    # dict keyed on chunk_id, so a real collision here would silently keep only the last
+    # one. Doc-qualified chunk_ids make them distinct keys, so both must resolve.
+    pages = [PDFPage(page_number=1, text="Purchase Order")]
+    chunks = [
+        Chunk(doc_id="po-004", chunk_id="po-004:page-001-chunk-001", page_number=1, text="A"),
+        Chunk(doc_id="po-005", chunk_id="po-005:page-001-chunk-001", page_number=1, text="B"),
+    ]
+    retrieved_sources = [
+        SourceEvidence(
+            doc_id="po-004",
+            chunk_id="po-004:page-001-chunk-001",
+            page_number=1,
+            text="A",
+            score=0.5,
+        ),
+        SourceEvidence(
+            doc_id="po-005",
+            chunk_id="po-005:page-001-chunk-001",
+            page_number=1,
+            text="B",
+            score=0.9,
+        ),
+    ]
+
+    monkeypatch.setattr(pipeline, "extract_pdf_pages", lambda path: pages)
+    monkeypatch.setattr(
+        pipeline,
+        "extract_purchase_order",
+        lambda client, actual_pages, model: PurchaseOrder(po_number="PO-1001"),
+    )
+    monkeypatch.setattr(pipeline, "chunk_pages", lambda actual_pages, doc_id: chunks)
+    monkeypatch.setattr(
+        pipeline,
+        "embed_texts",
+        lambda client, texts, model: [[1.0], [1.0], [1.0]],
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "top_k_chunks",
+        lambda actual_chunks, embeddings, query, k: retrieved_sources,
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "answer_question",
+        lambda client, question, sources, model: GroundedAnswer(
+            answer="Both documents' evidence",
+            source_chunk_ids=[
+                "po-004:page-001-chunk-001",
+                "po-005:page-001-chunk-001",
+            ],
+        ),
+    )
+
+    result = pipeline.process_document(
+        "sample.pdf",
+        "What are the payment terms?",
+        object(),
+        chat_model="test-chat-model",
+        embedding_model="test-embedding-model",
+    )
+
+    assert result.sources == retrieved_sources
+    assert {source.doc_id for source in result.sources} == {"po-004", "po-005"}
 
 
 @pytest.mark.parametrize(
@@ -373,9 +446,9 @@ def test_process_document_propagates_first_stage_failure_and_stops(
 ) -> None:
     calls: list[str] = []
     pages = [PDFPage(page_number=1, text="Purchase Order")]
-    chunks = [Chunk(chunk_id="a", page_number=1, text="Chunk A")]
+    chunks = [Chunk(doc_id="sample", chunk_id="a", page_number=1, text="Chunk A")]
     sources = [
-        SourceEvidence(chunk_id="a", page_number=1, text="Chunk A", score=0.8)
+        SourceEvidence(doc_id="sample", chunk_id="a", page_number=1, text="Chunk A", score=0.8)
     ]
 
     def stage(name: str, result: object):
@@ -451,11 +524,12 @@ def test_process_document_end_to_end_offline(tmp_path: Path) -> None:
         pdf.showPage()
     pdf.save()
 
+    doc_id = pdf_path.stem
     expected_pages = extract_pdf_pages(pdf_path)
-    expected_chunks = chunk_pages(expected_pages)
+    expected_chunks = chunk_pages(expected_pages, doc_id=doc_id)
     assert [chunk.chunk_id for chunk in expected_chunks] == [
-        "page-001-chunk-001",
-        "page-002-chunk-001",
+        f"{doc_id}:page-001-chunk-001",
+        f"{doc_id}:page-002-chunk-001",
     ]
 
     expected_purchase_order = PurchaseOrder(
@@ -478,7 +552,7 @@ def test_process_document_end_to_end_offline(tmp_path: Path) -> None:
             elif text_format is GroundedAnswer:
                 parsed = GroundedAnswer(
                     answer="Net 30",
-                    source_chunk_ids=["page-002-chunk-001"],
+                    source_chunk_ids=[f"{doc_id}:page-002-chunk-001"],
                 )
             else:
                 pytest.fail(f"Unexpected structured schema: {text_format}")
@@ -516,7 +590,8 @@ def test_process_document_end_to_end_offline(tmp_path: Path) -> None:
     assert result.purchase_order == expected_purchase_order
     assert result.answer == "Net 30"
     assert len(result.sources) == 1
-    assert result.sources[0].chunk_id == "page-002-chunk-001"
+    assert result.sources[0].doc_id == doc_id
+    assert result.sources[0].chunk_id == f"{doc_id}:page-002-chunk-001"
     assert result.sources[0].page_number == 2
     assert result.sources[0].text == expected_chunks[1].text
     assert result.sources[0].text == expected_pages[1].text
@@ -542,9 +617,9 @@ def test_process_document_end_to_end_offline(tmp_path: Path) -> None:
     answer_input = client.responses.calls[1]["input"]
     assert answer_input == (
         f"Question:\n{question}\n\nSources:\n"
-        f"--- Source: page-002-chunk-001 | Page: 2 ---\n"
+        f"--- Source: {doc_id}:page-002-chunk-001 | Page: 2 ---\n"
         f"{expected_chunks[1].text}\n\n"
-        f"--- Source: page-001-chunk-001 | Page: 1 ---\n"
+        f"--- Source: {doc_id}:page-001-chunk-001 | Page: 1 ---\n"
         f"{expected_chunks[0].text}"
     )
     assert "score" not in answer_input.lower()

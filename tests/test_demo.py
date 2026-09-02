@@ -50,6 +50,7 @@ def test_print_result_displays_purchase_order_answer_and_sources(
         answer="Net 30",
         sources=[
             SourceEvidence(
+                doc_id="po-001",
                 chunk_id="page-002-chunk-001",
                 page_number=2,
                 text=exact_text,
