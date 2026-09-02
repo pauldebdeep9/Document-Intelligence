@@ -14,5 +14,5 @@ env-check:
 	conda info --envs
 
 test:    ; $(PYTHON) -m pytest tests -q
-lint:    ; $(PYTHON) -m ruff check demo.py src/isc tests
-	$(PYTHON) -m mypy src/isc demo.py
+lint:    ; $(PYTHON) -m ruff check demo.py src/isc tests evals
+	$(PYTHON) -m mypy src/isc demo.py evals

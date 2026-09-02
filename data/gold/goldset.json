@@ -1,0 +1,731 @@
+{
+  "version": "1.0.0",
+  "created_utc": "2026-09-02T12:48:51.856365+00:00",
+  "items": [
+    {
+      "doc_id": "po-001",
+      "extraction": {
+        "doc_id": "po-001",
+        "expected": {
+          "po_number": "PO-1001",
+          "po_date": "2026-03-04",
+          "supplier_name": "ACME Components",
+          "ship_to_site": "Riverside Plant",
+          "payment_terms": "Net 30",
+          "currency": "USD",
+          "total_amount": "1985.00",
+          "line_items": [
+            {
+              "part_number": "BRG-2050",
+              "description": "Sealed ball bearing, 20mm bore",
+              "quantity": "10",
+              "unit_price": "50.00"
+            },
+            {
+              "part_number": "GSK-1140",
+              "description": "Silicone gasket, 140mm diameter",
+              "quantity": "5",
+              "unit_price": "97.00"
+            },
+            {
+              "part_number": "SHF-3390",
+              "description": "Stainless steel shaft, 390mm length",
+              "quantity": "100",
+              "unit_price": "10.00"
+            }
+          ]
+        }
+      },
+      "retrieval": [
+        {
+          "question_id": "po-001-q1",
+          "doc_id": "po-001",
+          "question": "What is the PO number on this purchase order?",
+          "question_class": "header_field",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "PO Number: PO-1001"
+            }
+          ]
+        },
+        {
+          "question_id": "po-001-q2",
+          "doc_id": "po-001",
+          "question": "What are the payment terms on this purchase order?",
+          "question_class": "header_field",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "Payment Terms: Net 30"
+            }
+          ]
+        },
+        {
+          "question_id": "po-001-q3",
+          "doc_id": "po-001",
+          "question": "What is the unit price of part number GSK-1140?",
+          "question_class": "line_item",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "2. Part Number: GSK-1140\n   Description: Silicone gasket, 140mm diameter\n   Quantity: 5\n   Unit Price: 97.00"
+            }
+          ]
+        },
+        {
+          "question_id": "po-001-q4",
+          "doc_id": "po-001",
+          "question": "What is the quantity ordered for part number SHF-3390?",
+          "question_class": "line_item",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "3. Part Number: SHF-3390\n   Description: Stainless steel shaft, 390mm length\n   Quantity: 100"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "doc_id": "po-002",
+      "extraction": {
+        "doc_id": "po-002",
+        "expected": {
+          "po_number": "PO-1002",
+          "po_date": "2026-02-10",
+          "supplier_name": "Meridian Fasteners",
+          "ship_to_site": "Dockside Warehouse 2",
+          "payment_terms": null,
+          "currency": null,
+          "total_amount": "640.00",
+          "line_items": [
+            {
+              "part_number": "HXN-0812",
+              "description": "Hex nut, M8",
+              "quantity": "400",
+              "unit_price": "1.20"
+            },
+            {
+              "part_number": "WSR-0820",
+              "description": "Flat washer, M8",
+              "quantity": "800",
+              "unit_price": "0.20"
+            }
+          ]
+        }
+      },
+      "retrieval": [
+        {
+          "question_id": "po-002-q1",
+          "doc_id": "po-002",
+          "question": "What is the ship-to site on this purchase order?",
+          "question_class": "header_field",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "Ship-to Site: Dockside Warehouse 2"
+            }
+          ]
+        },
+        {
+          "question_id": "po-002-q2",
+          "doc_id": "po-002",
+          "question": "What is the quantity ordered for part number WSR-0820?",
+          "question_class": "line_item",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "2. Part Number: WSR-0820\n   Description: Flat washer, M8\n   Quantity: 800\n   Unit Price: 0.20"
+            }
+          ]
+        },
+        {
+          "question_id": "po-002-q3",
+          "doc_id": "po-002",
+          "question": "What are the payment terms on this purchase order?",
+          "question_class": "absent",
+          "anchors": []
+        }
+      ]
+    },
+    {
+      "doc_id": "po-003",
+      "extraction": {
+        "doc_id": "po-003",
+        "expected": {
+          "po_number": "PO-1003",
+          "po_date": "03/04/2026",
+          "supplier_name": "Coastal Hydraulics",
+          "ship_to_site": "Plant 7",
+          "payment_terms": "Net 45",
+          "currency": "USD",
+          "total_amount": "212.50",
+          "line_items": [
+            {
+              "part_number": "HYD-4471",
+              "description": "Hydraulic hose fitting, 1/2in NPT",
+              "quantity": "25",
+              "unit_price": "8.50"
+            }
+          ]
+        }
+      },
+      "retrieval": [
+        {
+          "question_id": "po-003-q1",
+          "doc_id": "po-003",
+          "question": "What is the PO date on this purchase order, exactly as printed?",
+          "question_class": "header_field",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "PO Date: 03/04/2026"
+            }
+          ]
+        },
+        {
+          "question_id": "po-003-q2",
+          "doc_id": "po-003",
+          "question": "Who is the supplier on this purchase order?",
+          "question_class": "header_field",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "Supplier: Coastal Hydraulics"
+            }
+          ]
+        },
+        {
+          "question_id": "po-003-q3",
+          "doc_id": "po-003",
+          "question": "What is the unit price of the hydraulic hose fitting?",
+          "question_class": "line_item",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "1. Part Number: HYD-4471\n   Description: Hydraulic hose fitting, 1/2in NPT\n   Quantity: 25\n   Unit Price: 8.50"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "doc_id": "po-004",
+      "extraction": {
+        "doc_id": "po-004",
+        "expected": {
+          "po_number": "PO-1004",
+          "po_date": "2026-01-15",
+          "supplier_name": "Titan Fabrication",
+          "ship_to_site": "Bay 3",
+          "payment_terms": "Net 30",
+          "currency": "USD",
+          "total_amount": "330.00",
+          "line_items": [
+            {
+              "part_number": "4500123456",
+              "description": "Laser-cut steel bracket, 3mm gauge",
+              "quantity": "60",
+              "unit_price": "5.50"
+            }
+          ]
+        }
+      },
+      "retrieval": [
+        {
+          "question_id": "po-004-q1",
+          "doc_id": "po-004",
+          "question": "What is the exact part number for the laser-cut steel bracket on this purchase order?",
+          "question_class": "near_duplicate",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "1. Part Number: 4500123456"
+            }
+          ]
+        },
+        {
+          "question_id": "po-004-q2",
+          "doc_id": "po-004",
+          "question": "What quantity was ordered for part number 4500123456?",
+          "question_class": "near_duplicate",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "1. Part Number: 4500123456\n   Description: Laser-cut steel bracket, 3mm gauge\n   Quantity: 60"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "doc_id": "po-005",
+      "extraction": {
+        "doc_id": "po-005",
+        "expected": {
+          "po_number": "PO-1005",
+          "po_date": "2026-01-16",
+          "supplier_name": "Titan Fabrication",
+          "ship_to_site": "Bay 3",
+          "payment_terms": "Net 30",
+          "currency": "USD",
+          "total_amount": "330.00",
+          "line_items": [
+            {
+              "part_number": "4500123457",
+              "description": "Laser-cut steel bracket, 3mm gauge",
+              "quantity": "60",
+              "unit_price": "5.50"
+            }
+          ]
+        }
+      },
+      "retrieval": [
+        {
+          "question_id": "po-005-q1",
+          "doc_id": "po-005",
+          "question": "What is the exact part number for the laser-cut steel bracket on this purchase order?",
+          "question_class": "near_duplicate",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "1. Part Number: 4500123457"
+            }
+          ]
+        },
+        {
+          "question_id": "po-005-q2",
+          "doc_id": "po-005",
+          "question": "What quantity was ordered for part number 4500123457?",
+          "question_class": "near_duplicate",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "1. Part Number: 4500123457\n   Description: Laser-cut steel bracket, 3mm gauge\n   Quantity: 60"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "doc_id": "po-006",
+      "extraction": {
+        "doc_id": "po-006",
+        "expected": {
+          "po_number": "PO-1006",
+          "po_date": "2026-04-02",
+          "supplier_name": "Continental Bearings",
+          "ship_to_site": "Distribution Center 5",
+          "payment_terms": "Net 60",
+          "currency": "USD",
+          "total_amount": "2960.00",
+          "line_items": [
+            {
+              "part_number": "BRG-1001",
+              "description": "Deep groove ball bearing, 30mm",
+              "quantity": "50",
+              "unit_price": "12.00"
+            },
+            {
+              "part_number": "BRG-1002",
+              "description": "Deep groove ball bearing, 40mm",
+              "quantity": "40",
+              "unit_price": "15.00"
+            },
+            {
+              "part_number": "BRG-1003",
+              "description": "Angular contact bearing, 25mm",
+              "quantity": "60",
+              "unit_price": "18.00"
+            },
+            {
+              "part_number": "BRG-1004",
+              "description": "Angular contact bearing, 35mm",
+              "quantity": "34",
+              "unit_price": "20.00"
+            }
+          ]
+        }
+      },
+      "retrieval": [
+        {
+          "question_id": "po-006-q1",
+          "doc_id": "po-006",
+          "question": "What are the part numbers of the 30mm deep groove bearing and the 25mm angular contact bearing on this purchase order?",
+          "question_class": "cross_page",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "1. Part Number: BRG-1001\n   Description: Deep groove ball bearing, 30mm"
+            },
+            {
+              "page_number": 2,
+              "text": "3. Part Number: BRG-1003\n   Description: Angular contact bearing, 25mm"
+            }
+          ]
+        },
+        {
+          "question_id": "po-006-q2",
+          "doc_id": "po-006",
+          "question": "What is the quantity ordered for part number BRG-1002, and separately for part number BRG-1004?",
+          "question_class": "cross_page",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "2. Part Number: BRG-1002\n   Description: Deep groove ball bearing, 40mm\n   Quantity: 40\n   Unit Price: 15.00"
+            },
+            {
+              "page_number": 2,
+              "text": "4. Part Number: BRG-1004\n   Description: Angular contact bearing, 35mm\n   Quantity: 34\n   Unit Price: 20.00"
+            }
+          ]
+        },
+        {
+          "question_id": "po-006-q3",
+          "doc_id": "po-006",
+          "question": "What are the part numbers of the first and last line items in this purchase order's table, and what is the purchase order's total amount?",
+          "question_class": "cross_page",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "1. Part Number: BRG-1001"
+            },
+            {
+              "page_number": 2,
+              "text": "4. Part Number: BRG-1004"
+            },
+            {
+              "page_number": 3,
+              "text": "Total Amount: 2960.00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "doc_id": "po-007",
+      "extraction": {
+        "doc_id": "po-007",
+        "expected": {
+          "po_number": "PO-1007",
+          "po_date": "2026-05-11",
+          "supplier_name": "Northfield Industrial Supply",
+          "ship_to_site": "Warehouse C",
+          "payment_terms": "Net 30",
+          "currency": "USD",
+          "total_amount": "945.00",
+          "line_items": [
+            {
+              "part_number": "VLV-2201",
+              "description": "Ball valve, 1in NPT",
+              "quantity": "15",
+              "unit_price": "42.00"
+            },
+            {
+              "part_number": "VLV-2202",
+              "description": "Check valve, 1in NPT",
+              "quantity": "9",
+              "unit_price": "35.00"
+            }
+          ]
+        }
+      },
+      "retrieval": [
+        {
+          "question_id": "po-007-q1",
+          "doc_id": "po-007",
+          "question": "Who is the supplier on this purchase order?",
+          "question_class": "header_field",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "Supplier: Northfield Industrial Supply"
+            }
+          ]
+        },
+        {
+          "question_id": "po-007-q2",
+          "doc_id": "po-007",
+          "question": "What is the unit price of the check valve?",
+          "question_class": "line_item",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "2. Part Number: VLV-2202\n   Description: Check valve, 1in NPT\n   Quantity: 9\n   Unit Price: 35.00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "doc_id": "po-008",
+      "extraction": {
+        "doc_id": "po-008",
+        "expected": {
+          "po_number": "PO-1008",
+          "po_date": "2026-06-20",
+          "supplier_name": "Summit Electrical",
+          "ship_to_site": "Substation 2",
+          "payment_terms": "Net 30",
+          "currency": "USD",
+          "total_amount": "750.00",
+          "line_items": [
+            {
+              "part_number": "CBL-500",
+              "description": "THHN copper wire, 500ft spool",
+              "quantity": "4",
+              "unit_price": "85.00"
+            },
+            {
+              "part_number": "CBL-501",
+              "description": "THHN copper wire, 250ft spool",
+              "quantity": "3",
+              "unit_price": "55.00"
+            }
+          ]
+        }
+      },
+      "retrieval": [
+        {
+          "question_id": "po-008-q1",
+          "doc_id": "po-008",
+          "question": "What total amount is printed on this purchase order?",
+          "question_class": "line_item",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "Total Amount: 750.00"
+            }
+          ]
+        },
+        {
+          "question_id": "po-008-q2",
+          "doc_id": "po-008",
+          "question": "What are the payment terms on this purchase order?",
+          "question_class": "header_field",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "Payment Terms: Net 30"
+            }
+          ]
+        },
+        {
+          "question_id": "po-008-q3",
+          "doc_id": "po-008",
+          "question": "What is the description of part number CBL-500?",
+          "question_class": "line_item",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "1. Part Number: CBL-500\n   Description: THHN copper wire, 500ft spool"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "doc_id": "po-009",
+      "extraction": {
+        "doc_id": "po-009",
+        "expected": {
+          "po_number": "PO-1009",
+          "po_date": "2026-07-08",
+          "supplier_name": "Smith & Sons Machining",
+          "ship_to_site": "Unit 12",
+          "payment_terms": "Net 15",
+          "currency": "USD",
+          "total_amount": "180.00",
+          "line_items": [
+            {
+              "part_number": "MCH-0090",
+              "description": "CNC-machined spacer, brass",
+              "quantity": "20",
+              "unit_price": "9.00"
+            }
+          ]
+        }
+      },
+      "retrieval": [
+        {
+          "question_id": "po-009-q1",
+          "doc_id": "po-009",
+          "question": "Who is the supplier on this purchase order?",
+          "question_class": "header_field",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "Supplier: Smith & Sons Machining"
+            }
+          ]
+        },
+        {
+          "question_id": "po-009-q2",
+          "doc_id": "po-009",
+          "question": "What is the quantity ordered for the CNC-machined spacer?",
+          "question_class": "line_item",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "1. Part Number: MCH-0090\n   Description: CNC-machined spacer, brass\n   Quantity: 20"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "doc_id": "po-010",
+      "extraction": {
+        "doc_id": "po-010",
+        "expected": {
+          "po_number": "PO-1010",
+          "po_date": "2026-08-01",
+          "supplier_name": "Vantage Aerospace Components",
+          "ship_to_site": "Hangar 4",
+          "payment_terms": "Net 30",
+          "currency": "USD",
+          "total_amount": "4400.00",
+          "line_items": [
+            {
+              "part_number": "BRK-7701",
+              "description": "titanium-bracket-segment-0001 titanium-bracket-segment-0002 titanium-bracket-segment-0003 titanium-bracket-segment-0004 titanium-bracket-segment-0005 titanium-bracket-segment-0006 titanium-bracket-segment-0007 titanium-bracket-segment-0008 titanium-bracket-segment-0009 titanium-bracket-segment-0010 titanium-bracket-segment-0011 titanium-bracket-segment-0012 titanium-bracket-segment-0013 titanium-bracket-segment-0014 titanium-bracket-segment-0015 titanium-bracket-segment-0016 titanium-bracket-segment-0017 titanium-bracket-segment-0018 titanium-bracket-segment-0019 titanium-bracket-segment-0020 titanium-bracket-segment-0021 titanium-bracket-segment-0022 titanium-bracket-segment-0023 titanium-bracket-segment-0024 titanium-bracket-segment-0025 titanium-bracket-segment-0026 titanium-bracket-segment-0027 titanium-bracket-segment-0028 titanium-bracket-segment-0029 titanium-bracket-segment-0030 titanium-bracket-segment-0031 titanium-bracket-segment-0032 titanium-bracket-segment-0033 titanium-bracket-segment-0034 titanium-bracket-segment-0035 titanium-bracket-segment-0036 titanium-bracket-segment-0037 titanium-bracket-segment-0038 titanium-bracket-segment-0039 titanium-bracket-segment-0040 titanium-bracket-segment-0041 titanium-bracket-segment-0042 titanium-bracket-segment-0043 titanium-bracket-segment-0044 titanium-bracket-segment-0045 titanium-bracket-segment-0046 titanium-bracket-segment-0047 titanium-bracket-segment-0048 titanium-bracket-segment-0049 titanium-bracket-segment-0050 ",
+              "quantity": "40",
+              "unit_price": "110.00"
+            }
+          ]
+        }
+      },
+      "retrieval": [
+        {
+          "question_id": "po-010-q1",
+          "doc_id": "po-010",
+          "question": "What is the unit price for part number BRK-7701?",
+          "question_class": "line_item",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "   Quantity: 40\n   Unit Price: 110.00"
+            }
+          ]
+        },
+        {
+          "question_id": "po-010-q2",
+          "doc_id": "po-010",
+          "question": "What is the ship-to site on this purchase order?",
+          "question_class": "header_field",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "Ship-to Site: Hangar 4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "doc_id": "po-011",
+      "extraction": {
+        "doc_id": "po-011",
+        "expected": {
+          "po_number": "PO-1011",
+          "po_date": "2026-08-15",
+          "supplier_name": "Alpine Precision Tools",
+          "ship_to_site": "Site B",
+          "payment_terms": "Net 30",
+          "currency": "$",
+          "total_amount": "612.00",
+          "line_items": [
+            {
+              "part_number": "TL-3305",
+              "description": "Carbide end mill, 1/4in, 4-flute",
+              "quantity": "24",
+              "unit_price": "25.50"
+            }
+          ]
+        }
+      },
+      "retrieval": [
+        {
+          "question_id": "po-011-q1",
+          "doc_id": "po-011",
+          "question": "What currency symbol is printed on this purchase order?",
+          "question_class": "header_field",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "Currency: $"
+            }
+          ]
+        },
+        {
+          "question_id": "po-011-q2",
+          "doc_id": "po-011",
+          "question": "What is the quantity ordered for the carbide end mill?",
+          "question_class": "line_item",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "1. Part Number: TL-3305\n   Description: Carbide end mill, 1/4in, 4-flute\n   Quantity: 24"
+            }
+          ]
+        },
+        {
+          "question_id": "po-011-q3",
+          "doc_id": "po-011",
+          "question": "What is the ISO 4217 currency code for this purchase order?",
+          "question_class": "absent",
+          "anchors": []
+        }
+      ]
+    },
+    {
+      "doc_id": "po-012",
+      "extraction": {
+        "doc_id": "po-012",
+        "expected": {
+          "po_number": "PO-1012",
+          "po_date": "2026-08-20",
+          "supplier_name": "Bramwell Logistics",
+          "ship_to_site": "Yard 9",
+          "payment_terms": "Net 30",
+          "currency": "USD",
+          "total_amount": null,
+          "line_items": []
+        }
+      },
+      "retrieval": [
+        {
+          "question_id": "po-012-q1",
+          "doc_id": "po-012",
+          "question": "Who is the supplier on this purchase order?",
+          "question_class": "header_field",
+          "anchors": [
+            {
+              "page_number": 1,
+              "text": "Supplier: Bramwell Logistics"
+            }
+          ]
+        },
+        {
+          "question_id": "po-012-q2",
+          "doc_id": "po-012",
+          "question": "What is the part number of the first line item on this purchase order?",
+          "question_class": "absent",
+          "anchors": []
+        },
+        {
+          "question_id": "po-012-q3",
+          "doc_id": "po-012",
+          "question": "What is the total amount on this purchase order?",
+          "question_class": "absent",
+          "anchors": []
+        }
+      ]
+    }
+  ],
+  "chunking": {
+    "chunk_size": 1200,
+    "overlap": 200
+  }
+}

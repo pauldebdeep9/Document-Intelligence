@@ -1,0 +1,581 @@
+[
+  {
+    "doc_id": "po-001",
+    "purchase_order": {
+      "po_number": "PO-1001",
+      "po_date": "2026-03-04",
+      "supplier_name": "ACME Components",
+      "ship_to_site": "Riverside Plant",
+      "payment_terms": "Net 30",
+      "currency": "USD",
+      "total_amount": "1985.00",
+      "line_items": [
+        {
+          "part_number": "BRG-2050",
+          "description": "Sealed ball bearing, 20mm bore",
+          "quantity": "10",
+          "unit_price": "50.00"
+        },
+        {
+          "part_number": "GSK-1140",
+          "description": "Silicone gasket, 140mm diameter",
+          "quantity": "5",
+          "unit_price": "97.00"
+        },
+        {
+          "part_number": "SHF-3390",
+          "description": "Stainless steel shaft, 390mm length",
+          "quantity": "100",
+          "unit_price": "10.00"
+        }
+      ]
+    },
+    "pages": [
+      [
+        "PURCHASE ORDER",
+        "",
+        "PO Number: PO-1001",
+        "PO Date: 2026-03-04",
+        "Supplier: ACME Components",
+        "Ship-to Site: Riverside Plant",
+        "Payment Terms: Net 30",
+        "Currency: USD",
+        "",
+        "Line Items:",
+        "1. Part Number: BRG-2050",
+        "   Description: Sealed ball bearing, 20mm bore",
+        "   Quantity: 10",
+        "   Unit Price: 50.00",
+        "2. Part Number: GSK-1140",
+        "   Description: Silicone gasket, 140mm diameter",
+        "   Quantity: 5",
+        "   Unit Price: 97.00",
+        "3. Part Number: SHF-3390",
+        "   Description: Stainless steel shaft, 390mm length",
+        "   Quantity: 100",
+        "   Unit Price: 10.00",
+        "",
+        "Total Amount: 1985.00"
+      ]
+    ],
+    "notes": "Baseline: single page, every header field present, three line items summing exactly to the printed total."
+  },
+  {
+    "doc_id": "po-002",
+    "purchase_order": {
+      "po_number": "PO-1002",
+      "po_date": "2026-02-10",
+      "supplier_name": "Meridian Fasteners",
+      "ship_to_site": "Dockside Warehouse 2",
+      "payment_terms": null,
+      "currency": null,
+      "total_amount": "640.00",
+      "line_items": [
+        {
+          "part_number": "HXN-0812",
+          "description": "Hex nut, M8",
+          "quantity": "400",
+          "unit_price": "1.20"
+        },
+        {
+          "part_number": "WSR-0820",
+          "description": "Flat washer, M8",
+          "quantity": "800",
+          "unit_price": "0.20"
+        }
+      ]
+    },
+    "pages": [
+      [
+        "PURCHASE ORDER",
+        "",
+        "PO Number: PO-1002",
+        "PO Date: 2026-02-10",
+        "Supplier: Meridian Fasteners",
+        "Ship-to Site: Dockside Warehouse 2",
+        "",
+        "Line Items:",
+        "1. Part Number: HXN-0812",
+        "   Description: Hex nut, M8",
+        "   Quantity: 400",
+        "   Unit Price: 1.20",
+        "2. Part Number: WSR-0820",
+        "   Description: Flat washer, M8",
+        "   Quantity: 800",
+        "   Unit Price: 0.20",
+        "",
+        "Total Amount: 640.00"
+      ]
+    ],
+    "notes": "Payment Terms and Currency are true-null: their labels are omitted from the printed page entirely, not printed with a blank value."
+  },
+  {
+    "doc_id": "po-003",
+    "purchase_order": {
+      "po_number": "PO-1003",
+      "po_date": "03/04/2026",
+      "supplier_name": "Coastal Hydraulics",
+      "ship_to_site": "Plant 7",
+      "payment_terms": "Net 45",
+      "currency": "USD",
+      "total_amount": "212.50",
+      "line_items": [
+        {
+          "part_number": "HYD-4471",
+          "description": "Hydraulic hose fitting, 1/2in NPT",
+          "quantity": "25",
+          "unit_price": "8.50"
+        }
+      ]
+    },
+    "pages": [
+      [
+        "PURCHASE ORDER",
+        "",
+        "PO Number: PO-1003",
+        "PO Date: 03/04/2026",
+        "Supplier: Coastal Hydraulics",
+        "Ship-to Site: Plant 7",
+        "Payment Terms: Net 45",
+        "Currency: USD",
+        "",
+        "Line Items:",
+        "1. Part Number: HYD-4471",
+        "   Description: Hydraulic hose fitting, 1/2in NPT",
+        "   Quantity: 25",
+        "   Unit Price: 8.50",
+        "",
+        "Total Amount: 212.50"
+      ]
+    ],
+    "notes": "PO Date is printed as the ambiguous 03/04/2026; ground truth preserves it verbatim rather than resolving it to an unambiguous date."
+  },
+  {
+    "doc_id": "po-004",
+    "purchase_order": {
+      "po_number": "PO-1004",
+      "po_date": "2026-01-15",
+      "supplier_name": "Titan Fabrication",
+      "ship_to_site": "Bay 3",
+      "payment_terms": "Net 30",
+      "currency": "USD",
+      "total_amount": "330.00",
+      "line_items": [
+        {
+          "part_number": "4500123456",
+          "description": "Laser-cut steel bracket, 3mm gauge",
+          "quantity": "60",
+          "unit_price": "5.50"
+        }
+      ]
+    },
+    "pages": [
+      [
+        "PURCHASE ORDER",
+        "",
+        "PO Number: PO-1004",
+        "PO Date: 2026-01-15",
+        "Supplier: Titan Fabrication",
+        "Ship-to Site: Bay 3",
+        "Payment Terms: Net 30",
+        "Currency: USD",
+        "",
+        "Line Items:",
+        "1. Part Number: 4500123456",
+        "   Description: Laser-cut steel bracket, 3mm gauge",
+        "   Quantity: 60",
+        "   Unit Price: 5.50",
+        "",
+        "Total Amount: 330.00"
+      ]
+    ],
+    "notes": "Single line item with part number 4500123456; paired with po-005, which differs only in the final digit, to stress fine-grained identifier discrimination."
+  },
+  {
+    "doc_id": "po-005",
+    "purchase_order": {
+      "po_number": "PO-1005",
+      "po_date": "2026-01-16",
+      "supplier_name": "Titan Fabrication",
+      "ship_to_site": "Bay 3",
+      "payment_terms": "Net 30",
+      "currency": "USD",
+      "total_amount": "330.00",
+      "line_items": [
+        {
+          "part_number": "4500123457",
+          "description": "Laser-cut steel bracket, 3mm gauge",
+          "quantity": "60",
+          "unit_price": "5.50"
+        }
+      ]
+    },
+    "pages": [
+      [
+        "PURCHASE ORDER",
+        "",
+        "PO Number: PO-1005",
+        "PO Date: 2026-01-16",
+        "Supplier: Titan Fabrication",
+        "Ship-to Site: Bay 3",
+        "Payment Terms: Net 30",
+        "Currency: USD",
+        "",
+        "Line Items:",
+        "1. Part Number: 4500123457",
+        "   Description: Laser-cut steel bracket, 3mm gauge",
+        "   Quantity: 60",
+        "   Unit Price: 5.50",
+        "",
+        "Total Amount: 330.00"
+      ]
+    ],
+    "notes": "Identical to po-004 except the part number's final digit (...57 vs ...56); tests whether extraction/retrieval conflates near-duplicate identifiers."
+  },
+  {
+    "doc_id": "po-006",
+    "purchase_order": {
+      "po_number": "PO-1006",
+      "po_date": "2026-04-02",
+      "supplier_name": "Continental Bearings",
+      "ship_to_site": "Distribution Center 5",
+      "payment_terms": "Net 60",
+      "currency": "USD",
+      "total_amount": "2960.00",
+      "line_items": [
+        {
+          "part_number": "BRG-1001",
+          "description": "Deep groove ball bearing, 30mm",
+          "quantity": "50",
+          "unit_price": "12.00"
+        },
+        {
+          "part_number": "BRG-1002",
+          "description": "Deep groove ball bearing, 40mm",
+          "quantity": "40",
+          "unit_price": "15.00"
+        },
+        {
+          "part_number": "BRG-1003",
+          "description": "Angular contact bearing, 25mm",
+          "quantity": "60",
+          "unit_price": "18.00"
+        },
+        {
+          "part_number": "BRG-1004",
+          "description": "Angular contact bearing, 35mm",
+          "quantity": "34",
+          "unit_price": "20.00"
+        }
+      ]
+    },
+    "pages": [
+      [
+        "PURCHASE ORDER",
+        "",
+        "PO Number: PO-1006",
+        "PO Date: 2026-04-02",
+        "Supplier: Continental Bearings",
+        "Ship-to Site: Distribution Center 5",
+        "Payment Terms: Net 60",
+        "Currency: USD",
+        "",
+        "Line Items:",
+        "1. Part Number: BRG-1001",
+        "   Description: Deep groove ball bearing, 30mm",
+        "   Quantity: 50",
+        "   Unit Price: 12.00",
+        "2. Part Number: BRG-1002",
+        "   Description: Deep groove ball bearing, 40mm",
+        "   Quantity: 40",
+        "   Unit Price: 15.00"
+      ],
+      [
+        "3. Part Number: BRG-1003",
+        "   Description: Angular contact bearing, 25mm",
+        "   Quantity: 60",
+        "   Unit Price: 18.00",
+        "4. Part Number: BRG-1004",
+        "   Description: Angular contact bearing, 35mm",
+        "   Quantity: 34",
+        "   Unit Price: 20.00"
+      ],
+      [
+        "Total Amount: 2960.00"
+      ]
+    ],
+    "notes": "Three pages; the line item table's four entries are split 2/2 across the page 1 / page 2 boundary (page 2 does not repeat the header), with the total on page 3."
+  },
+  {
+    "doc_id": "po-007",
+    "purchase_order": {
+      "po_number": "PO-1007",
+      "po_date": "2026-05-11",
+      "supplier_name": "Northfield Industrial Supply",
+      "ship_to_site": "Warehouse C",
+      "payment_terms": "Net 30",
+      "currency": "USD",
+      "total_amount": "945.00",
+      "line_items": [
+        {
+          "part_number": "VLV-2201",
+          "description": "Ball valve, 1in NPT",
+          "quantity": "15",
+          "unit_price": "42.00"
+        },
+        {
+          "part_number": "VLV-2202",
+          "description": "Check valve, 1in NPT",
+          "quantity": "9",
+          "unit_price": "35.00"
+        }
+      ]
+    },
+    "pages": [
+      [
+        "PURCHASE ORDER",
+        "",
+        "PO Number: PO-1007",
+        "PO Date: 2026-05-11",
+        "Supplier: Northfield Industrial Supply",
+        "Ship-to Site: Warehouse C",
+        "Payment Terms: Net 30",
+        "Currency: USD",
+        "",
+        "Line Items:",
+        "1. Part Number: VLV-2201",
+        "   Description: Ball valve, 1in NPT",
+        "   Quantity: 15",
+        "   Unit Price: 42.00",
+        "2. Part Number: VLV-2202",
+        "   Description: Check valve, 1in NPT",
+        "   Quantity: 9",
+        "   Unit Price: 35.00"
+      ],
+      [],
+      [
+        "Total Amount: 945.00"
+      ]
+    ],
+    "notes": "Three pages; page 2 is entirely blank (nothing drawn) to test that extract_pdf_pages preserves a genuinely blank page at its correct page_number rather than collapsing or renumbering it."
+  },
+  {
+    "doc_id": "po-008",
+    "purchase_order": {
+      "po_number": "PO-1008",
+      "po_date": "2026-06-20",
+      "supplier_name": "Summit Electrical",
+      "ship_to_site": "Substation 2",
+      "payment_terms": "Net 30",
+      "currency": "USD",
+      "total_amount": "750.00",
+      "line_items": [
+        {
+          "part_number": "CBL-500",
+          "description": "THHN copper wire, 500ft spool",
+          "quantity": "4",
+          "unit_price": "85.00"
+        },
+        {
+          "part_number": "CBL-501",
+          "description": "THHN copper wire, 250ft spool",
+          "quantity": "3",
+          "unit_price": "55.00"
+        }
+      ]
+    },
+    "pages": [
+      [
+        "PURCHASE ORDER",
+        "",
+        "PO Number: PO-1008",
+        "PO Date: 2026-06-20",
+        "Supplier: Summit Electrical",
+        "Ship-to Site: Substation 2",
+        "Payment Terms: Net 30",
+        "Currency: USD",
+        "",
+        "Line Items:",
+        "1. Part Number: CBL-500",
+        "   Description: THHN copper wire, 500ft spool",
+        "   Quantity: 4",
+        "   Unit Price: 85.00",
+        "2. Part Number: CBL-501",
+        "   Description: THHN copper wire, 250ft spool",
+        "   Quantity: 3",
+        "   Unit Price: 55.00",
+        "",
+        "Total Amount: 750.00"
+      ]
+    ],
+    "notes": "Total Amount is printed as 750.00 but the two line items sum to only 505.00; ground truth preserves the printed, inconsistent total rather than the computed sum, per the extraction contract's prohibition on recalculating totals."
+  },
+  {
+    "doc_id": "po-009",
+    "purchase_order": {
+      "po_number": "PO-1009",
+      "po_date": "2026-07-08",
+      "supplier_name": "Smith & Sons Machining",
+      "ship_to_site": "Unit 12",
+      "payment_terms": "Net 15",
+      "currency": "USD",
+      "total_amount": "180.00",
+      "line_items": [
+        {
+          "part_number": "MCH-0090",
+          "description": "CNC-machined spacer, brass",
+          "quantity": "20",
+          "unit_price": "9.00"
+        }
+      ]
+    },
+    "pages": [
+      [
+        "PURCHASE ORDER",
+        "",
+        "PO Number: PO-1009",
+        "PO Date: 2026-07-08",
+        "Supplier: Smith & Sons Machining   ",
+        "Ship-to Site: Unit 12",
+        "Payment Terms: Net 15",
+        "Currency: USD",
+        "",
+        "Line Items:",
+        "1. Part Number: MCH-0090",
+        "   Description: CNC-machined spacer, brass",
+        "   Quantity: 20",
+        "   Unit Price: 9.00",
+        "",
+        "Total Amount: 180.00"
+      ]
+    ],
+    "notes": "Supplier name contains an ampersand and is printed with trailing whitespace after it; ground truth is the trimmed value, per the extraction contract's 'preserve apart from surrounding whitespace' rule. CAVEAT (verified, not assumed): the trailing whitespace is real in the PDF's content stream and survives pypdf's default extract_text(), but extract_pdf_pages() tries extraction_mode='layout' first, and layout mode strips trailing whitespace at end-of-line (it preserves *internal* whitespace between visible runs, just not a trailing run with nothing after it on the same line). So by the time text reaches anything downstream of extract_pdf_pages, the trailing whitespace this spec was meant to exercise is already gone \u2014 the whitespace-trim rule is not actually exercised end-to-end by this document. Ground truth is still correct; this just means po-009 cannot be used to test whitespace trimming through the real pipeline."
+  },
+  {
+    "doc_id": "po-010",
+    "purchase_order": {
+      "po_number": "PO-1010",
+      "po_date": "2026-08-01",
+      "supplier_name": "Vantage Aerospace Components",
+      "ship_to_site": "Hangar 4",
+      "payment_terms": "Net 30",
+      "currency": "USD",
+      "total_amount": "4400.00",
+      "line_items": [
+        {
+          "part_number": "BRK-7701",
+          "description": "titanium-bracket-segment-0001 titanium-bracket-segment-0002 titanium-bracket-segment-0003 titanium-bracket-segment-0004 titanium-bracket-segment-0005 titanium-bracket-segment-0006 titanium-bracket-segment-0007 titanium-bracket-segment-0008 titanium-bracket-segment-0009 titanium-bracket-segment-0010 titanium-bracket-segment-0011 titanium-bracket-segment-0012 titanium-bracket-segment-0013 titanium-bracket-segment-0014 titanium-bracket-segment-0015 titanium-bracket-segment-0016 titanium-bracket-segment-0017 titanium-bracket-segment-0018 titanium-bracket-segment-0019 titanium-bracket-segment-0020 titanium-bracket-segment-0021 titanium-bracket-segment-0022 titanium-bracket-segment-0023 titanium-bracket-segment-0024 titanium-bracket-segment-0025 titanium-bracket-segment-0026 titanium-bracket-segment-0027 titanium-bracket-segment-0028 titanium-bracket-segment-0029 titanium-bracket-segment-0030 titanium-bracket-segment-0031 titanium-bracket-segment-0032 titanium-bracket-segment-0033 titanium-bracket-segment-0034 titanium-bracket-segment-0035 titanium-bracket-segment-0036 titanium-bracket-segment-0037 titanium-bracket-segment-0038 titanium-bracket-segment-0039 titanium-bracket-segment-0040 titanium-bracket-segment-0041 titanium-bracket-segment-0042 titanium-bracket-segment-0043 titanium-bracket-segment-0044 titanium-bracket-segment-0045 titanium-bracket-segment-0046 titanium-bracket-segment-0047 titanium-bracket-segment-0048 titanium-bracket-segment-0049 titanium-bracket-segment-0050 ",
+          "quantity": "40",
+          "unit_price": "110.00"
+        }
+      ]
+    },
+    "pages": [
+      [
+        "PURCHASE ORDER",
+        "",
+        "PO Number: PO-1010",
+        "PO Date: 2026-08-01",
+        "Supplier: Vantage Aerospace Components",
+        "Ship-to Site: Hangar 4",
+        "Payment Terms: Net 30",
+        "Currency: USD",
+        "",
+        "Line Items:",
+        "1. Part Number: BRK-7701",
+        "   Description: titanium-bracket-segment-0001 titanium-bracket-segment-0002 titanium-bracket-segment-0003",
+        "      titanium-bracket-segment-0004 titanium-bracket-segment-0005 titanium-bracket-segment-0006",
+        "      titanium-bracket-segment-0007 titanium-bracket-segment-0008 titanium-bracket-segment-0009",
+        "      titanium-bracket-segment-0010 titanium-bracket-segment-0011 titanium-bracket-segment-0012",
+        "      titanium-bracket-segment-0013 titanium-bracket-segment-0014 titanium-bracket-segment-0015",
+        "      titanium-bracket-segment-0016 titanium-bracket-segment-0017 titanium-bracket-segment-0018",
+        "      titanium-bracket-segment-0019 titanium-bracket-segment-0020 titanium-bracket-segment-0021",
+        "      titanium-bracket-segment-0022 titanium-bracket-segment-0023 titanium-bracket-segment-0024",
+        "      titanium-bracket-segment-0025 titanium-bracket-segment-0026 titanium-bracket-segment-0027",
+        "      titanium-bracket-segment-0028 titanium-bracket-segment-0029 titanium-bracket-segment-0030",
+        "      titanium-bracket-segment-0031 titanium-bracket-segment-0032 titanium-bracket-segment-0033",
+        "      titanium-bracket-segment-0034 titanium-bracket-segment-0035 titanium-bracket-segment-0036",
+        "      titanium-bracket-segment-0037 titanium-bracket-segment-0038 titanium-bracket-segment-0039",
+        "      titanium-bracket-segment-0040 titanium-bracket-segment-0041 titanium-bracket-segment-0042",
+        "      titanium-bracket-segment-0043 titanium-bracket-segment-0044 titanium-bracket-segment-0045",
+        "      titanium-bracket-segment-0046 titanium-bracket-segment-0047 titanium-bracket-segment-0048",
+        "      titanium-bracket-segment-0049 titanium-bracket-segment-0050",
+        "   Quantity: 40",
+        "   Unit Price: 110.00",
+        "",
+        "Total Amount: 4400.00"
+      ]
+    ],
+    "notes": "Line item description is a deterministic 1500-character string, longer than the default 1200-character chunk_size, guaranteeing by construction that no single chunk_pages() window can contain it whole."
+  },
+  {
+    "doc_id": "po-011",
+    "purchase_order": {
+      "po_number": "PO-1011",
+      "po_date": "2026-08-15",
+      "supplier_name": "Alpine Precision Tools",
+      "ship_to_site": "Site B",
+      "payment_terms": "Net 30",
+      "currency": "$",
+      "total_amount": "612.00",
+      "line_items": [
+        {
+          "part_number": "TL-3305",
+          "description": "Carbide end mill, 1/4in, 4-flute",
+          "quantity": "24",
+          "unit_price": "25.50"
+        }
+      ]
+    },
+    "pages": [
+      [
+        "PURCHASE ORDER",
+        "",
+        "PO Number: PO-1011",
+        "PO Date: 2026-08-15",
+        "Supplier: Alpine Precision Tools",
+        "Ship-to Site: Site B",
+        "Payment Terms: Net 30",
+        "Currency: $",
+        "",
+        "Line Items:",
+        "1. Part Number: TL-3305",
+        "   Description: Carbide end mill, 1/4in, 4-flute",
+        "   Quantity: 24",
+        "   Unit Price: 25.50",
+        "",
+        "Total Amount: 612.00"
+      ]
+    ],
+    "notes": "Currency is printed only as a bare '$' symbol; no ISO 4217 code (e.g. USD) appears anywhere in the document, and ground truth preserves the bare symbol rather than inferring an ISO code from geography or convention."
+  },
+  {
+    "doc_id": "po-012",
+    "purchase_order": {
+      "po_number": "PO-1012",
+      "po_date": "2026-08-20",
+      "supplier_name": "Bramwell Logistics",
+      "ship_to_site": "Yard 9",
+      "payment_terms": "Net 30",
+      "currency": "USD",
+      "total_amount": null,
+      "line_items": []
+    },
+    "pages": [
+      [
+        "PURCHASE ORDER",
+        "",
+        "PO Number: PO-1012",
+        "PO Date: 2026-08-20",
+        "Supplier: Bramwell Logistics",
+        "Ship-to Site: Yard 9",
+        "Payment Terms: Net 30",
+        "Currency: USD",
+        "",
+        "Line Items:",
+        "  None"
+      ]
+    ],
+    "notes": "Zero line items; the Line Items section is present but literally empty, and total_amount is genuinely absent rather than printed as zero."
+  }
+]
