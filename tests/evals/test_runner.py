@@ -170,6 +170,50 @@ def test_preflight_raises_for_invalid_chunk_size() -> None:
         preflight(goldset, "chat-model", "embed-model", 0, 200, 3)
 
 
+# chunk_pages([], doc_id="x", chunk_size=0, overlap=200) and
+# chunk_pages([], doc_id="x", chunk_size=1200, overlap=1200) were verified directly (not
+# through preflight) to raise ValueError before touching any page — chunk_size/overlap
+# validation runs before chunk_pages's page-number-uniqueness check and its chunking loop, so
+# preflight's indirect check (calling chunk_pages against an empty page list) is not a silent
+# pass-through. These four go through run_eval specifically, not preflight directly, so a
+# real client is in scope to assert zero calls were ever recorded against it.
+@pytest.mark.parametrize(
+    ("chunk_size", "overlap", "match"),
+    [
+        (0, 200, "Chunk size must be greater than zero"),
+        (-100, 200, "Chunk size must be greater than zero"),
+        (1200, -1, "Overlap must be non-negative and smaller than chunk size"),
+        (1200, 1200, "Overlap must be non-negative and smaller than chunk size"),
+    ],
+)
+def test_run_eval_aborts_via_preflight_for_invalid_chunking_params_before_any_call(
+    tmp_path: Path,
+    chunk_size: int,
+    overlap: int,
+    match: str,
+) -> None:
+    pdf_dir = tmp_path / "pdfs"
+    _write_pdf(pdf_dir / "doc-a.pdf", ["PO Number: PO-A001"])
+    goldset = _small_goldset(["doc-a"])
+    client = StubClient()
+
+    with pytest.raises(ValueError, match=match):
+        run_eval(
+            goldset,
+            Split.DEV,
+            client,
+            "chat-model",
+            "embed-model",
+            chunk_size,
+            overlap,
+            3,
+            pdf_dir=pdf_dir,
+        )
+
+    assert client.responses.calls == []
+    assert client.embeddings.calls == []
+
+
 def test_preflight_raises_for_empty_goldset() -> None:
     goldset = GoldSet(
         version="test", chunking=ChunkingConfig(chunk_size=1200, overlap=200), items=[]
@@ -410,6 +454,54 @@ def test_save_run_record_round_trips(tmp_path: Path) -> None:
     reloaded = RunRecord.model_validate_json(output_path.read_text())
 
     assert reloaded == record
+
+
+def test_save_run_record_round_trips_with_an_errored_item(tmp_path: Path) -> None:
+    record = _sample_record().model_copy(
+        update={
+            "items": [
+                ItemRecord(
+                    question_id="doc-a-q1",
+                    doc_id="doc-a",
+                    question_class="header_field",
+                    retrieved_chunk_ids=["doc-a:page-001-chunk-001"],
+                    retrieved_doc_ids=["doc-a"],
+                    retrieved_page_numbers=[1],
+                    retrieved_texts=["PO Number: PO-A001"],
+                    retrieved_scores=[0.9],
+                    answer=None,
+                    source_chunk_ids=[],
+                    error="RuntimeError: provider unavailable",
+                ),
+            ],
+        }
+    )
+
+    output_path = save_run_record(record, runs_dir=tmp_path)
+    reloaded = RunRecord.model_validate_json(output_path.read_text())
+
+    assert reloaded == record
+    assert reloaded.items[0].error == "RuntimeError: provider unavailable"
+
+
+def test_save_run_record_writes_valid_utf8_json(tmp_path: Path) -> None:
+    record = _sample_record().model_copy(
+        update={
+            "documents": [
+                DocumentRecord(
+                    doc_id="doc-a",
+                    purchase_order=PurchaseOrder(supplier_name="Müller & Söhne"),
+                    chunk_count=1,
+                ),
+            ],
+        }
+    )
+
+    output_path = save_run_record(record, runs_dir=tmp_path)
+    with output_path.open(encoding="utf-8") as handle:
+        payload = json.load(handle)
+
+    assert payload["documents"][0]["purchase_order"]["supplier_name"] == "Müller & Söhne"
 
 
 # --- RunRecord JSON round-trip ---------------------------------------------------------------
