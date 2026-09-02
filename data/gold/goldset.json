@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "items": [
     {
       "doc_id": "po-001",
@@ -261,7 +261,7 @@
         {
           "question_id": "po-004-q1",
           "doc_id": "po-004",
-          "question": "What is the exact part number for the laser-cut steel bracket on this purchase order?",
+          "question": "What is the exact part number for the laser-cut steel bracket on purchase order PO-1004?",
           "question_class": "near_duplicate",
           "anchors": [
             {
@@ -317,7 +317,7 @@
         {
           "question_id": "po-005-q1",
           "doc_id": "po-005",
-          "question": "What is the exact part number for the laser-cut steel bracket on this purchase order?",
+          "question": "What is the exact part number for the laser-cut steel bracket on purchase order PO-1005?",
           "question_class": "near_duplicate",
           "anchors": [
             {

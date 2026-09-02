@@ -28,7 +28,7 @@ GOLDSET_PATH = Path("data/gold/goldset.json")
 CHUNK_SIZE = 1200
 OVERLAP = 200
 
-_VERSION = "1.0.0"
+_VERSION = "1.1.0"
 
 # doc_id -> hand-written retrieval questions for that document.
 _QUESTIONS: dict[str, list[RetrievalGold]] = {
@@ -178,13 +178,20 @@ _QUESTIONS: dict[str, list[RetrievalGold]] = {
             ],
         ),
     ],
+    # po-004-q1/po-005-q1 originally shared byte-identical question text ("...on this purchase
+    # order?"), which made the pair undecidable from the query alone: nothing in the text said
+    # which document was meant, so a hit or miss was luck, not discrimination (measured at
+    # k=3, the two candidates scored 0.6478 vs 0.6459 apart - see FINDING-002.md). Each question
+    # now names its own po_number so it is answerable from its own document alone, while still
+    # requiring the model to read the differing part number rather than just restating it - do
+    # not "simplify" this back to the original shared wording.
     "po-004": [
         RetrievalGold(
             question_id="po-004-q1",
             doc_id="po-004",
             question=(
-                "What is the exact part number for the laser-cut steel bracket on this "
-                "purchase order?"
+                "What is the exact part number for the laser-cut steel bracket on purchase "
+                "order PO-1004?"
             ),
             question_class="near_duplicate",
             anchors=[Anchor(page_number=1, text="1. Part Number: 4500123456")],
@@ -218,8 +225,8 @@ _QUESTIONS: dict[str, list[RetrievalGold]] = {
             question_id="po-005-q1",
             doc_id="po-005",
             question=(
-                "What is the exact part number for the laser-cut steel bracket on this "
-                "purchase order?"
+                "What is the exact part number for the laser-cut steel bracket on purchase "
+                "order PO-1005?"
             ),
             question_class="near_duplicate",
             anchors=[Anchor(page_number=1, text="1. Part Number: 4500123457")],

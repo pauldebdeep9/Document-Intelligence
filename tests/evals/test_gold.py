@@ -416,6 +416,40 @@ def test_build_goldset_question_count_is_within_the_target_range() -> None:
     assert 30 <= total <= 40
 
 
+def _near_duplicate_q1_questions(goldset: GoldSet) -> tuple[str, str]:
+    by_id = {
+        retrieval.question_id: retrieval.question
+        for item in goldset.items
+        for retrieval in item.retrieval
+    }
+    return by_id["po-004-q1"], by_id["po-005-q1"]
+
+
+def test_near_duplicate_q1_questions_are_distinguishable_by_document() -> None:
+    # po-004-q1 and po-005-q1 originally shared byte-identical question text, so a hit or miss
+    # on either was luck rather than discrimination (FINDING-002.md). Each must now name its
+    # own document (po_number) so the pair is answerable without guessing which PO is meant.
+    goldset = build_goldset()
+
+    po_004_q1, po_005_q1 = _near_duplicate_q1_questions(goldset)
+
+    assert po_004_q1 != po_005_q1
+
+
+def test_near_duplicate_q1_questions_do_not_name_the_differentiating_part_number() -> None:
+    # The rewrite must disambiguate via a document identifier, not by stating the part number
+    # itself in the question - that would make the answer a restatement of the query rather
+    # than something retrieval and reading have to discriminate.
+    goldset = build_goldset()
+
+    po_004_q1, po_005_q1 = _near_duplicate_q1_questions(goldset)
+
+    assert "4500123456" not in po_004_q1
+    assert "4500123457" not in po_004_q1
+    assert "4500123456" not in po_005_q1
+    assert "4500123457" not in po_005_q1
+
+
 # --- authoring.write_goldset -------------------------------------------------------------------
 
 
