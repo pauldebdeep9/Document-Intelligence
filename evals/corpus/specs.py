@@ -474,17 +474,9 @@ _PO_009_SPEC = DocumentSpec(
         ],
     ],
     notes=(
-        "Supplier name contains an ampersand and is printed with trailing whitespace after it; "
-        "ground truth is the trimmed value, per the extraction contract's 'preserve apart from "
-        "surrounding whitespace' rule. CAVEAT (verified, not assumed): the trailing whitespace "
-        "is real in the PDF's content stream and survives pypdf's default extract_text(), but "
-        "extract_pdf_pages() tries extraction_mode='layout' first, and layout mode strips "
-        "trailing whitespace at end-of-line (it preserves *internal* whitespace between visible "
-        "runs, just not a trailing run with nothing after it on the same line). So by the time "
-        "text reaches anything downstream of extract_pdf_pages, the trailing whitespace this "
-        "spec was meant to exercise is already gone — the whitespace-trim rule is not actually "
-        "exercised end-to-end by this document. Ground truth is still correct; this just means "
-        "po-009 cannot be used to test whitespace trimming through the real pipeline."
+        "Supplier name contains an ampersand (Smith & Sons Machining); tests that extraction "
+        "and retrieval preserve the ampersand character verbatim rather than escaping, "
+        "dropping, or otherwise mangling it."
     ),
 )
 

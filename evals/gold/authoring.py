@@ -80,6 +80,13 @@ _QUESTIONS: dict[str, list[RetrievalGold]] = {
                 ),
             ],
         ),
+        RetrievalGold(
+            question_id="po-001-q5",
+            doc_id="po-001",
+            question="What are the freight terms (e.g., FOB, CIF) for this purchase order?",
+            question_class="absent",
+            anchors=[],
+        ),
     ],
     "po-002": [
         RetrievalGold(
@@ -112,6 +119,30 @@ _QUESTIONS: dict[str, list[RetrievalGold]] = {
             question="What are the payment terms on this purchase order?",
             question_class="absent",
             anchors=[],
+        ),
+        RetrievalGold(
+            question_id="po-002-q4",
+            doc_id="po-002",
+            question="What is the currency for this purchase order?",
+            question_class="absent",
+            anchors=[],
+        ),
+        RetrievalGold(
+            question_id="po-002-q5",
+            doc_id="po-002",
+            question="What is the unit price of part number HXN-0812?",
+            question_class="line_item",
+            anchors=[
+                Anchor(
+                    page_number=1,
+                    text=(
+                        "1. Part Number: HXN-0812\n"
+                        "   Description: Hex nut, M8\n"
+                        "   Quantity: 400\n"
+                        "   Unit Price: 1.20"
+                    ),
+                ),
+            ],
         ),
     ],
     "po-003": [
@@ -174,6 +205,13 @@ _QUESTIONS: dict[str, list[RetrievalGold]] = {
                 ),
             ],
         ),
+        RetrievalGold(
+            question_id="po-004-q3",
+            doc_id="po-004",
+            question="What is the requested delivery date for this purchase order?",
+            question_class="absent",
+            anchors=[],
+        ),
     ],
     "po-005": [
         RetrievalGold(
@@ -201,6 +239,13 @@ _QUESTIONS: dict[str, list[RetrievalGold]] = {
                     ),
                 ),
             ],
+        ),
+        RetrievalGold(
+            question_id="po-005-q3",
+            doc_id="po-005",
+            question="What is the warranty period for the part ordered on this purchase order?",
+            question_class="absent",
+            anchors=[],
         ),
     ],
     "po-006": [
@@ -265,6 +310,20 @@ _QUESTIONS: dict[str, list[RetrievalGold]] = {
                 Anchor(page_number=2, text="4. Part Number: BRG-1004"),
                 Anchor(page_number=3, text="Total Amount: 2960.00"),
             ],
+        ),
+        RetrievalGold(
+            question_id="po-006-q4",
+            doc_id="po-006",
+            question="Who is the buyer's contact person for this purchase order?",
+            question_class="absent",
+            anchors=[],
+        ),
+        RetrievalGold(
+            question_id="po-006-q5",
+            doc_id="po-006",
+            question="What are the payment terms on this purchase order?",
+            question_class="header_field",
+            anchors=[Anchor(page_number=1, text="Payment Terms: Net 60")],
         ),
     ],
     "po-007": [
@@ -360,6 +419,16 @@ _QUESTIONS: dict[str, list[RetrievalGold]] = {
             question="What is the ship-to site on this purchase order?",
             question_class="header_field",
             anchors=[Anchor(page_number=1, text="Ship-to Site: Hangar 4")],
+        ),
+        RetrievalGold(
+            question_id="po-010-q3",
+            doc_id="po-010",
+            question=(
+                "What certification standard applies to the bracket ordered on this "
+                "purchase order?"
+            ),
+            question_class="absent",
+            anchors=[],
         ),
     ],
     "po-011": [

@@ -257,12 +257,25 @@ def test_split_assignment_satisfies_coverage_requirements() -> None:
         "near_duplicate",
     }
 
-    # header_field, line_item, and absent each have at least one question in every split.
-    for question_class in ("header_field", "line_item", "absent"):
+    # header_field and line_item each have at least one question in every split.
+    for question_class in ("header_field", "line_item"):
         for split in (Split.DEV, Split.TEST, Split.HELD):
             assert question_class in classes_by_split[split], (
                 f"{question_class} has no question in {split}"
             )
+
+    # absent has at least one question in TEST and HELD, and at least five in DEV — a single
+    # DEV absent question measures nothing (n=1), so the count is the invariant, not presence.
+    assert "absent" in classes_by_split[Split.TEST]
+    assert "absent" in classes_by_split[Split.HELD]
+    absent_count_in_dev = sum(
+        1
+        for item in goldset.items
+        if assign_split(item.doc_id) == Split.DEV
+        for retrieval in item.retrieval
+        if retrieval.question_class == "absent"
+    )
+    assert absent_count_in_dev >= 5, f"only {absent_count_in_dev} absent questions in DEV"
 
     # cross_page and near_duplicate appear in DEV only. This is a known corpus limitation,
     # not a design goal: po-006 is the only cross_page document and po-004/po-005 the only
