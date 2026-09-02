@@ -20,11 +20,12 @@ from evals.runner import (
     ItemRecord,
     RunConfig,
     RunRecord,
+    _scope_candidates,
     preflight,
     run_eval,
     save_run_record,
 )
-from isc.models import GroundedAnswer, PurchaseOrder
+from isc.models import Chunk, GroundedAnswer, PurchaseOrder
 
 _INSUFFICIENT_ANSWER = "I don't have enough information in the provided sources."
 
@@ -131,6 +132,61 @@ def _small_goldset(doc_ids: list[str], questions_per_doc: int = 1) -> GoldSet:
             for doc_id in doc_ids
         ],
     )
+
+
+def _chunk(doc_id: str, chunk_number: int) -> Chunk:
+    return Chunk(
+        doc_id=doc_id,
+        chunk_id=f"{doc_id}:page-001-chunk-{chunk_number:03d}",
+        page_number=1,
+        text=f"text for {doc_id} chunk {chunk_number}",
+    )
+
+
+# --- _scope_candidates ---------------------------------------------------------------------
+
+
+def test_scope_candidates_filters_to_only_the_given_doc_id() -> None:
+    chunks = [_chunk("po-004", 1), _chunk("po-005", 1), _chunk("po-010", 1)]
+    embeddings = [[1.0], [2.0], [3.0]]
+
+    scoped_chunks, scoped_embeddings = _scope_candidates(chunks, embeddings, "po-004")
+
+    assert [c.doc_id for c in scoped_chunks] == ["po-004"]
+    assert scoped_embeddings == [[1.0]]
+
+
+def test_scope_candidates_with_scope_none_returns_input_unchanged() -> None:
+    chunks = [_chunk("po-004", 1), _chunk("po-005", 1)]
+    embeddings = [[1.0], [2.0]]
+
+    scoped_chunks, scoped_embeddings = _scope_candidates(chunks, embeddings, None)
+
+    assert scoped_chunks == chunks
+    assert scoped_embeddings == embeddings
+
+
+def test_scope_candidates_with_no_matching_doc_id_returns_empty_not_an_error() -> None:
+    chunks = [_chunk("po-004", 1), _chunk("po-005", 1)]
+    embeddings = [[1.0], [2.0]]
+
+    scoped_chunks, scoped_embeddings = _scope_candidates(chunks, embeddings, "po-999")
+
+    assert scoped_chunks == []
+    assert scoped_embeddings == []
+
+
+def test_scope_candidates_keeps_multiple_chunks_from_the_same_scoped_document() -> None:
+    chunks = [_chunk("po-006", 1), _chunk("po-006", 2), _chunk("po-001", 1)]
+    embeddings = [[1.0], [2.0], [3.0]]
+
+    scoped_chunks, scoped_embeddings = _scope_candidates(chunks, embeddings, "po-006")
+
+    assert [c.chunk_id for c in scoped_chunks] == [
+        "po-006:page-001-chunk-001",
+        "po-006:page-001-chunk-002",
+    ]
+    assert scoped_embeddings == [[1.0], [2.0]]
 
 
 # --- preflight ---------------------------------------------------------------------------------
@@ -264,6 +320,97 @@ def test_preflight_passes_for_a_valid_configuration(tmp_path: Path) -> None:
     preflight(goldset, "chat-model", "embed-model", 1200, 200, 3, pdf_dir=pdf_dir)
 
 
+def test_preflight_raises_for_goldset_version_mismatch(tmp_path: Path) -> None:
+    pdf_dir = tmp_path / "pdfs"
+    _write_pdf(pdf_dir / "doc-a.pdf", ["PO Number: PO-A001"])
+    goldset = _small_goldset(["doc-a"])  # goldset.version == "test"
+
+    with pytest.raises(ValueError, match="goldset version mismatch"):
+        preflight(
+            goldset,
+            "chat-model",
+            "embed-model",
+            1200,
+            200,
+            3,
+            pdf_dir=pdf_dir,
+            expected_goldset_version="1.1.0",
+        )
+
+
+def test_preflight_error_message_names_both_versions(tmp_path: Path) -> None:
+    pdf_dir = tmp_path / "pdfs"
+    _write_pdf(pdf_dir / "doc-a.pdf", ["PO Number: PO-A001"])
+    goldset = _small_goldset(["doc-a"])  # goldset.version == "test"
+
+    with pytest.raises(ValueError, match="loaded 'test'.*expected '1.1.0'"):
+        preflight(
+            goldset,
+            "chat-model",
+            "embed-model",
+            1200,
+            200,
+            3,
+            pdf_dir=pdf_dir,
+            expected_goldset_version="1.1.0",
+        )
+
+
+def test_preflight_passes_when_goldset_version_matches_expected(tmp_path: Path) -> None:
+    pdf_dir = tmp_path / "pdfs"
+    _write_pdf(pdf_dir / "doc-a.pdf", ["PO Number: PO-A001"])
+    goldset = _small_goldset(["doc-a"])  # goldset.version == "test"
+
+    preflight(
+        goldset,
+        "chat-model",
+        "embed-model",
+        1200,
+        200,
+        3,
+        pdf_dir=pdf_dir,
+        expected_goldset_version="test",
+    )
+
+
+def test_preflight_skips_version_check_when_expected_goldset_version_not_given(
+    tmp_path: Path,
+) -> None:
+    pdf_dir = tmp_path / "pdfs"
+    _write_pdf(pdf_dir / "doc-a.pdf", ["PO Number: PO-A001"])
+    goldset = _small_goldset(["doc-a"])  # goldset.version == "test"
+
+    # No expected_goldset_version passed -> no comparison happens, regardless of what
+    # goldset.version actually is.
+    preflight(goldset, "chat-model", "embed-model", 1200, 200, 3, pdf_dir=pdf_dir)
+
+
+def test_run_eval_raises_via_preflight_for_goldset_version_mismatch_before_any_call(
+    tmp_path: Path,
+) -> None:
+    pdf_dir = tmp_path / "pdfs"
+    _write_pdf(pdf_dir / "doc-a.pdf", ["PO Number: PO-A001"])
+    goldset = _small_goldset(["doc-a"])  # goldset.version == "test"
+    client = StubClient()
+
+    with pytest.raises(ValueError, match="goldset version mismatch"):
+        run_eval(
+            goldset,
+            Split.DEV,
+            client,
+            "chat-model",
+            "embed-model",
+            1200,
+            200,
+            3,
+            pdf_dir=pdf_dir,
+            expected_goldset_version="1.1.0",
+        )
+
+    assert client.responses.calls == []
+    assert client.embeddings.calls == []
+
+
 # --- run_eval ------------------------------------------------------------------------------
 
 
@@ -288,7 +435,9 @@ def test_run_eval_ingests_each_document_exactly_once_regardless_of_question_coun
     assert len(client.embeddings.calls) == 1 + 3
 
 
-def test_run_eval_pools_chunks_across_every_document_in_split(tmp_path: Path) -> None:
+def test_run_eval_pools_chunks_across_every_document_in_split_when_scoping_pooled(
+    tmp_path: Path,
+) -> None:
     pdf_dir = tmp_path / "pdfs"
     _write_pdf(pdf_dir / "doc-a.pdf", ["PO Number: PO-A001"])
     _write_pdf(pdf_dir / "doc-b.pdf", ["PO Number: PO-B001"])
@@ -319,14 +468,26 @@ def test_run_eval_pools_chunks_across_every_document_in_split(tmp_path: Path) ->
     client = StubClient()
 
     record = run_eval(
-        goldset, Split.DEV, client, "chat-model", "embed-model", 1200, 200, 3, pdf_dir=pdf_dir
+        goldset,
+        Split.DEV,
+        client,
+        "chat-model",
+        "embed-model",
+        1200,
+        200,
+        3,
+        pdf_dir=pdf_dir,
+        scoping="pooled",
     )
 
     item = next(i for i in record.items if i.question_id == "doc-a-q1")
     # k=3 but only 2 chunks total exist (one per doc) -> top_k_chunks returns both; the pool
-    # must include doc-b's chunk even though the question is about doc-a.
+    # must include doc-b's chunk even though the question is about doc-a. Only true under
+    # explicit scoping="pooled" now that "scoped" is the default.
     assert set(item.retrieved_doc_ids) == {"doc-a", "doc-b"}
     assert record.config.pooled_chunk_count == 2
+    assert record.config.scoping == "pooled"
+    assert item.scope is None
 
 
 def test_run_eval_records_per_item_provider_exception_and_continues(tmp_path: Path) -> None:
@@ -386,6 +547,118 @@ def test_run_eval_document_records_hold_extracted_purchase_order_and_chunk_count
     assert record.documents[0].chunk_count == 1
 
 
+# --- run_eval scoping ------------------------------------------------------------------------
+
+
+def _two_doc_goldset() -> GoldSet:
+    return GoldSet(
+        version="test",
+        chunking=ChunkingConfig(chunk_size=1200, overlap=200),
+        items=[
+            GoldItem(
+                doc_id="doc-a",
+                extraction=ExtractionGold(doc_id="doc-a", expected=PurchaseOrder()),
+                retrieval=[
+                    RetrievalGold(
+                        question_id="doc-a-q1",
+                        doc_id="doc-a",
+                        question="What is the PO number?",
+                        question_class="header_field",
+                        anchors=[Anchor(page_number=1, text="PO Number: PO-A001")],
+                    ),
+                ],
+            ),
+            GoldItem(
+                doc_id="doc-b",
+                extraction=ExtractionGold(doc_id="doc-b", expected=PurchaseOrder()),
+                retrieval=[_absent_question("doc-b", 1)],
+            ),
+        ],
+    )
+
+
+def test_run_eval_defaults_to_scoped_retrieval(tmp_path: Path) -> None:
+    pdf_dir = tmp_path / "pdfs"
+    _write_pdf(pdf_dir / "doc-a.pdf", ["PO Number: PO-A001"])
+    _write_pdf(pdf_dir / "doc-b.pdf", ["PO Number: PO-B001"])
+    goldset = _two_doc_goldset()
+    client = StubClient()
+
+    # No scoping argument passed -> must default to "scoped".
+    record = run_eval(
+        goldset, Split.DEV, client, "chat-model", "embed-model", 1200, 200, 3, pdf_dir=pdf_dir
+    )
+
+    item = next(i for i in record.items if i.question_id == "doc-a-q1")
+    assert set(item.retrieved_doc_ids) == {"doc-a"}
+    assert record.config.scoping == "scoped"
+
+
+def test_run_eval_scoped_with_k_larger_than_document_chunk_count_has_no_filler(
+    tmp_path: Path,
+) -> None:
+    pdf_dir = tmp_path / "pdfs"
+    _write_pdf(pdf_dir / "doc-a.pdf", ["PO Number: PO-A001"])
+    _write_pdf(pdf_dir / "doc-b.pdf", ["PO Number: PO-B001"])
+    goldset = _two_doc_goldset()
+    client = StubClient()
+
+    # doc-a chunks to exactly 1 chunk; k=5 is far larger than that.
+    record = run_eval(
+        goldset,
+        Split.DEV,
+        client,
+        "chat-model",
+        "embed-model",
+        1200,
+        200,
+        5,
+        pdf_dir=pdf_dir,
+        scoping="scoped",
+    )
+
+    item = next(i for i in record.items if i.question_id == "doc-a-q1")
+    assert item.retrieved_doc_ids == ["doc-a"]
+    assert len(item.retrieved_chunk_ids) == 1
+
+
+def test_run_eval_records_scope_used_on_each_item_for_both_modes(tmp_path: Path) -> None:
+    pdf_dir = tmp_path / "pdfs"
+    _write_pdf(pdf_dir / "doc-a.pdf", ["PO Number: PO-A001"])
+    _write_pdf(pdf_dir / "doc-b.pdf", ["PO Number: PO-B001"])
+    goldset = _two_doc_goldset()
+
+    scoped_record = run_eval(
+        goldset,
+        Split.DEV,
+        StubClient(),
+        "chat-model",
+        "embed-model",
+        1200,
+        200,
+        3,
+        pdf_dir=pdf_dir,
+        scoping="scoped",
+    )
+    scoped_item = next(i for i in scoped_record.items if i.question_id == "doc-a-q1")
+    assert scoped_item.scope == "doc-a"
+
+    pooled_record = run_eval(
+        goldset,
+        Split.DEV,
+        StubClient(),
+        "chat-model",
+        "embed-model",
+        1200,
+        200,
+        3,
+        pdf_dir=pdf_dir,
+        scoping="pooled",
+    )
+    pooled_item = next(i for i in pooled_record.items if i.question_id == "doc-a-q1")
+    assert pooled_item.scope is None
+
+
 # --- save_run_record -----------------------------------------------------------------------
 
 
@@ -404,6 +677,7 @@ def _sample_record() -> RunRecord:
             split=Split.DEV,
             document_count=1,
             pooled_chunk_count=1,
+            scoping="scoped",
         ),
         documents=[
             DocumentRecord(
@@ -415,6 +689,7 @@ def _sample_record() -> RunRecord:
                 question_id="doc-a-q1",
                 doc_id="doc-a",
                 question_class="absent",
+                scope="doc-a",
                 retrieved_chunk_ids=[],
                 retrieved_doc_ids=[],
                 retrieved_page_numbers=[],
@@ -464,6 +739,7 @@ def test_save_run_record_round_trips_with_an_errored_item(tmp_path: Path) -> Non
                     question_id="doc-a-q1",
                     doc_id="doc-a",
                     question_class="header_field",
+                    scope="doc-a",
                     retrieved_chunk_ids=["doc-a:page-001-chunk-001"],
                     retrieved_doc_ids=["doc-a"],
                     retrieved_page_numbers=[1],
