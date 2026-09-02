@@ -18,7 +18,6 @@ from enum import StrEnum
 from typing import NamedTuple
 
 from evals.gold.schema import Anchor
-from isc.llm import _INSUFFICIENT_ANSWER
 from isc.models import LineItem, PurchaseOrder, SourceEvidence
 
 _HEADER_FIELDS = (
@@ -187,16 +186,26 @@ def score_line_items(expected: list[LineItem], actual: list[LineItem]) -> LineIt
 
 # --- insufficiency compliance -----------------------------------------------------------------
 
+# Deliberately pinned here, not imported from isc.llm. This string is the contract between
+# what the model is asked to emit and what this eval scores as compliant. If it were
+# imported, an edit to isc.llm's wording would silently change what this eval accepts — the
+# metric would keep returning True and every prior run record would stay scored as
+# compliant, with nothing anywhere going red. Pinning it here means a real wording change
+# shows up as a failing test (see test_pinned_insufficiency_answer_matches_isc_llm_contract
+# in tests/evals/test_metrics.py — the only place these two values are allowed to meet), not
+# a silent pass-through.
+INSUFFICIENCY_ANSWER = "I don't have enough information in the provided sources."
+
 
 def is_insufficiency_response(answer: str) -> bool:
-    """Exact-string compliance with isc.llm's insufficiency control string.
+    """Exact-string compliance with the pinned INSUFFICIENCY_ANSWER contract above.
 
-    No normalization, no fuzzy match, no startswith, no strip — isc.llm treats this exact
-    string as a control signal, so a near-miss (trailing whitespace, a differing final
+    No normalization, no fuzzy match, no startswith, no strip — this exact string is a
+    control signal downstream, so a near-miss (trailing whitespace, a differing final
     period, a case difference) is a real failure and must be visible as one. This is binary
     string compliance, not answer grading.
     """
-    return answer == _INSUFFICIENT_ANSWER
+    return answer == INSUFFICIENCY_ANSWER
 
 
 # --- reporting ---------------------------------------------------------------------------------

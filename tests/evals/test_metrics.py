@@ -328,6 +328,23 @@ def test_is_insufficiency_response_false_for_empty_string() -> None:
     assert is_insufficiency_response("") is False
 
 
+def test_pinned_insufficiency_answer_matches_isc_llm_contract() -> None:
+    # The only place evals.metrics.INSUFFICIENCY_ANSWER and isc.llm's control string are
+    # allowed to meet. metrics.py pins its own literal deliberately rather than importing
+    # isc.llm's (private, underscore-prefixed) constant, specifically so that a wording
+    # change in isc.llm shows up here as a failure instead of silently changing what this
+    # eval accepts.
+    from isc.llm import _INSUFFICIENT_ANSWER as isc_llm_insufficient_answer
+
+    assert isc_llm_insufficient_answer == metrics.INSUFFICIENCY_ANSWER, (
+        "evals.metrics.INSUFFICIENCY_ANSWER no longer matches isc.llm's insufficiency "
+        "control string. This means the insufficiency contract changed: every run record "
+        "scored against the old string is no longer comparable to runs scored against the "
+        "new one. Fix this as a deliberate decision about the gold set, not by copying "
+        "isc.llm's new value into INSUFFICIENCY_ANSWER to make this test pass."
+    )
+
+
 # --- format_kn -------------------------------------------------------------------------------
 
 
