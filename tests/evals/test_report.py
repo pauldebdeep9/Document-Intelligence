@@ -9,7 +9,7 @@ from evals.gold.schema import (
 from evals.gold.split import Split
 from evals.report import build_report
 from evals.runner import DocumentRecord, ItemRecord, RunConfig, RunRecord
-from isc.models import PurchaseOrder
+from isc.models import LineItem, PurchaseOrder
 
 _INSUFFICIENT_ANSWER = "I don't have enough information in the provided sources."
 
@@ -268,3 +268,161 @@ def test_build_report_returns_a_string() -> None:
 
     assert isinstance(report, str)
     assert len(report) > 0
+
+
+# --- line items ------------------------------------------------------------------------------
+#
+# Dedicated hand-built fixture, deliberately separate from _goldset()/_run_record() above:
+# those have no line items set and are used by every other test in this file, so growing them
+# to cover line-item scoring risks perturbing unrelated tests for no reason.
+
+
+def _line_items_goldset() -> GoldSet:
+    return GoldSet(
+        version="test",
+        chunking=ChunkingConfig(chunk_size=1200, overlap=200),
+        items=[
+            GoldItem(
+                doc_id="doc-a",
+                extraction=ExtractionGold(
+                    doc_id="doc-a",
+                    expected=PurchaseOrder(
+                        line_items=[
+                            LineItem(part_number="A1"),
+                            LineItem(part_number="A2"),
+                        ],
+                    ),
+                ),
+                retrieval=[
+                    RetrievalGold(
+                        question_id="doc-a-q1",
+                        doc_id="doc-a",
+                        question="irrelevant",
+                        question_class="absent",
+                        anchors=[],
+                    ),
+                ],
+            ),
+            GoldItem(
+                doc_id="doc-b",
+                extraction=ExtractionGold(
+                    doc_id="doc-b",
+                    expected=PurchaseOrder(line_items=[LineItem(part_number="B1")]),
+                ),
+                retrieval=[
+                    RetrievalGold(
+                        question_id="doc-b-q1",
+                        doc_id="doc-b",
+                        question="irrelevant",
+                        question_class="absent",
+                        anchors=[],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
+def _line_items_run_record(
+    *,
+    doc_a_actual_items: list[LineItem],
+    doc_b_actual_items: list[LineItem],
+) -> RunRecord:
+    return RunRecord(
+        run_id="line-items-test-run",
+        created_utc="2026-01-01T00:00:00+00:00",
+        git_commit_sha="deadbeef",
+        config=RunConfig(
+            chat_model="chat-model",
+            embedding_model="embed-model",
+            chunk_size=1200,
+            overlap=200,
+            k=3,
+            goldset_version="test",
+            split=Split.DEV,
+            document_count=2,
+            pooled_chunk_count=2,
+        ),
+        documents=[
+            DocumentRecord(
+                doc_id="doc-a",
+                purchase_order=PurchaseOrder(line_items=doc_a_actual_items),
+                chunk_count=1,
+            ),
+            DocumentRecord(
+                doc_id="doc-b",
+                purchase_order=PurchaseOrder(line_items=doc_b_actual_items),
+                chunk_count=1,
+            ),
+        ],
+        items=[
+            ItemRecord(
+                question_id="doc-a-q1",
+                doc_id="doc-a",
+                question_class="absent",
+                retrieved_chunk_ids=[],
+                retrieved_doc_ids=[],
+                retrieved_page_numbers=[],
+                retrieved_texts=[],
+                retrieved_scores=[],
+                answer=_INSUFFICIENT_ANSWER,
+                source_chunk_ids=[],
+                error=None,
+            ),
+            ItemRecord(
+                question_id="doc-b-q1",
+                doc_id="doc-b",
+                question_class="absent",
+                retrieved_chunk_ids=[],
+                retrieved_doc_ids=[],
+                retrieved_page_numbers=[],
+                retrieved_texts=[],
+                retrieved_scores=[],
+                answer=_INSUFFICIENT_ANSWER,
+                source_chunk_ids=[],
+                error=None,
+            ),
+        ],
+    )
+
+
+def test_build_report_line_items_reports_missing_and_spurious_separately_per_document() -> None:
+    # doc-a expects 2 items, actual has only 1 (A1) -> A2 is missing.
+    # doc-b expects 1 item, actual has 2 (B1 plus an extra) -> the extra is spurious.
+    record = _line_items_run_record(
+        doc_a_actual_items=[LineItem(part_number="A1")],
+        doc_b_actual_items=[LineItem(part_number="B1"), LineItem(part_number="B2")],
+    )
+
+    report = build_report(record, _line_items_goldset())
+
+    assert "doc-a: matched 1/2, missing 1/2, spurious 0/1" in report
+    assert "doc-b: matched 1/1, missing 0/1, spurious 1/2" in report
+
+
+def test_build_report_line_items_all_matched() -> None:
+    record = _line_items_run_record(
+        doc_a_actual_items=[LineItem(part_number="A1"), LineItem(part_number="A2")],
+        doc_b_actual_items=[LineItem(part_number="B1")],
+    )
+
+    report = build_report(record, _line_items_goldset())
+
+    assert "doc-a: matched 2/2, missing 0/2, spurious 0/2" in report
+    assert "doc-b: matched 1/1, missing 0/1, spurious 0/1" in report
+
+
+def test_build_report_line_items_no_rollup_across_documents() -> None:
+    record = _line_items_run_record(
+        doc_a_actual_items=[LineItem(part_number="A1")],
+        doc_b_actual_items=[LineItem(part_number="B1"), LineItem(part_number="B2")],
+    )
+
+    report = build_report(record, _line_items_goldset())
+    line_items_section = report.split("=== Line items ===")[1].split("===")[0]
+
+    # Each document gets its own line; nothing sums doc-a and doc-b into one combined count.
+    doc_lines = [line for line in line_items_section.splitlines() if line.strip()]
+    assert len(doc_lines) == 2
+    assert any(line.startswith("doc-a:") for line in doc_lines)
+    assert any(line.startswith("doc-b:") for line in doc_lines)

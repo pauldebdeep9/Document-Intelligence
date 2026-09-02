@@ -16,6 +16,7 @@ from evals.metrics import (
     hit_at_k,
     is_insufficiency_response,
     reciprocal_rank,
+    score_line_items,
     score_purchase_order,
 )
 from evals.runner import ItemRecord, RunRecord
@@ -125,6 +126,20 @@ def build_report(run_record: RunRecord, goldset: GoldSet) -> str:
             for verdict in FieldVerdict
         )
         lines.append(f"{field}: {rendered}")
+    lines.append("")
+
+    # --- Line items, per document (no rollup across documents) -------------------------------
+    lines.append("=== Line items ===")
+    for document in run_record.documents:
+        expected_items = expected_purchase_order_by_doc[document.doc_id].line_items
+        actual_items = document.purchase_order.line_items
+        line_item_score = score_line_items(expected_items, actual_items)
+        lines.append(
+            f"{document.doc_id}: "
+            f"matched {format_kn(line_item_score.matched, len(expected_items))}, "
+            f"missing {format_kn(line_item_score.missing, len(expected_items))}, "
+            f"spurious {format_kn(line_item_score.spurious, len(actual_items))}"
+        )
     lines.append("")
 
     # --- Insufficiency compliance (absent slice) ----------------------------------------------
