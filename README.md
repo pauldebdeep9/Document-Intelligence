@@ -109,16 +109,61 @@ python demo.py --pdf path/to/purchase_order.pdf --question "What are the payment
 `--pdf` and `--question` are independent: omit either one and the demo falls back to
 its interactive prompt for that value.
 
+## Local FastAPI Deployment
+
+From the repository root, activate the existing environment:
+
+```bash
+conda activate Sai2608
+```
+
+This local deployment assumes `fastapi`, `uvicorn`, and `python-multipart` are already
+installed in `Sai2608`. Set nonblank values in the repository-root `.env` for:
+
+- `OPENAI_API_KEY`: your OpenAI API key.
+- `OPENAI_CHAT_MODEL`: the chat model used by the existing pipeline.
+- `OPENAI_EMBEDDING_MODEL`: the embedding model used by the existing pipeline.
+
+Start the server in that terminal:
+
+```bash
+python -m uvicorn isc.api:app --app-dir src --host 127.0.0.1 --port 8000
+```
+
+1. Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in a browser with JavaScript enabled.
+2. Select one unencrypted PDF containing selectable text, enter a question, and click **Ask**.
+3. Wait while **Processing...** appears. The page displays the answer and supplied source
+   evidence, or a concise error message. The Ask button becomes available again when complete.
+
+Health check: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health) returns
+`{"status": "ok"}`. It checks application liveness only; it does not call OpenAI or validate
+model configuration. Stop the server with **Ctrl+C** in its terminal.
+
+`GET /` serves plain HTML, CSS, and JavaScript. The browser posts multipart fields `file`
+and `question` to `/ask`. FastAPI saves the PDF temporarily and calls the existing
+`process_document()` pipeline, then returns its `PipelineResult` as JSON. The browser shows
+the answer and existing evidence; structured Purchase Order fields remain available in the
+JSON response. Temporary files are removed on completion or failure, with no saved history.
+
+Submitting a valid document uses real OpenAI services and requires network access and valid
+credentials. Automated API tests mock those calls. API failures use JSON `detail` messages:
+400 for invalid input/unreadable PDFs, 422 for recognized no-text failures, 502 for OpenAI
+failures, 504 for OpenAI timeouts, and 500 for unexpected failures. Development tracebacks
+remain in the server terminal. This server is intended only for local PoC use.
+
 ## Test and lint
 
 From the activated environment:
 
 ```bash
+python -m pytest tests/test_api.py -q
 make test
 make lint
 ```
 
-The current offline suite contains 181 tests. `make lint` runs Ruff and strict MyPy.
+The current offline suite contains 382 tests, including 34 API/UI tests. The focused tests
+cover `/`, `/health`, and mocked `/ask` success/error paths without real OpenAI calls.
+`make lint` runs Ruff and strict MyPy.
 
 ## Project tree
 
@@ -135,7 +180,9 @@ pyproject.toml
 
 src/isc/
   __init__.py
+  api.py
   chunking.py
+  index.html
   llm.py
   models.py
   pdf.py
@@ -143,6 +190,7 @@ src/isc/
   retrieval.py
 
 tests/
+  test_api.py
   test_chunking.py
   test_demo.py
   test_llm.py
@@ -159,7 +207,8 @@ tests/
 - Structured extraction, answering, and embeddings use OpenAI services.
 - Retrieval is in memory only; there is no persistence or vector database.
 - There is no ACL or security model.
-- There is no API service or CLI framework beyond `demo.py`.
+- The FastAPI/browser interface is for local use, with no application-level upload-size
+  limits, authentication, or production hardening.
 - There is no hybrid BM25/RRF retrieval.
 - There is no automatic retry or repair framework.
 - Retrieval similarity is not factual confidence.
@@ -169,6 +218,7 @@ tests/
 
 ## Validation status
 
-The PoC has been validated with 181 offline tests, Ruff, strict MyPy, and one
-controlled live end-to-end run using a synthetic Purchase Order. This validation is
-evidence for the scoped PoC behavior, not production certification.
+The local deployment checkpoint has been validated with 382 offline tests, Ruff, strict
+MyPy, and the exact Uvicorn command above with live HTTP checks of `/` and `/health`.
+`/ask` is validated using mocks; no real OpenAI calls are made during these automated
+checks. This does not verify live OpenAI credentials, model availability, or answer quality.

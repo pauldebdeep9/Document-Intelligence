@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Document Intelligence</title>
+  <style>
+    body { max-width: 720px; margin: 40px auto; padding: 0 20px; font: 16px/1.5 sans-serif; }
+    label { display: block; margin-top: 16px; font-weight: bold; }
+    input, textarea, button { font: inherit; }
+    textarea { box-sizing: border-box; width: 100%; padding: 8px; }
+    button { margin-top: 16px; padding: 8px 24px; cursor: pointer; }
+    button:disabled { cursor: wait; }
+    #error { color: #b42318; }
+    #answer, #error, #sources { white-space: pre-wrap; overflow-wrap: anywhere; }
+    #sources li { margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Document Intelligence</h1>
+    <form id="ask-form">
+      <label for="file">PDF file</label>
+      <input id="file" name="file" type="file" accept=".pdf,application/pdf" required>
+      <label for="question">Question</label>
+      <textarea id="question" name="question" rows="3" required></textarea>
+      <button id="ask-button" type="submit">Ask</button>
+    </form>
+    <p id="status" role="status"></p>
+    <p id="error" role="alert"></p>
+    <section id="result" hidden>
+      <h2>Answer</h2>
+      <div id="answer"></div>
+      <section id="sources-section" hidden>
+        <h2>Sources</h2>
+        <ul id="sources"></ul>
+      </section>
+    </section>
+  </main>
+  <script>
+    const form = document.getElementById("ask-form");
+    const button = document.getElementById("ask-button");
+    const status = document.getElementById("status");
+    const errorArea = document.getElementById("error");
+    const result = document.getElementById("result");
+    const answer = document.getElementById("answer");
+    const sourcesSection = document.getElementById("sources-section");
+    const sources = document.getElementById("sources");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      button.disabled = true;
+      status.textContent = "Processing...";
+      errorArea.textContent = "";
+      answer.textContent = "";
+      result.hidden = true;
+      sourcesSection.hidden = true;
+      sources.replaceChildren();
+
+      try {
+        const response = await fetch("/ask", { method: "POST", body: new FormData(form) });
+        const data = response.headers.get("content-type")?.includes("application/json")
+          ? await response.json().catch(() => ({ detail: "The server returned an invalid response." }))
+          : { detail: `The server could not complete the request (HTTP ${response.status}).` };
+        if (!response.ok) {
+          const detail = Array.isArray(data.detail)
+            ? data.detail.map((item) => item.msg).join("; ")
+            : data.detail;
+          throw new Error(detail || `Request failed (HTTP ${response.status}).`);
+        }
+        if (typeof data.answer !== "string") {
+          throw new Error("The server returned an invalid response.");
+        }
+        answer.textContent = data.answer;
+        for (const source of data.sources || []) {
+          const item = document.createElement("li");
+          item.textContent = `${source.doc_id} · Page ${source.page_number} · ${source.chunk_id}`
+            + `\n${source.text}`;
+          sources.appendChild(item);
+        }
+        sourcesSection.hidden = sources.children.length === 0;
+        result.hidden = false;
+        status.textContent = "Complete.";
+      } catch (error) {
+        errorArea.textContent = error.message || "Unable to complete the request.";
+        status.textContent = "";
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
