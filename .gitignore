@@ -23,3 +23,4 @@ data/blobs/
 .ruff_cache/
 *.egg-info/
 .conda/
+.DS_Store

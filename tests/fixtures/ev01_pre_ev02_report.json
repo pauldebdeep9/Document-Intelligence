@@ -1,0 +1,170 @@
+{
+  "retrieval": {
+    "recall@5": 0.9714285714285714,
+    "recall@8": 0.9714285714285714,
+    "mrr": 0.8333333333333334,
+    "ndcg@8": 0.8673205782966876,
+    "n_answerable": 35,
+    "recall_by_subtype": {
+      "single_hop": {
+        "n": 10,
+        "recall@5": 1.0,
+        "recall@8": 1.0,
+        "mrr": 0.95,
+        "ndcg@8": 0.9630929753571458
+      },
+      "header_lookup": {
+        "n": 5,
+        "recall@5": 1.0,
+        "recall@8": 1.0,
+        "mrr": 1.0,
+        "ndcg@8": 1.0
+      },
+      "line_item": {
+        "n": 8,
+        "recall@5": 1.0,
+        "recall@8": 1.0,
+        "mrr": 0.5208333333333333,
+        "ndcg@8": 0.644331095982161
+      },
+      "cross_document": {
+        "n": 8,
+        "recall@5": 0.875,
+        "recall@8": 0.875,
+        "mrr": 0.8125,
+        "ndcg@8": 0.821330214869415
+      },
+      "ambiguous": {
+        "n": 4,
+        "recall@5": 1.0,
+        "recall@8": 1.0,
+        "mrr": 1.0,
+        "ndcg@8": 1.0
+      }
+    },
+    "answer_accuracy": {
+      "n": 35,
+      "correct": 26,
+      "accuracy": 0.7428571428571429
+    },
+    "answerable_failures": [
+      {
+        "question_id": "q_cd_01",
+        "subtype": "cross_document",
+        "gold_chunks_retrieved": true,
+        "abstained": false,
+        "abstention_reason": null,
+        "diagnosis": "generation/grounding -- gold chunks were retrieved"
+      },
+      {
+        "question_id": "q_cd_02",
+        "subtype": "cross_document",
+        "gold_chunks_retrieved": true,
+        "abstained": true,
+        "abstention_reason": "attribution_mismatch",
+        "diagnosis": "generation/grounding -- gold chunks were retrieved"
+      },
+      {
+        "question_id": "q_cd_03",
+        "subtype": "cross_document",
+        "gold_chunks_retrieved": true,
+        "abstained": false,
+        "abstention_reason": null,
+        "diagnosis": "generation/grounding -- gold chunks were retrieved"
+      },
+      {
+        "question_id": "q_cd_04",
+        "subtype": "cross_document",
+        "gold_chunks_retrieved": true,
+        "abstained": true,
+        "abstention_reason": "attribution_mismatch",
+        "diagnosis": "generation/grounding -- gold chunks were retrieved"
+      },
+      {
+        "question_id": "q_cd_06",
+        "subtype": "cross_document",
+        "gold_chunks_retrieved": false,
+        "abstained": false,
+        "abstention_reason": null,
+        "diagnosis": "retrieval -- gold chunks were not retrieved"
+      },
+      {
+        "question_id": "q_am_01",
+        "subtype": "ambiguous",
+        "gold_chunks_retrieved": true,
+        "abstained": false,
+        "abstention_reason": null,
+        "diagnosis": "generation/grounding -- gold chunks were retrieved"
+      },
+      {
+        "question_id": "q_am_02",
+        "subtype": "ambiguous",
+        "gold_chunks_retrieved": true,
+        "abstained": false,
+        "abstention_reason": null,
+        "diagnosis": "generation/grounding -- gold chunks were retrieved"
+      },
+      {
+        "question_id": "q_am_03",
+        "subtype": "ambiguous",
+        "gold_chunks_retrieved": true,
+        "abstained": false,
+        "abstention_reason": null,
+        "diagnosis": "generation/grounding -- gold chunks were retrieved"
+      },
+      {
+        "question_id": "q_am_04",
+        "subtype": "ambiguous",
+        "gold_chunks_retrieved": true,
+        "abstained": true,
+        "abstention_reason": "insufficient_context",
+        "diagnosis": "generation/grounding -- gold chunks were retrieved"
+      }
+    ],
+    "abstention_precision": 0.8620689655172413,
+    "abstention_recall": 0.75,
+    "abstention_by_subtype": {
+      "absent": {
+        "n": 3,
+        "correct": 3,
+        "accuracy": 1.0
+      },
+      "out_of_scope": {
+        "n": 3,
+        "correct": 3,
+        "accuracy": 1.0
+      },
+      "underspecified": {
+        "n": 2,
+        "correct": 0,
+        "accuracy": 0.0
+      }
+    },
+    "restricted": {
+      "restricted_filtered": {
+        "n_pairs": 8,
+        "primary_recall@8": 1.0,
+        "primary_answer_correct": 8,
+        "secondary_n": 8,
+        "secondary_correctly_empty_and_abstained": 8,
+        "leaks": 0
+      },
+      "restricted_unfiltered": {
+        "n_pairs": 4,
+        "primary_recall@8": 0.75,
+        "primary_answer_correct": 2,
+        "secondary_n": 4,
+        "secondary_correctly_empty_and_abstained": 0,
+        "leaks": 0
+      }
+    },
+    "no_reader": {
+      "n_principals_checked": 7,
+      "all_empty": true,
+      "principals_with_results": []
+    },
+    "acl_leaks": 0,
+    "leaks_by_subtype": {},
+    "passed": true
+  }
+}

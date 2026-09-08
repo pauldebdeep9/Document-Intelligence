@@ -2,6 +2,25 @@
 
 Markdown alongside JSON on purpose: the JSON is for regression diffing between
 runs, the Markdown is what gets pasted into a design review.
+
+EV-02: every rate (a float in [0,1] computed as a ratio over some population)
+is emitted as its own {"n": <denominator>, ...: <rate>} object, never a bare
+float -- see tests/unit/test_eval_report_rates.py, which walks report.json
+and fails on any exception to that. n_answerable sitting far from
+recall@5/recall@8/mrr/ndcg@8 in a flat dict, or abstention_precision's and
+abstention_recall's denominators not appearing anywhere at all, both read
+fine until someone reads recall@8=0.97 without noticing it is 34/35 rather
+than 340/350 -- at this corpus's scale (35 answerable questions, subtypes as
+small as 2) that difference is the whole story. Known, deliberately deferred
+exception: extraction.by_field's PRF shape (precision/recall/f1) -- see the
+allowlist in test_eval_report_rates.py for why.
+
+report.json also carries a top-level schema_version (REPORT_SCHEMA_VERSION)
+from this item on -- there is no runtime loader for report.json anywhere in
+this codebase today (it is a terminal artifact for humans and for
+`git diff`-style regression comparison between runs), so
+validate_schema_version() exists for the day something does read it back,
+and for this module's own tests to pin the shape against drift.
 """
 
 from __future__ import annotations
@@ -10,15 +29,42 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+from isc.common.errors import IscError
 from isc.eval.extraction import ExtractionReport
 from isc.eval.retrieval import RetrievalReport
+
+REPORT_SCHEMA_VERSION = 2
+
+
+class ReportSchemaMismatch(IscError):
+    """report.json's schema_version does not match this reader's
+    REPORT_SCHEMA_VERSION. No code in this repo reads report.json back
+    today, so nothing raises this yet in production -- it exists so a
+    future reader (and this module's own tests) can reject a mismatched
+    shape loudly rather than silently misreading it, the same discipline as
+    eval/outcomes.py's OutcomesSchemaMismatch."""
+
+    def __init__(self, found: object) -> None:
+        super().__init__(
+            f"report.json schema_version {found!r} does not match this reader's "
+            f"REPORT_SCHEMA_VERSION={REPORT_SCHEMA_VERSION} -- this report was written by a "
+            "different version of report.write(); regenerate it, or read it with a matching "
+            "version of this module."
+        )
+        self.found = found
+
+
+def validate_schema_version(payload: dict) -> None:
+    found = payload.get("schema_version")
+    if found != REPORT_SCHEMA_VERSION:
+        raise ReportSchemaMismatch(found)
 
 
 def write(out_dir: Path, extraction: ExtractionReport | None,
           retrieval: RetrievalReport | None, threshold: float = 0.9,
           review_threshold: float = 0.6) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
-    payload: dict = {}
+    payload: dict = {"schema_version": REPORT_SCHEMA_VERSION}
     lines = ["# Evaluation report", ""]
 
     if extraction:
@@ -32,10 +78,15 @@ def write(out_dir: Path, extraction: ExtractionReport | None,
         line_outcomes = [asdict(o) for o in extraction.line_outcomes()]
         detected, total_errors = extraction.detection_rate(threshold)
         review_wrong, review_total = extraction.band_precision(review_threshold, threshold)
+        auto_wrong, auto_total = extraction.auto_accept_band(threshold)
         payload["extraction"] = {
             "by_field": by_field,
             "calibration": extraction.calibration(),
-            "auto_accept_error_rate": extraction.auto_accept_error_rate(threshold),
+            "auto_accept_error_rate": {
+                "n": auto_total,
+                "wrong": auto_wrong,
+                "auto_accept_error_rate": extraction.auto_accept_error_rate(threshold),
+            },
             "detection": {"detected": detected, "total_errors": total_errors},
             "review_band": {"wrong": review_wrong, "total": review_total},
             "false_negatives": false_negatives_by_axis,
@@ -133,20 +184,46 @@ def write(out_dir: Path, extraction: ExtractionReport | None,
         no_reader_summary = retrieval.no_reader_summary()
         leaks_by_subtype = retrieval.leaks_by_subtype()
         n_answerable = sum(v["n"] for v in recall_by_subtype.values())
+        expected_to_abstain, n_abstained = retrieval.abstention_precision_band()
+        abstention_correct, n_unanswerable = retrieval.abstention_recall_band()
+
+        # EV-02: every rate below is its own {"n": <denominator>, ...} object,
+        # never a bare float -- see this module's docstring and
+        # test_eval_report_rates.py. recall@5/8, mrr and ndcg@8 share
+        # n_answerable as their denominator (all four average over the same
+        # answerable-class outcomes, retrieval.py's recall_at()/mean_mrr()/
+        # ndcg()); abstention_precision and abstention_recall do NOT share
+        # that denominator (or each other's) -- see abstention_precision_band()/
+        # abstention_recall_band()'s docstrings for the populations each one
+        # actually counts over.
+        restricted_payload = {}
+        for subtype, row in restricted_summary.items():
+            restricted_payload[subtype] = dict(row)
+            restricted_payload[subtype]["primary_recall@8"] = {
+                "n": row["n_pairs"], "primary_recall@8": row["primary_recall@8"],
+            }
 
         payload["retrieval"] = {
-            "recall@5": retrieval.recall_at(5),
-            "recall@8": retrieval.recall_at(8),
-            "mrr": retrieval.mean_mrr(),
-            "ndcg@8": retrieval.ndcg(8),
+            "recall@5": {"n": n_answerable, "recall@5": retrieval.recall_at(5)},
+            "recall@8": {"n": n_answerable, "recall@8": retrieval.recall_at(8)},
+            "mrr": {"n": n_answerable, "mrr": retrieval.mean_mrr()},
+            "ndcg@8": {"n": n_answerable, "ndcg@8": retrieval.ndcg(8)},
             "n_answerable": n_answerable,
             "recall_by_subtype": recall_by_subtype,
             "answer_accuracy": answer_accuracy,
             "answerable_failures": answerable_failures,
-            "abstention_precision": retrieval.abstention_precision(),
-            "abstention_recall": retrieval.abstention_recall(),
+            "abstention_precision": {
+                "n": n_abstained,
+                "expected_to_abstain": expected_to_abstain,
+                "abstention_precision": retrieval.abstention_precision(),
+            },
+            "abstention_recall": {
+                "n": n_unanswerable,
+                "correct": abstention_correct,
+                "abstention_recall": retrieval.abstention_recall(),
+            },
             "abstention_by_subtype": abstention_by_subtype,
-            "restricted": restricted_summary,
+            "restricted": restricted_payload,
             "no_reader": no_reader_summary,
             "acl_leaks": len(retrieval.leaks()),
             "leaks_by_subtype": leaks_by_subtype,

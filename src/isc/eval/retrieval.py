@@ -133,6 +133,19 @@ class RetrievalReport:
             return 0.0
         return sum(_expected_to_abstain(o) for o in abstained) / len(abstained)
 
+    def abstention_precision_band(self) -> tuple[int, int]:
+        """(expected, total) underlying abstention_precision() -- same
+        population (every abstained outcome) and the same
+        _expected_to_abstain() check, exposed as raw counts rather than a
+        pre-divided ratio (EV-02: a rate with nowhere to show its own
+        denominator is a rate a reader cannot size). Does not change what
+        abstention_precision() means or returns -- an additional view onto
+        the same computation, not a replacement."""
+        abstained = [o for o in self.outcomes if o.abstained]
+        if not abstained:
+            return 0, 0
+        return sum(_expected_to_abstain(o) for o in abstained), len(abstained)
+
     def abstention_recall(self) -> float:
         """Of the genuinely unanswerable questions, how many did we abstain
         on FOR THE RIGHT REASON? Uses abstention_correct, not the bare
@@ -144,6 +157,20 @@ class RetrievalReport:
         if not unanswerable:
             return 1.0
         return sum(bool(o.abstention_correct) for o in unanswerable) / len(unanswerable)
+
+    def abstention_recall_band(self) -> tuple[int, int]:
+        """(correct, total) underlying abstention_recall() -- same
+        population (every unanswerable-class outcome) and the same
+        abstention_correct check, exposed as raw counts rather than a
+        pre-divided ratio (EV-02, same reasoning as
+        abstention_precision_band()). Note the n=0 case here is (0, 0), NOT
+        (0, 1) or any stand-in for abstention_recall()'s own vacuous-truth
+        1.0 return on empty -- this method only exposes counts, it does not
+        recompute or reinterpret the rate."""
+        unanswerable = [o for o in self.outcomes if o.question_class == "unanswerable"]
+        if not unanswerable:
+            return 0, 0
+        return sum(bool(o.abstention_correct) for o in unanswerable), len(unanswerable)
 
     def abstention_by_subtype(self) -> dict[str, dict[str, float | int]]:
         """Per unanswerable subtype (absent, out_of_scope, underspecified):

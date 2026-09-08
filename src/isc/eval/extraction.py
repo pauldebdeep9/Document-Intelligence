@@ -181,6 +181,21 @@ class ExtractionReport:
             return 0.0
         return sum(o.outcome in _ERROR_OUTCOMES for o in auto) / len(auto)
 
+    def auto_accept_band(self, threshold: float, axis: str = "normalisation") -> tuple[int, int]:
+        """(wrong, total) underlying auto_accept_error_rate() -- same
+        population (confidence >= threshold, no upper bound) and the same
+        _ERROR_OUTCOMES check, exposed as raw counts rather than a
+        pre-divided ratio. Mirrors detection_rate()/band_precision()'s
+        existing (numerator, total) shape (EV-02): a rate with nowhere to
+        show its own denominator is a rate a reader cannot size. Does not
+        change what auto_accept_error_rate() means or returns -- this is an
+        additional view onto the same computation, not a replacement."""
+        auto = [o for o in self._axis(axis) if o.confidence >= threshold]
+        if not auto:
+            return 0, 0
+        wrong = sum(o.outcome in _ERROR_OUTCOMES for o in auto)
+        return wrong, len(auto)
+
     def false_negatives(self, threshold: float, axis: str = "normalisation") -> list[FieldOutcome]:
         """Every field or line outcome that disagrees with gold (wrong,
         missed, dropped_line, hallucinated_line) but scored high enough to
