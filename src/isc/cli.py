@@ -343,6 +343,37 @@ def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
         raise typer.Exit(code=1)
 
 
+@app.command(name="eval-diff")
+def eval_diff(
+    run_a: str = typer.Argument(..., help="run_id whose eval/outcomes.jsonl is the 'before' side"),
+    run_b: str = typer.Argument(..., help="run_id whose eval/outcomes.jsonl is the 'after' side"),
+) -> None:
+    """Per-outcome diff between two runs (EV-04) -- see eval/diff.py's module
+    docstring. Reads eval/outcomes.jsonl + eval/failed.jsonl for both runs
+    (eval/outcomes.py's load()); never touches report.json, gold, the index,
+    or any provider -- purely a comparison of already-persisted records.
+
+    Exit code mirrors diff(1): 0 when identical, 1 when any difference is
+    found (including gold_change -- it is a difference; the banner in the
+    output carries what it means). citations_valid disagreeing between the
+    two files, or a (question_id, principal_id) key repeated within one
+    file, both raise uncaught -- the same refuse-rather-than-silently-misread
+    discipline as check_provenance()'s GoldProvenanceMismatch above.
+    """
+    from isc.eval import diff as eval_diff_module
+    from isc.eval import outcomes as eval_outcomes
+
+    s = get_settings()
+    result_a = eval_outcomes.load(s.paths.runs / run_a / "eval" / "outcomes.jsonl")
+    result_b = eval_outcomes.load(s.paths.runs / run_b / "eval" / "outcomes.jsonl")
+
+    diff_result = eval_diff_module.diff(result_a, result_b, label_a=run_a, label_b=run_b)
+    console.print(eval_diff_module.render(diff_result))
+
+    if not diff_result.is_identical:
+        raise typer.Exit(code=1)
+
+
 def _todo(stage: str) -> int:
     console.print(f"[yellow]{stage}[/] not implemented yet — see the first-slice list in README")
     return 1
