@@ -213,8 +213,10 @@ left implicit:
   a real cost future changes should weigh against how much shape churn is
   actually necessary.
 - `--rescore-from` remains cheaper to run than a live re-run (no model,
-  index, or docstore access), but does not currently produce a run directory
-  `eval-diff` can compare against anything (Open items).
+  index, or docstore access), and is deliberately terminal: it never
+  produces a run directory `eval-diff` can compare against anything — see
+  the rescore-gap entry under Open items for the reasoning and what EV-07
+  still owes it.
 - The three provenance caveats above apply to any future citation of this
   item's own evidence — in particular, the synthetic old-format fixture must
   never be presented as something that once ran in production.
@@ -229,9 +231,10 @@ left implicit:
   sentence, not built for here: it becomes a second `evaluate_x_gate()`
   returning its own `GatePolicy`, aggregated at the call site — not a change
   to this gate's shape.
-- The rescore-gap decision below is made either way — this ADR's rule 1
-  should then note which of the two shapes `--rescore-from` actually
-  produces.
+- EV-07 (Open items) lands and a recorded source turns out not to be enough
+  — a case shows up where knowing the source run_id isn't sufficient to
+  answer the question someone actually had. Not anticipated; not a reason to
+  build more than EV-07 scopes today.
 
 ## Open items
 
@@ -251,37 +254,55 @@ constraint against fixing what it finds.
   range in df755b9's commit message — that range was a rough estimate before
   the checker existed to count precisely; 54 is a direct count against
   `ExtractionReport.by_field()`'s real output, not a re-estimate.
-- **The rescore gap — decision needed, not made here.** `eval_outcomes.write()`
-  is called only in `cli.py`'s live-run branch (`:293-295`); `--rescore-from`
-  (`:265-269`) never calls it, so every rescored run's directory has
-  `report.json`/`report.md` and no `outcomes.jsonl`. On disk today: 6 run
-  directories are exactly this (`ev01_gate_rescore`, `ev02_gate_rebaseline_a`,
-  `ev02_gate_rebaseline_b`, `ev02_gate_rescore_a`, `ev02_gate_rescore_b`,
-  `ev03_gate_policy_check`). Two shapes are available:
-  - **(A) A rescore emits a copy of its source's `outcomes.jsonl`.** Every
-    run directory becomes uniform; `eval-diff` works on any two run_ids
-    without special-casing. Cost: real duplication of a file that can hold
-    dozens to hundreds of records, and no automatic link back to the source
-    — if the source's `outcomes.jsonl` is ever regenerated, the copy goes
-    stale silently.
-  - **(B) A rescore is explicitly terminal: no `outcomes.jsonl` written; its
-    source path is recorded in `report.json` instead.** No duplication,
-    provenance is explicit and singular (one canonical `outcomes.jsonl` per
-    live run), but `eval-diff` can only ever compare two live runs directly —
-    diffing two rescores, or a rescore against anything, means following the
-    recorded source path and diffing *that*.
+- **The rescore gap is resolved: a rescore is terminal.**
+  `eval_outcomes.write()` is called only in `cli.py`'s live-run branch
+  (`:293-295`); `--rescore-from` (`:265-269`) does not call it. That is now
+  the decision, not an accident awaiting one: a rescored run does not emit
+  `outcomes.jsonl`. Its `report.json` instead records the source run it was
+  scored from. On disk today, before this decision had a name: 6 run
+  directories are exactly the old, accidental shape (`ev01_gate_rescore`,
+  `ev02_gate_rebaseline_a`, `ev02_gate_rebaseline_b`, `ev02_gate_rescore_a`,
+  `ev02_gate_rescore_b`, `ev03_gate_policy_check`) — a `report.json`/
+  `report.md` with no `outcomes.jsonl` and no recorded source either, since
+  the field EV-07 (below) adds does not exist yet.
 
-    My lean is (B), and on reflection I agree with it rather than arguing
-    against it: a rescore does not generate new raw retrieval evidence — its
-    `QuestionOutcome`s are, by construction, identical to its source's,
-    re-aggregated through (possibly corrected) scoring logic. Writing a copy
-    of unchanged evidence under a second run_id doesn't add information; it
-    adds a second thing to keep synchronized. Diffing two rescores of the
-    same source with `eval-diff` would also always return zero differences —
-    the raw records never changed — which answers a question `eval-diff`
-    isn't built to ask ("did the aggregation logic change") with a tool built
-    to ask a different one ("did retrieval behavior change"). (B) is the
-    shape that keeps `eval-diff` doing the one job this item scoped it to.
+  The reasoning: a rescore generates no new raw retrieval evidence — its
+  `QuestionOutcome`s are, by construction, identical to its source's,
+  re-aggregated through (possibly corrected) scoring logic. Emitting a copy
+  of that evidence under the rescore's own run_id would create a second copy
+  of a file that already exists, with no mechanism keeping the two
+  consistent — if the source's `outcomes.jsonl` were ever regenerated, the
+  copy would go stale silently. Exactly one `outcomes.jsonl` exists per set
+  of observations, and every report scored from it, live or rescored, points
+  back at that one file rather than at a copy of it.
+
+  The cost, stated rather than glossed: `eval-diff` compares live runs only.
+  A rescored run is invisible to it, permanently and by design — there will
+  never be an `outcomes.jsonl` in its directory to diff. This is acceptable
+  because two rescores of one source have identical observations by
+  construction, so that diff would always report zero differences — it would
+  test nothing `isc eval-diff <source> <source>` (EV-04's own identity case)
+  doesn't already cover. The comparison someone would actually want in that
+  situation — two scorings of the same outcomes under different metric
+  definitions — is a `report.json` comparison, not an outcome comparison,
+  and `git diff` (or any text diff) handles it adequately now that the
+  emitted format is a deterministic function of the persisted outcomes
+  (rule 6).
+
+  **Filed as EV-07, three or four prompts, not urgent:**
+  - `report.json` records the source as a `run_id`, not an absolute path (an
+    absolute path breaks on a clone) and not anything that assumes the
+    `runs/` layout directly — every other run-addressing convention in this
+    codebase already resolves through `s.paths.runs / run_id`.
+  - A reader encountering a recorded source that is absent fails loudly,
+    rather than treating a missing source as "this must be an unrescored
+    run" — those are different claims and must not be conflated by omission.
+  - A test asserts the rescore path writes no `outcomes.jsonl`. Today that
+    behaviour is an accident of where `eval_outcomes.write()` happens to sit
+    — inside the live branch's `else`, not because anyone decided the
+    rescore branch should skip it. Now that it is a decision, it needs an
+    assertion, or someone will "fix" the asymmetry in six months believing
+    they are closing a gap.
 - **`GatePolicy` is unversioned.** `report.json` is at schema 3,
   `outcomes.jsonl` at 1, both with a mismatch error a reader can catch. The
   policy's own identity is a bare `name: str` field (`retrieval.py:335-347`).
