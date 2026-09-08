@@ -190,7 +190,17 @@ def review(limit: int = 20) -> None:
 
 @app.command()
 def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
-         run_id: str = typer.Option(..., help="existing run with an extract/ stage")) -> None:
+         run_id: str = typer.Option(..., help="existing run with an extract/ stage"),
+         rescore_from: Path | None = typer.Option(
+             None, "--rescore-from",
+             help="Path to a prior run's eval/outcomes.jsonl. Re-scores retrieval from that "
+                  "file instead of making live embedding/chat calls -- no index, docstore, or "
+                  "provider access. Requires --harness retrieval (extraction, if you also want "
+                  "it, is already offline -- run it separately into its own report rather than "
+                  "mixing it into a rescore, so the rescore's contract stays 'one outcomes file "
+                  "in, one retrieval-only report out'). --run-id must be a run whose "
+                  "eval/report.json does not already exist -- a rescore must never overwrite "
+                  "the very report it will be compared against.")) -> None:
     """Score a completed extract run against gold, and/or run the P1-08
     retrieval gold set live against the current index, and write
     report.json + report.md.
@@ -204,14 +214,36 @@ def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
     Refuses to run if either fingerprint in the gold's provenance disagrees
     with the live index or corpus (check_provenance()) -- see docs/adr/0007
     and docs/adr/0008. A single ACL leak fails the run: non-zero exit,
-    regardless of every other metric.
+    regardless of every other metric. Every retrieval outcome is written to
+    runs/<run_id>/eval/{outcomes.jsonl,failed.jsonl} (see eval/outcomes.py)
+    so a later --rescore-from can re-derive report.json/md without a live
+    re-run.
+
+    --rescore-from: re-scores from a previously written outcomes.jsonl
+    instead of running retrieval live. See eval/outcomes.py's module
+    docstring -- that file is evaluator-only, never share or serve it as-is.
     """
     from isc.eval.report import write
     from isc.storage.sqlite_docstore import SqliteDocStore
 
+    if rescore_from is not None and harness != "retrieval":
+        console.print("[red]error[/] --rescore-from requires --harness retrieval "
+                       f"(got --harness {harness!r})")
+        raise typer.Exit(code=1)
+
     s = get_settings()
     run = start_run(s.paths.runs, run_id)
     docs = SqliteDocStore(s.paths.data / "docstore.sqlite")
+
+    if rescore_from is not None:
+        report_path = run.artifact_dir("eval") / "report.json"
+        if report_path.exists():
+            console.print(
+                f"[red]error[/] refusing to rescore into run {run.run_id!r}: {report_path} "
+                "already exists. Pass a different --run-id for the rescore output so the "
+                "report it will be compared against is not overwritten."
+            )
+            raise typer.Exit(code=1)
 
     extraction_report = None
     if harness in {"extraction", "both"}:
@@ -227,26 +259,40 @@ def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
 
     retrieval_report = None
     if harness in {"retrieval", "both"}:
-        from isc.answer.orchestrator import AnswerOrchestrator
-        from isc.eval.retrieval import check_provenance
-        from isc.eval.retrieval import run as run_retrieval_eval
-        from isc.llm.registry import get_chat_model, get_embedding_model
-        from isc.models.acl import load_principals
-        from isc.retrieve.retriever import Retriever
-        from isc.storage.local_vector import LocalVectorStore
+        from isc.eval import outcomes as eval_outcomes
 
-        gold = json.loads((s.paths.data / "gold" / "retrieval" / "questions.json").read_text())
-        store = LocalVectorStore(s.paths.data / "vector_store.pkl")
-        check_provenance(gold["provenance"], s, store, docs)  # raises loudly on mismatch
+        if rescore_from is not None:
+            retrieval_result = eval_outcomes.load(rescore_from)
+            retrieval_report = retrieval_result.report
+            console.print(f"[green]loaded[/] {len(retrieval_report.outcomes)} retrieval "
+                          f"outcomes from {rescore_from}  run={run.run_id}")
+        else:
+            from isc.answer.orchestrator import AnswerOrchestrator
+            from isc.eval.retrieval import check_provenance
+            from isc.eval.retrieval import run as run_retrieval_eval
+            from isc.llm.registry import get_chat_model, get_embedding_model
+            from isc.models.acl import load_principals
+            from isc.retrieve.retriever import Retriever
+            from isc.storage.local_vector import LocalVectorStore
 
-        chat = get_chat_model()
-        orchestrator = AnswerOrchestrator(Retriever(store, get_embedding_model(), chat, s), chat, s)
-        users = load_principals(s.paths.data / "acl")
+            gold = json.loads(
+                (s.paths.data / "gold" / "retrieval" / "questions.json").read_text())
+            store = LocalVectorStore(s.paths.data / "vector_store.pkl")
+            check_provenance(gold["provenance"], s, store, docs)  # raises loudly on mismatch
 
-        retrieval_result = run_retrieval_eval(gold["questions"], users, orchestrator)
-        retrieval_report = retrieval_result.report
-        console.print(f"[green]scored[/] {len(retrieval_report.outcomes)} retrieval outcomes  "
-                      f"run={run.run_id}")
+            chat = get_chat_model()
+            orchestrator = AnswerOrchestrator(
+                Retriever(store, get_embedding_model(), chat, s), chat, s)
+            users = load_principals(s.paths.data / "acl")
+
+            retrieval_result = run_retrieval_eval(gold["questions"], users, orchestrator)
+            retrieval_report = retrieval_result.report
+            console.print(f"[green]scored[/] {len(retrieval_report.outcomes)} retrieval "
+                          f"outcomes  run={run.run_id}")
+            outcomes_path, failed_path = eval_outcomes.write(
+                run.artifact_dir("eval"), retrieval_result)
+            console.print(f"[green]outcomes written[/] {outcomes_path}  {failed_path}")
+
         if retrieval_result.failed:
             console.print(f"[yellow]failed[/] {len(retrieval_result.failed)} (question, principal):")
             for qid, principal_id, reason in retrieval_result.failed:
