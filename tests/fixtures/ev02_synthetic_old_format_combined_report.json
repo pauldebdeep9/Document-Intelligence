@@ -1,0 +1,152 @@
+{
+  "extraction": {
+    "by_field": {
+      "po_number": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 1
+      },
+      "supplier_name": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      }
+    },
+    "calibration": [
+      {
+        "bin_low": 0.9,
+        "bin_high": 1.0,
+        "n": 3,
+        "accuracy": 0.3333333333333333,
+        "gap": -0.6166666666666667
+      }
+    ],
+    "auto_accept_error_rate": 0.6666666666666666,
+    "detection": {
+      "detected": 0,
+      "total_errors": 2
+    },
+    "review_band": {
+      "wrong": 0,
+      "total": 0
+    },
+    "false_negatives": {
+      "extraction": [],
+      "normalisation": [
+        {
+          "document_id": "doc_1",
+          "field_name": "supplier_name",
+          "outcome": "wrong",
+          "axis": "normalisation",
+          "predicted": "Acme",
+          "gold": "Acmee",
+          "confidence": 0.95
+        },
+        {
+          "document_id": "doc_1",
+          "field_name": "lines[20]",
+          "outcome": "dropped_line",
+          "axis": "normalisation",
+          "predicted": null,
+          "gold": {
+            "line_number": 20
+          },
+          "confidence": 0.92
+        }
+      ]
+    },
+    "line_outcomes": [
+      {
+        "document_id": "doc_1",
+        "field_name": "lines[20]",
+        "outcome": "dropped_line",
+        "axis": "normalisation",
+        "predicted": null,
+        "gold": {
+          "line_number": 20
+        },
+        "confidence": 0.92
+      }
+    ]
+  },
+  "retrieval": {
+    "recall@5": 1.0,
+    "recall@8": 1.0,
+    "mrr": 1.0,
+    "ndcg@8": 1.0,
+    "n_answerable": 2,
+    "recall_by_subtype": {
+      "cross_document": {
+        "n": 1,
+        "recall@5": 1.0,
+        "recall@8": 1.0,
+        "mrr": 1.0,
+        "ndcg@8": 1.0
+      },
+      "line_item": {
+        "n": 1,
+        "recall@5": 1.0,
+        "recall@8": 1.0,
+        "mrr": 1.0,
+        "ndcg@8": 1.0
+      }
+    },
+    "answer_accuracy": {
+      "n": 2,
+      "correct": 1,
+      "accuracy": 0.5
+    },
+    "answerable_failures": [
+      {
+        "question_id": "q_cd_02",
+        "subtype": "cross_document",
+        "gold_chunks_retrieved": true,
+        "abstained": true,
+        "abstention_reason": "attribution_mismatch",
+        "diagnosis": "generation/grounding -- gold chunks were retrieved"
+      }
+    ],
+    "abstention_precision": 0.6666666666666666,
+    "abstention_recall": 0.5,
+    "abstention_by_subtype": {
+      "absent": {
+        "n": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      "underspecified": {
+        "n": 1,
+        "correct": 0,
+        "accuracy": 0.0
+      }
+    },
+    "restricted": {
+      "restricted_filtered": {
+        "n_pairs": 1,
+        "primary_recall@8": 1.0,
+        "primary_answer_correct": 1,
+        "secondary_n": 1,
+        "secondary_correctly_empty_and_abstained": 1,
+        "leaks": 0
+      },
+      "restricted_unfiltered": {
+        "n_pairs": 0,
+        "primary_recall@8": 0.0,
+        "primary_answer_correct": 0,
+        "secondary_n": 0,
+        "secondary_correctly_empty_and_abstained": 0,
+        "leaks": 0
+      }
+    },
+    "no_reader": {
+      "n_principals_checked": 1,
+      "all_empty": true,
+      "principals_with_results": []
+    },
+    "acl_leaks": 0,
+    "leaks_by_subtype": {},
+    "passed": true
+  }
+}

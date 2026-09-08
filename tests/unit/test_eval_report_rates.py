@@ -2,9 +2,9 @@
 on any float in [0,1] that isn't accompanied by a sibling "n" in the same
 JSON object -- enforced mechanically, not left as a convention someone has
 to remember (answer_accuracy's {n, correct, accuracy} already got this
-right; recall@5/recall@8/mrr/ndcg@8/abstention_precision/abstention_recall
-and restricted.<subtype>.primary_recall@8 did not, until eval/report.py's
-EV-02 changes).
+right; recall@5/recall@8/mrr/ndcg@8/abstention_precision/abstention_recall,
+restricted.<subtype>.primary_recall@8, and extraction.auto_accept_error_rate
+did not, until eval/report.py's EV-02 changes).
 
 "Adjacent" is purely structural: the float's immediate parent dict must
 contain a key literally named "n" whose value is a non-negative int (not a
@@ -16,13 +16,32 @@ ambiguity, not bare absence, was n_answerable's actual problem: it sat in
 the same flat dict as abstention_precision/abstention_recall too, whose
 denominators are different populations entirely).
 
-fixtures/ev01_pre_ev02_report.json is a real report.json produced by a live
-74-outcome retrieval run (see runs/ev01_gate_source, produced under EV-01),
-captured before EV-02's report.py changes -- committed because it is pure
-aggregate numbers (no retrieved_ids/citations/answer_text; see EV-01's A5 on
-why outcomes.jsonl itself is NOT committed). Kept as a permanent regression
-fixture: proof the checker detects a real historical instance of the defect
-it exists to catch, not just a synthetic example built to please it.
+Two fixtures, both committed, neither carrying any real per-principal data:
+
+  fixtures/ev01_pre_ev02_report.json
+    A real report.json from a live 74-outcome retrieval run (see
+    runs/ev01_gate_source, produced under EV-01), captured before EV-02's
+    report.py changes -- committed because it is pure aggregate numbers (no
+    retrieved_ids/citations/answer_text; see EV-01's A5 on why
+    outcomes.jsonl itself is never committed). --harness retrieval only, so
+    it has no extraction subtree at all -- 8 bare rates, not 9.
+
+  fixtures/ev02_synthetic_old_format_combined_report.json
+    Genuinely EXECUTED, not hand-typed: the real pre-EV-02 report.py (git
+    show fa5f2b0:src/isc/eval/report.py) run against a small synthetic
+    ExtractionReport + RetrievalReport, so it has both subtrees and
+    demonstrates all 9 values this item fixes in one file, including
+    auto_accept_error_rate (retrieval-only ev01_gate_source never exercised
+    the extraction path, so it alone cannot demonstrate that one).
+
+  fixtures/ev02_synthetic_outcomes/{outcomes.jsonl,failed.jsonl}
+    Hand-built QuestionOutcome objects -- a None-vs-False pair on
+    answer_correct, a restricted pair sharing one question_id, a leaked
+    chunk, and a subtype (restricted_unfiltered) with zero outcomes at all.
+    Nothing here corresponds to a real principal's real view, so unlike
+    outcomes.jsonl from a live run it carries no ACL semantics and is freely
+    committable -- the permanent, clone-safe input for this item's tests and
+    for EV-04's future diff.
 """
 
 from __future__ import annotations
@@ -33,6 +52,7 @@ from typing import Any
 
 import pytest
 
+from isc.eval import outcomes as eval_outcomes
 from isc.eval.extraction import ExtractionReport, FieldOutcome
 from isc.eval.report import (
     REPORT_SCHEMA_VERSION,
@@ -44,19 +64,10 @@ from isc.eval.retrieval import QuestionOutcome, RetrievalReport
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"
 
-# Every entry below needs a written reason. Two different KINDS of entry --
-# conflating them would let a real gap hide behind a "this was reviewed and
-# is fine" reading it doesn't deserve:
-#
-#   NOT_A_RATE   -- not a ratio over a population at all, so "needs an n"
-#                   never applied to it in the first place.
-#   DEFERRED_GAP -- IS a rate that needs this same fix. Deliberately out of
-#                   scope for THIS item (see EV-02 Stage 1 inventory:
-#                   extraction.by_field has ~18 fields x up to 3 rates each,
-#                   far more than retrieval's 8, and fixing it means
-#                   restructuring metrics.py's shared PRF dataclass, not a
-#                   report.py presentation change). A known, tracked gap,
-#                   not a false positive.
+# Not a rate at all -- a float in [0,1] that isn't a ratio over a
+# population, so "needs an n" never applied to it in the first place. Every
+# entry needs a written reason; this is not a place to quietly park a real
+# gap (see the TODO below the walker for that).
 NOT_A_RATE = {
     "bin_low", "bin_high",  # calibration_bins()'s fixed bin boundaries, not computed values
     "gap",                  # accuracy - bin_midpoint: a signed difference, not a ratio;
@@ -64,15 +75,32 @@ NOT_A_RATE = {
     "confidence",            # one FieldOutcome's own score -- a single item, not an
                              # aggregate over a population; there is no "n" to have
 }
-DEFERRED_GAP = {"precision", "recall", "f1"}  # extraction.by_field's PRF shape -- see above
 
 
 def _walk(node: Any, path: str, violations: list[str]) -> None:
     if isinstance(node, dict):
         for key, value in node.items():
             child_path = f"{path}.{key}" if path else key
+
+            # TODO: EV-06 -- extraction.by_field's PRF shape (precision,
+            # recall, f1) is a KNOWN, UNFIXED instance of exactly the defect
+            # this checker exists to catch: recall's true denominator sits
+            # under "support", not "n"; precision's and f1's true
+            # denominators (tp+fp, and a composite of two different counts)
+            # are not present under ANY name. NOT excluded because it isn't
+            # a rate -- it plainly is one -- but because fixing it means
+            # restructuring metrics.py's shared PRF dataclass (~18 fields x
+            # up to 3 rates each in the real corpus, far more than this
+            # item's 9), not a report.py presentation change. See EV-02
+            # Stage 1's inventory. Remove this skip when EV-06 lands, not
+            # before -- a checker that quietly tolerates the thing it was
+            # built to catch is worse than no checker.
+            if path == "extraction.by_field" or path.startswith("extraction.by_field."):
+                if key in {"precision", "recall", "f1"}:
+                    continue
+
             if isinstance(value, float) and 0.0 <= value <= 1.0:
-                if key in NOT_A_RATE or key in DEFERRED_GAP:
+                if key in NOT_A_RATE:
                     continue
                 n = node.get("n")
                 if not (isinstance(n, int) and not isinstance(n, bool) and n >= 0):
@@ -86,25 +114,28 @@ def _walk(node: Any, path: str, violations: list[str]) -> None:
 
 def find_bare_rates(payload: dict) -> list[str]:
     """Every JSON path to a float in [0,1] whose immediate parent object has
-    no sibling "n", excluding the written allowlist above. Empty means every
-    rate in the payload can be sized by a reader without cross-referencing
-    anything else in the file."""
+    no sibling "n", excluding NOT_A_RATE and the EV-06 TODO above. Empty
+    means every in-scope rate in the payload can be sized by a reader
+    without cross-referencing anything else in the file."""
     violations: list[str] = []
     _walk(payload, "", violations)
     return violations
 
 
-# -- the checker against a real, historical broken file -------------------
+# -- the checker against real (or genuinely executed) old-format files -----
 
-def test_old_pre_ev02_report_has_bare_rates_without_denominators():
+def test_old_pre_ev02_retrieval_report_has_exactly_8_bare_rates():
     """Regression proof, not a synthetic example: this is an actual
     report.json from a real 74-outcome live run, captured before EV-02's
-    report.py changes. If this ever stops failing without report.py's shape
+    report.py changes. --harness retrieval only -- no extraction subtree,
+    so no auto_accept_error_rate here; the 9th offender is demonstrated
+    separately below. If this ever stops failing without report.py's shape
     actually being fixed, the checker itself has gone blind."""
     payload = json.loads((FIXTURES / "ev01_pre_ev02_report.json").read_text())
 
     violations = find_bare_rates(payload)
 
+    assert len(violations) == 8
     assert set(violations) == {
         "retrieval.recall@5",
         "retrieval.recall@8",
@@ -114,6 +145,32 @@ def test_old_pre_ev02_report_has_bare_rates_without_denominators():
         "retrieval.abstention_recall",
         "retrieval.restricted.restricted_filtered.primary_recall@8",
         "retrieval.restricted.restricted_unfiltered.primary_recall@8",
+    }
+
+
+def test_old_format_combined_report_has_exactly_9_bare_rates():
+    """fixtures/ev02_synthetic_old_format_combined_report.json is the real
+    pre-EV-02 report.py, actually executed (not hand-typed JSON) against a
+    small synthetic sample carrying both subtrees -- the one place all 9
+    values this item fixes appear together, including
+    extraction.auto_accept_error_rate."""
+    payload = json.loads(
+        (FIXTURES / "ev02_synthetic_old_format_combined_report.json").read_text()
+    )
+
+    violations = find_bare_rates(payload)
+
+    assert len(violations) == 9
+    assert set(violations) == {
+        "retrieval.recall@5",
+        "retrieval.recall@8",
+        "retrieval.mrr",
+        "retrieval.ndcg@8",
+        "retrieval.abstention_precision",
+        "retrieval.abstention_recall",
+        "retrieval.restricted.restricted_filtered.primary_recall@8",
+        "retrieval.restricted.restricted_unfiltered.primary_recall@8",
+        "extraction.auto_accept_error_rate",
     }
 
 
@@ -175,6 +232,64 @@ def test_current_format_has_no_bare_rates_with_both_harnesses(tmp_path):
     assert find_bare_rates(payload) == []
 
 
+# -- the synthetic outcomes fixture (amendment B) ---------------------------
+
+def test_synthetic_outcomes_fixture_round_trips_and_has_no_bare_rates(tmp_path):
+    """Loads the committed, hand-built outcomes fixture (no live run, no
+    real principal's data), rescores it through report.write(), and checks
+    the result -- this is the "permanent, clone-safe input" amendment B
+    asked for, actually exercised end to end."""
+    result = eval_outcomes.load(FIXTURES / "ev02_synthetic_outcomes" / "outcomes.jsonl")
+    assert len(result.report.outcomes) == 5
+
+    write(tmp_path, None, result.report)
+    payload = json.loads((tmp_path / "report.json").read_text())
+
+    assert find_bare_rates(payload) == []
+
+
+def test_synthetic_outcomes_fixture_exercises_a_zero_denominator_subtype(tmp_path):
+    """The fixture deliberately has restricted_filtered pairs but NO
+    restricted_unfiltered outcomes at all -- restricted_unfiltered's
+    primary_recall@8 must come back as {"n": 0, ...: 0.0}, not a bare float
+    a reader could mistake for a real measured score."""
+    result = eval_outcomes.load(FIXTURES / "ev02_synthetic_outcomes" / "outcomes.jsonl")
+
+    write(tmp_path, None, result.report)
+    payload = json.loads((tmp_path / "report.json").read_text())
+    restricted = payload["retrieval"]["restricted"]
+
+    assert restricted["restricted_filtered"]["n_pairs"] == 1
+    assert "restricted_unfiltered" not in restricted or restricted["restricted_unfiltered"] == {
+        "n_pairs": 0,
+        "primary_recall@8": {"n": 0, "primary_recall@8": 0.0},
+        "primary_answer_correct": 0,
+        "secondary_n": 0,
+        "secondary_correctly_empty_and_abstained": 0,
+        "leaks": 0,
+    }
+
+
+def test_synthetic_outcomes_fixture_carries_a_leak_and_a_none_vs_false_pair():
+    """Confirms the fixture actually has the structural cases amendment B
+    asked for -- not asserting report.json shape here, just that the
+    committed file still contains what it's supposed to."""
+    result = eval_outcomes.load(FIXTURES / "ev02_synthetic_outcomes" / "outcomes.jsonl")
+    outcomes = [o for o in result.report.outcomes if o.question_id == "syn_re_01"]
+
+    # (2) one question_id, two principals -- the restricted pair.
+    assert {o.principal_id for o in outcomes} == {"p_alice", "p_ben"}
+    # (3) the denied side leaked a chunk.
+    assert result.report.leaks_by_subtype() == {"restricted_filtered": 1}
+    # (1) None (not applicable) vs False (checked, wrong) on answer_correct.
+    none_correct = [o.answer_correct for o in result.report.outcomes
+                     if o.question_id == "syn_ans_01"][0]
+    false_correct = [o.answer_correct for o in result.report.outcomes
+                      if o.question_id == "syn_ans_02"][0]
+    assert none_correct is None
+    assert false_correct is False
+
+
 # -- n=0: the guard value is still shown next to its own denominator -------
 
 def test_n_zero_is_emitted_next_to_abstention_precisions_zero_guard(tmp_path):
@@ -223,21 +338,47 @@ def test_n_zero_is_emitted_for_recall_mrr_ndcg_when_no_answerable_outcomes(tmp_p
     assert r["ndcg@8"] == {"n": 0, "ndcg@8": 0.0}
 
 
-def test_n_zero_is_emitted_for_restricted_summary_with_no_pairs(tmp_path):
-    """No restricted_unfiltered outcomes at all -- n_pairs=0, and the
-    checker must not mistake the resulting 0.0 for a real measured score."""
-    report = RetrievalReport(outcomes=[
-        QuestionOutcome(question_id="q_re_01", question_class="restricted",
-                         subtype="restricted_filtered", principal_id="u_alice",
-                         is_gold_principal=True, retrieved_ids=["c1"],
-                         gold_ids={"c1"}, answer_correct=True),
+def test_n_zero_is_emitted_for_auto_accept_error_rate_when_nothing_clears_threshold(tmp_path):
+    report = ExtractionReport(outcomes=[
+        FieldOutcome("doc_1", "po_number", "correct", "normalisation", "123", "123", 0.10),
     ])
-    write(tmp_path, None, report)
+    write(tmp_path, report, None, threshold=0.90)
     payload = json.loads((tmp_path / "report.json").read_text())
 
-    assert payload["retrieval"]["restricted"]["restricted_unfiltered"]["primary_recall@8"] == {
-        "n": 0, "primary_recall@8": 0.0,
+    assert payload["extraction"]["auto_accept_error_rate"] == {
+        "n": 0, "wrong": 0, "auto_accept_error_rate": 0.0,
     }
+
+
+# -- auto_accept_band(): consistent with auto_accept_error_rate ------------
+
+def test_auto_accept_band_is_consistent_with_auto_accept_error_rate():
+    report = _sample_extraction_report()
+    threshold = 0.90
+
+    rate = report.auto_accept_error_rate(threshold)
+    wrong, total = report.auto_accept_band(threshold)
+
+    assert total > 0
+    assert wrong / total == rate
+
+
+def test_auto_accept_band_matches_the_rate_across_several_thresholds():
+    """Same population, same check, for a range of thresholds -- not just
+    the one value happened to be picked above."""
+    report = ExtractionReport(outcomes=[
+        FieldOutcome("doc_1", "a", "correct", "normalisation", "1", "1", 0.95),
+        FieldOutcome("doc_1", "b", "wrong", "normalisation", "2", "3", 0.92),
+        FieldOutcome("doc_1", "c", "missed", "normalisation", None, "4", 1.0),
+        FieldOutcome("doc_1", "d", "correct", "normalisation", "5", "5", 0.40),
+    ])
+    for threshold in (0.0, 0.5, 0.9, 1.0, 1.01):
+        rate = report.auto_accept_error_rate(threshold)
+        wrong, total = report.auto_accept_band(threshold)
+        if total == 0:
+            assert rate == 0.0
+        else:
+            assert wrong / total == rate
 
 
 # -- schema_version: present, and a wrong version is rejected loudly -------
