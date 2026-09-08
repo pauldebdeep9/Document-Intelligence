@@ -260,6 +260,7 @@ def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
     retrieval_report = None
     if harness in {"retrieval", "both"}:
         from isc.eval import outcomes as eval_outcomes
+        from isc.eval.retrieval import evaluate_acl_gate
 
         if rescore_from is not None:
             retrieval_result = eval_outcomes.load(rescore_from)
@@ -297,7 +298,8 @@ def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
             console.print(f"[yellow]failed[/] {len(retrieval_result.failed)} (question, principal):")
             for qid, principal_id, reason in retrieval_result.failed:
                 console.print(f"  {qid} as {principal_id}: {reason}")
-        if not retrieval_report.passed():
+        gate = evaluate_acl_gate(retrieval_report)
+        if not gate.passed:
             console.print(f"[red]ACL LEAK[/] in {len(retrieval_report.leaks())} outcome(s): "
                            f"{[o.question_id for o in retrieval_report.leaks()]}")
 
@@ -333,11 +335,11 @@ def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
                 f"  retrieval:  recall@8={retrieval_report.recall_at(8):.3f}  "
                 f"mrr={retrieval_report.mean_mrr():.3f}  "
                 f"answer_accuracy={acc['correct']}/{acc['n']} ({acc['accuracy']:.1%})  "
-                f"passed={retrieval_report.passed()}"
+                f"passed={gate.passed}"
             )
         console.print(f"  cost:       ${cost:.4f}  ({int(tokens)} tokens)")
 
-    if retrieval_report is not None and not retrieval_report.passed():
+    if retrieval_report is not None and not gate.passed:
         raise typer.Exit(code=1)
 
 

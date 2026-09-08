@@ -142,6 +142,46 @@ def test_auto_accept_error_rate_counts_missed_not_just_wrong():
     assert rate > 0.0
 
 
+def test_missed_field_at_certain_confidence_appears_in_both_n_and_wrong():
+    """States the claim directly, not just its effect on a rate: a field the
+    model silently omits is wrapped ExtractedField.missing() (base.py:46-50),
+    which is Confidence.certain() == 1.0 (confidence.py:110-113) -- clearing
+    any realistic auto-accept threshold -- and "missed" is in
+    _ERROR_OUTCOMES (extraction.py:70). Those three facts mean a missed
+    field lands in BOTH auto_accept_band()'s denominator and its numerator.
+    The chain is exercised only incidentally elsewhere
+    (test_auto_accept_error_rate_counts_missed_not_just_wrong asserts
+    rate > 0.0, via a hand-rolled equivalent of missing() rather than the
+    classmethod itself) -- worth its own named test since this is the
+    metric the README leads with at 0.0%, and the one with a documented
+    history of a wrong denominator."""
+    gold = _gold(supplier_id=("V1", "V1"))
+    raw_pred = _raw_predicted(supplier_id=None)
+    record = _record(
+        supplier_id=ExtractedField.missing(),
+        # _record()'s own default for buyer_contact is also missing()-shaped
+        # (confidence 1.0) -- dropped to 0.5 here so it falls below the
+        # threshold below and does not join the population this test means
+        # to isolate to supplier_id alone.
+        buyer_contact=ExtractedField(value=None, confidence=Confidence(0.5)),
+    )
+    report = ExtractionReport(compare("doc_test", gold, raw_pred, record))
+
+    outcome = next(
+        o for o in report.outcomes
+        if o.field_name == "supplier_id" and o.axis == "normalisation"
+    )
+    assert outcome.outcome == "missed"
+    assert outcome.confidence == 1.0
+
+    # Threshold above every other field's confidence (0.9, _field()'s
+    # default) isolates supplier_id as the sole member of the auto-accept
+    # population -- so (1, 1) is exactly "the missed field, and nothing
+    # else, is both counted and wrong", not an inference from a moved rate.
+    wrong, n = report.auto_accept_band(threshold=0.95)
+    assert (wrong, n) == (1, 1)
+
+
 def test_false_negatives_lists_wrong_and_missed_fields_routed_to_accept():
     gold = _gold(supplier_id=("V1", "V1"))
     raw_pred = _raw_predicted(supplier_id=None)

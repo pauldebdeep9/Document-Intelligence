@@ -325,8 +325,54 @@ class RetrievalReport:
         return out
 
     def passed(self) -> bool:
-        """A single leak fails the run. This is not a tunable metric."""
-        return not self.leaks()
+        """A single leak fails the run. This is not a tunable metric.
+        Thin delegate onto evaluate_acl_gate() -- see that function for the
+        declared policy this verdict comes from, and its reason."""
+        return evaluate_acl_gate(self).passed
+
+
+@dataclass(frozen=True)
+class GatePolicy:
+    """One gate's verdict: an identifier, a pass/fail verdict, and a reason
+    a reader can act on without cross-referencing anything else. `reason` is
+    a statement of aggregates only (counts, subtype names) -- the same
+    discipline report.json itself is held to (EV-02's A5/B: report.json is
+    committed as a clone-safe fixture with no per-principal data, and a
+    reason string embedding a leaked_chunk_id or principal_id would cross
+    that line). It states what passed as well as what failed -- a reason
+    that only exists on failure is half a policy."""
+
+    name: str
+    passed: bool
+    reason: str
+
+
+def evaluate_acl_gate(report: RetrievalReport) -> GatePolicy:
+    """The ACL leak gate, declared. A single leaked chunk fails the run,
+    regardless of every other metric on the report -- this function reads
+    nothing off `report` except leaks()/leaks_by_subtype(), by construction,
+    so that claim is structural, not a promise. Extraction, not
+    redefinition: acl_leaks == 0 was already the entire pass condition (see
+    the now-thin RetrievalReport.passed()); this produces an identical
+    verdict on every input, just with a name and a reason attached.
+
+    For the leaked chunk ids and principal ids themselves -- deliberately
+    absent from `reason`, see the docstring above -- see the run's
+    outcomes.jsonl (eval/outcomes.py), not report.json.
+    """
+    leaks = report.leaks()
+    if leaks:
+        by_subtype = ", ".join(f"{k}:{v}" for k, v in sorted(report.leaks_by_subtype().items()))
+        return GatePolicy(
+            name="acl_leak_gate", passed=False,
+            reason=f"{len(leaks)} chunk(s) leaked to a principal who cannot read them "
+                   f"({by_subtype})",
+        )
+    return GatePolicy(
+        name="acl_leak_gate", passed=True,
+        reason=f"no chunks leaked to a principal who cannot read them "
+               f"({len(report.outcomes)} outcomes checked)",
+    )
 
 
 def check_provenance(

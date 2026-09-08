@@ -77,7 +77,10 @@ def test_write_renders_retrieval_report_without_raising(tmp_path):
     assert r["answerable_failures"][0]["question_id"] == "q_cd_02"
     assert r["restricted"]["restricted_filtered"]["n_pairs"] == 1
     assert r["no_reader"]["all_empty"] is True
-    assert r["passed"] is True
+    assert r["acl_gate"] == {
+        "name": "acl_leak_gate", "passed": True,
+        "reason": "no chunks leaked to a principal who cannot read them (7 outcomes checked)",
+    }
 
     text = md_path.read_text()
     assert "cross_document" in text

@@ -21,6 +21,11 @@ this codebase today (it is a terminal artifact for humans and for
 `git diff`-style regression comparison between runs), so
 validate_schema_version() exists for the day something does read it back,
 and for this module's own tests to pin the shape against drift.
+
+EV-03: retrieval.acl_gate replaces the bare retrieval.passed boolean with
+the declared GatePolicy's {name, passed, reason} (schema_version -> 3) --
+same verdict (see evaluate_acl_gate()'s docstring), now with an identifier
+and a reason a reader can act on without parsing report.md's prose.
 """
 
 from __future__ import annotations
@@ -31,9 +36,9 @@ from pathlib import Path
 
 from isc.common.errors import IscError
 from isc.eval.extraction import ExtractionReport
-from isc.eval.retrieval import RetrievalReport
+from isc.eval.retrieval import RetrievalReport, evaluate_acl_gate
 
-REPORT_SCHEMA_VERSION = 2
+REPORT_SCHEMA_VERSION = 3
 
 
 class ReportSchemaMismatch(IscError):
@@ -186,6 +191,7 @@ def write(out_dir: Path, extraction: ExtractionReport | None,
         n_answerable = sum(v["n"] for v in recall_by_subtype.values())
         expected_to_abstain, n_abstained = retrieval.abstention_precision_band()
         abstention_correct, n_unanswerable = retrieval.abstention_recall_band()
+        gate = evaluate_acl_gate(retrieval)
 
         # EV-02: every rate below is its own {"n": <denominator>, ...} object,
         # never a bare float -- see this module's docstring and
@@ -227,7 +233,7 @@ def write(out_dir: Path, extraction: ExtractionReport | None,
             "no_reader": no_reader_summary,
             "acl_leaks": len(retrieval.leaks()),
             "leaks_by_subtype": leaks_by_subtype,
-            "passed": retrieval.passed(),
+            "acl_gate": asdict(gate),
         }
 
         lines += ["## Retrieval", ""]
@@ -251,11 +257,12 @@ def write(out_dir: Path, extraction: ExtractionReport | None,
             f"- abstention precision: {retrieval.abstention_precision():.3f}",
             f"- abstention recall (reason-aware): {retrieval.abstention_recall():.3f}",
             f"- acl_leaks: {len(retrieval.leaks())}",
-            f"- passed: {retrieval.passed()}",
+            f"- passed: {gate.passed}",
+            f"- reason: {gate.reason}",
             "",
         ]
-        if not retrieval.passed():
-            lines += ["**RUN FAILED: ACL leak detected.**", ""]
+        if not gate.passed:
+            lines += [f"**RUN FAILED: {gate.reason}**", ""]
 
         # Per-subtype recall: cross_document and line_item called out
         # first and explicitly -- the two subtypes P1-08's gold set was
