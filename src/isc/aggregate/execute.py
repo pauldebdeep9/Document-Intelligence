@@ -248,13 +248,17 @@ def _part_prices(
         if plan.currency is not None and currency != plan.currency:
             continue
         identity = _identity_chunk(vr)
+        # A supplier-scoped question selected this record by its supplier, so
+        # that field enters every line's route (D5); unscoped, it selected
+        # nothing and stays out.
+        scoped = [_selection_fields(vr)[0]] if wanted else []
         for line in rec.lines:
             part = line.part_number.value
             if part is None or str(part).upper() != plan.part_number:
                 continue
             ln = line.line_number.value
             value = _decimal(line.unit_price.value)
-            confidence = _weakest(line.unit_price, line.part_number, rec.currency)
+            confidence = _weakest(line.unit_price, line.part_number, rec.currency, *scoped)
             route = thresholds.route(confidence)
             line_chunk = _line_chunk(vr.chunks, ln) if ln is not None else None
             ref = ValueRef(document_id=vr.document.id, po_number=rec.po_number.value,

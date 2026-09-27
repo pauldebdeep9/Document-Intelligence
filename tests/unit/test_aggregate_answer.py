@@ -204,6 +204,26 @@ def test_part_prices_lists_every_visible_priced_line(tmp_path):
     assert {c.chunk_id for c in ans.citations} >= {"chk_d1_1", "chk_d2_1"}
 
 
+def test_scoped_part_price_route_includes_supplier_confidence(tmp_path):
+    """D5 for part prices: when the question names a supplier, the supplier
+    field that selected the record is a selection field too -- a confident
+    price on an order we are not sure is Keyence's is not a Keyence price."""
+    po = Po("d1", "4500000001", KEYENCE, "V103014", "SGD", D("1"), supplier_conf=0.40,
+            lines=[Line(10, "TRM-BLK-2P5", D("12.34"))])
+    docs, store = build(tmp_path, [po])
+    q = "What did we pay Keyence for part TRM-BLK-2P5?"
+    the_plan, reason = validate_plan(
+        QueryPlanRaw(operation="part_prices", supplier="Keyence", part_number="TRM-BLK-2P5"),
+        q, MASTERS)
+    assert the_plan is not None, reason
+
+    result = execute(the_plan, visible_records(ANYONE, docs, store), Thresholds(),
+                     frozenset({"accept", "review"}), MASTERS)
+
+    assert [r.document_id for r in result.items] == []
+    assert [(r.document_id, r.line_number) for r in result.excluded] == [("d1", 10)]
+
+
 # -- grounding: the renderer's output passes the same checks as a draft -------
 
 _GROUNDING_CASES = {
