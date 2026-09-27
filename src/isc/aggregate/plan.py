@@ -16,13 +16,18 @@ The one rule that matters most: every identifier in the plan must appear
 verbatim in the question. A planner that "helpfully" completes "Kestrel
 Industrial" to "Kestrel Industrial AG", invents a part number, or infers
 SGD from a Singapore supplier has changed the question, and the answer
-would be precise and wrong. Validation failure is never an abstention -- it
-returns None and the question falls through to the chunk path unchanged.
+would be precise and wrong. Dropping words changes it too: when the
+question's next word would extend the mention toward a longer master name
+("Kestrel Industrial" taken from "Kestrel Industrial AG"), the planner
+truncated it, and the plan is rejected. Validation failure is never an
+abstention -- it returns None and the question falls through to the chunk
+path unchanged.
 """
 
 from __future__ import annotations
 
 import re
+import string
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -31,6 +36,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from isc.aggregate.resolve import resolve_mention
+from isc.extract.masters import supplier_ids_by_name
 from isc.extract.validators import PART_NUMBER
 
 _CURRENCY = re.compile(r"^[A-Z]{3}$")
@@ -65,6 +71,24 @@ def _collapse(s: str) -> str:
     return " ".join(s.split()).casefold()
 
 
+def _tokens(s: str) -> list[str]:
+    return [t.rstrip(string.punctuation) for t in _collapse(s).split()]
+
+
+def _appears_truncated(mention: str, rest: str, masters_dir: Path) -> bool:
+    """True when the question word right after the mention would extend it
+    toward a longer master name (legal suffix included): the planner kept
+    only part of what the user wrote."""
+    following = rest.split(maxsplit=1)
+    if not following:
+        return False
+    extended = [*_tokens(mention), *_tokens(following[0])[:1]]
+    return any(
+        _tokens(name)[: len(extended)] == extended
+        for name in supplier_ids_by_name(masters_dir)
+    )
+
+
 def validate_plan(
     raw: QueryPlanRaw, question: str, masters_dir: Path,
 ) -> tuple[QueryPlan | None, str]:
@@ -81,8 +105,11 @@ def validate_plan(
     supplier_ids: tuple[str, ...] = ()
     if raw.supplier is not None and raw.supplier.strip():
         supplier_mention = " ".join(raw.supplier.split())
-        if _collapse(supplier_mention) not in q:
+        hit = re.search(rf"(?<!\w){re.escape(_collapse(supplier_mention))}(?!\w)", q)
+        if hit is None:
             return None, f"supplier {raw.supplier!r} is not in the question verbatim"
+        if _appears_truncated(supplier_mention, q[hit.end():], masters_dir):
+            return None, f"supplier mention {raw.supplier!r} appears truncated"
         supplier_ids = resolve_mention(supplier_mention, masters_dir)
         if not supplier_ids:
             return None, f"supplier {raw.supplier!r} matches nothing in the supplier master"
@@ -100,13 +127,15 @@ def validate_plan(
         currency = raw.currency.strip().upper()
         if not _CURRENCY.match(currency):
             return None, f"currency {raw.currency!r} is not a 3-letter code"
-        if not re.search(rf"\b{currency}\b", q_upper):
+        if not re.search(rf"(?<![A-Za-z]){currency}(?![A-Za-z])", question):
             return None, f"currency {currency} is not named in the question"
 
     if op is Operation.TOTAL_SPEND and not supplier_ids:
         return None, "total_spend needs a supplier"
     if op is Operation.PART_PRICES and part_number is None:
         return None, "part_prices needs a part number"
+    if op is Operation.TOTAL_SPEND and part_number is not None:
+        return None, "total_spend does not take a part number"
 
     return QueryPlan(
         operation=op,

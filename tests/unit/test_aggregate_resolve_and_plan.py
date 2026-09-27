@@ -138,6 +138,57 @@ def test_operation_missing_its_required_parameter(raw):
     assert plan is None
 
 
+def test_truncated_supplier_mention_is_rejected():
+    """The mirror of completing a name: dropping the user's "AG" widens one
+    entity to both Kestrels, and every word left is still in the question."""
+    plan, reason = _v("What did we spend with Kestrel Industrial AG in total, in USD?",
+                      operation="total_spend", supplier="Kestrel Industrial", currency="USD")
+    assert plan is None and reason
+
+
+def test_truncation_toward_a_longer_master_name_is_rejected():
+    plan, reason = _v("What did we spend with Kestrel Industrial Pneumatics in total?",
+                      operation="total_spend", supplier="Kestrel Industrial")
+    assert plan is None and reason
+
+
+def test_supplier_mention_must_end_on_a_word_boundary():
+    plan, reason = _v("What did we spend with Kestrel Industrials in total?",
+                      operation="total_spend", supplier="Kestrel Industrial")
+    assert plan is None and reason
+
+
+def test_currency_must_be_written_as_a_code_in_the_question():
+    """An English word that is also an ISO code is not a currency. Fail-safe
+    cost: a lower-case code ("sgd") falls through to the chunk path too."""
+    plan, reason = _v("What did we spend with Keyence across all orders?",
+                      operation="total_spend", supplier="Keyence", currency="ALL")
+    assert plan is None and reason
+    plan, reason = _v("What did we spend with Keyence in sgd?",
+                      operation="total_spend", supplier="Keyence", currency="SGD")
+    assert plan is None and reason
+
+
+def test_part_number_shape_is_checked():
+    plan, reason = _v("What did we pay for part ABC across our purchase orders?",
+                      operation="part_prices", part_number="ABC")
+    assert plan is None and "shape" in reason
+
+
+def test_currency_shape_is_checked():
+    plan, reason = _v("What did we spend with Keyence in SGDX?",
+                      operation="total_spend", supplier="Keyence", currency="SGDX")
+    assert plan is None and "3-letter" in reason
+
+
+def test_total_spend_with_a_part_number_is_rejected():
+    """total_spend sums whole-order totals; it cannot restrict to one part,
+    so accepting the plan would answer a different question."""
+    plan, reason = _v("What did we spend with Keyence on part TRM-BLK-2P5 in total?",
+                      operation="total_spend", supplier="Keyence", part_number="TRM-BLK-2P5")
+    assert plan is None and reason
+
+
 def test_plan_schema_is_strict_mode_compatible():
     schema = to_strict_schema(QueryPlanRaw)
     assert schema["additionalProperties"] is False
