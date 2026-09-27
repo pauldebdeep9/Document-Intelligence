@@ -658,4 +658,6 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 | Date | Item | Prompts | Note |
 |---|---|---|---|
 | 2026-09-28 | AG-01..07 reference patch | — | Built in a sandbox with an approximate tokenizer (tiktoken's download host blocked); 71 new tests; 9/9 offline with scripted plans; the mutation check found the single-supplier sentence layout uncovered — test parametrised; found the part-price gold incomplete (→ AG-10). Not yet run on `Sai2606`. |
+| 2026-09-28 | AG-00 preflight | 2 | Sai2608 editable install repointed from the removed BabaKoreDao path; baselines: make test 561 passed, acl 16, ruff 55, mypy 18 errors in 8 files; patch --check clean |
+| 2026-09-28 | AG adopt — patch applied | 1 | make test 632 passed, acl 22 passed, aggregate gold 13/13 offline; ruff 55, mypy 18 |
 | | | | |
