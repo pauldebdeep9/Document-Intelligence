@@ -332,6 +332,26 @@ def test_rendered_text_binds_and_verifies(tmp_path, case):
             assert cited == {m.group(1)}
 
 
+def test_answerer_discards_a_misattributed_render(tmp_path, monkeypatch):
+    """The renderer is trusted to cite correctly, but not unchecked: a render
+    whose PO number is vouched for by another PO's chunks must be thrown
+    away by the same verify_attribution() gate a generated draft goes through."""
+    import isc.aggregate.answerer as answerer
+
+    real = answerer.render_text
+
+    def misattributing(result, masters_dir):
+        text, supporting = real(result, masters_dir)
+        return text.replace("PO 4500000001", "PO 4500000002"), supporting
+
+    monkeypatch.setattr(answerer, "render_text", misattributing)
+    pos = [Po("d1", "4500000001", OMRON, "V102337", "SGD", D("10.00")),
+           Po("d2", "4500000002", KEYENCE, "V103014", "SGD", D("20.00"))]
+    ans = _ask(tmp_path, pos, plan("total_spend", OMRON, currency="SGD"), _omron_q())
+    assert ans.abstained and ans.abstention_reason is AbstentionReason.ATTRIBUTION_MISMATCH
+    assert ans.route == "records"
+
+
 # -- orchestrator hand-off -----------------------------------------------------
 
 class _ExplodingRetriever:
