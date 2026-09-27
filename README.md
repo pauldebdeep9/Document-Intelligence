@@ -181,6 +181,9 @@ Full reasoning lives in `docs/adr/`; one line each here.
   either — why `LOW_SUPPORT` is disabled.
 - **0009** — Binding resolves a citation; it does not verify what it
   supports — citation binding vs. attribution verification, found live.
+- **0011** — Total-spend and part-price questions are answered from
+  extracted records, not chunks: typed plan, permissions before selection,
+  Decimal arithmetic, deterministic cited text (proposed; off by default).
 
 ## Layout
 

@@ -59,6 +59,19 @@ retrieval:
   # run showed working.
   min_support_score: 0.0
 
+# Total-spend and part-price questions answered from extracted records, not
+# chunks (src/isc/aggregate/, docs/adr/0011). Off until a live retrieval eval
+# measures it: k/n on q_cd_01..08 and q_am_04, and zero misroutes on every
+# other subtype. Flip with ISC_AGGREGATE__ENABLED=true for that run.
+aggregate:
+  enabled: false
+  # Which thresholds.route() bands may contribute to a computed figure. Not a
+  # new threshold -- the bands below are the extraction routing bands. review
+  # is included because P1-03 measured 0 wrong of 93 review-band values; each
+  # such value is still named in the answer as pending review. Anything
+  # outside these bands is excluded AND named, never silently dropped.
+  contributing_routes: [accept, review]
+
 # Routing policy for extracted fields. These are the numbers a process owner
 # argues with, so they live in config and are justified by eval/calibration.
 thresholds:

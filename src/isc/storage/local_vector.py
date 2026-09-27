@@ -231,6 +231,17 @@ class LocalVectorStore:
                 for r, (s, i) in enumerate(scored[:k])
             ]
 
+    def document_chunks(self, document_id: str, principal: Principal) -> list[Chunk]:
+        """Every chunk of one document this principal may read, in ordinal
+        order -- the aggregate path's citation candidates (aggregate/source.py).
+        Principal is required for the same reason it is on search(): there
+        is no way to read chunks out of this store without an ACL check."""
+        return sorted(
+            (c for c in self._chunks
+             if c.document_id == document_id and principal.may_read(c.acl)),
+            key=lambda c: c.ordinal,
+        )
+
     def count(self) -> int:
         return len(self._chunks)
 

@@ -1,0 +1,132 @@
+"""aggregate/resolve.py and aggregate/plan.py: a question's supplier mention
+resolves to every candidate, and a plan is only trusted when every
+identifier in it was copied from the question."""
+
+from __future__ import annotations
+
+import pytest
+
+from isc.aggregate.plan import Operation, QueryPlanRaw, validate_plan
+from isc.aggregate.resolve import resolve_mention
+from isc.extract.masters import supplier_id_for_printed_name
+from isc.llm.schema import to_strict_schema
+from tests.aggregate_world import MASTERS
+
+AG, PNEU = "V100781", "V100782"
+
+
+# -- resolve_mention: a question wants every candidate ----------------------
+
+@pytest.mark.parametrize("mention, expected", [
+    ("Kestrel Industrial", (AG, PNEU)),              # the ambiguous case: both
+    ("Kestrel", (AG, PNEU)),
+    ("Kestrel Industrial AG", (AG,)),                # full legal name: that one only
+    ("kestrel   industrial ag", (AG,)),              # case/whitespace-insensitive
+    ("Kestrel Industrial Pneumatics", (PNEU,)),
+    ("Kestrel Industrial Pneumatics GmbH", (PNEU,)),
+    ("Keyence", ("V103014",)),
+    ("Fastenal Industrial", ("V100234", "V100235")),
+    ("Kes", ()),                                     # whole tokens only, no substrings
+    ("Siemens", ()),
+    ("", ()),
+    (None, ()),
+])
+def test_resolve_mention(mention, expected):
+    assert resolve_mention(mention, MASTERS) == expected
+
+
+def test_same_string_resolves_differently_printed_vs_asked():
+    """The reason resolve_mention() exists: the extraction-side policy
+    (exact-or-nothing, for a name PRINTED on a document) maps "Kestrel
+    Industrial" to AG alone, because both normalise to "kestrel
+    industrial". Reusing it for a question would silently drop the
+    Pneumatics GmbH -- q_am_*'s whole failure mode."""
+    assert supplier_id_for_printed_name("Kestrel Industrial", MASTERS) == AG
+    assert resolve_mention("Kestrel Industrial", MASTERS) == (AG, PNEU)
+
+
+def test_printed_name_needs_a_unique_match():
+    assert supplier_id_for_printed_name("Omron Electronics Asia", MASTERS) == "V102337"
+    assert supplier_id_for_printed_name("Omron", MASTERS) is None
+    assert supplier_id_for_printed_name(None, MASTERS) is None
+
+
+# -- validate_plan: every identifier must come from the question ------------
+
+def _v(question, **raw):
+    return validate_plan(QueryPlanRaw(**raw), question, MASTERS)
+
+
+def test_none_falls_through():
+    plan, reason = _v("Who is the buyer on PO 4513180299?", operation="none")
+    assert plan is None and "not an aggregate" in reason
+
+
+def test_valid_total_spend():
+    plan, reason = _v("What did we spend with Omron Electronics Asia in total, in SGD?",
+                      operation="total_spend", supplier="Omron Electronics Asia", currency="SGD")
+    assert reason == ""
+    assert plan.operation is Operation.TOTAL_SPEND
+    assert plan.supplier_ids == ("V102337",)
+    assert plan.currency == "SGD"
+
+
+def test_ambiguous_mention_keeps_every_candidate():
+    plan, _ = _v("How much did we spend with Kestrel Industrial in total?",
+                 operation="total_spend", supplier="Kestrel Industrial")
+    assert plan.supplier_ids == (AG, PNEU)
+
+
+def test_planner_completing_a_supplier_name_is_rejected():
+    """The planner 'helpfully' expanding the user's words changes the
+    question -- here it would collapse the ambiguous case to one entity."""
+    plan, reason = _v("How much did we spend with Kestrel Industrial in total?",
+                      operation="total_spend", supplier="Kestrel Industrial AG")
+    assert plan is None and "verbatim" in reason
+
+
+def test_inferred_currency_is_rejected():
+    plan, reason = _v("What did we spend with Omron Electronics Asia in total?",
+                      operation="total_spend", supplier="Omron Electronics Asia", currency="SGD")
+    assert plan is None and "currency" in reason
+
+
+def test_hallucinated_part_number_is_rejected():
+    plan, reason = _v("What did we pay for the terminal blocks across our orders?",
+                      operation="part_prices", part_number="TRM-BLK-2P5")
+    assert plan is None and "verbatim" in reason
+
+
+def test_part_number_must_be_a_whole_token_of_the_question():
+    plan, _ = _v("What did we pay for part TRM-BLK-2P5 across our purchase orders?",
+                 operation="part_prices", part_number="TRM-BLK-2")
+    assert plan is None
+
+
+def test_part_number_case_is_normalised():
+    plan, _ = _v("what did we pay for part trm-blk-2p5 across our purchase orders?",
+                 operation="part_prices", part_number="trm-blk-2p5")
+    assert plan is not None and plan.part_number == "TRM-BLK-2P5"
+
+
+def test_supplier_not_in_master_falls_through():
+    plan, reason = _v("What did we spend with Siemens in total?",
+                      operation="total_spend", supplier="Siemens")
+    assert plan is None and "master" in reason
+
+
+@pytest.mark.parametrize("raw", [
+    dict(operation="total_spend"),                      # no supplier
+    dict(operation="part_prices", supplier="Keyence"),  # no part number
+])
+def test_operation_missing_its_required_parameter(raw):
+    plan, _ = _v("What did we spend with Keyence in total?", **raw)
+    assert plan is None
+
+
+def test_plan_schema_is_strict_mode_compatible():
+    schema = to_strict_schema(QueryPlanRaw)
+    assert schema["additionalProperties"] is False
+    assert set(schema["required"]) == {"operation", "supplier", "part_number", "currency"}
+    assert set(schema["properties"]["operation"]["enum"]) == {
+        "total_spend", "part_prices", "none"}

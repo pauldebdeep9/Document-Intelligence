@@ -75,6 +75,40 @@ def supplier_ids_by_name(masters_dir: Path) -> dict[str, str]:
     return {s["name"]: s["supplier_id"] for s in _suppliers(masters_dir)}
 
 
+def normalise_supplier_name(name: str) -> str:
+    """Public alias of the normalisation resolve_supplier() matches with
+    (casefold, collapsed whitespace, one trailing legal suffix stripped), so
+    query-side resolution (aggregate/resolve.py) compares names exactly the
+    way extraction-side resolution does rather than through a second copy."""
+    return _normalise_name(name)
+
+
+def supplier_id_for_printed_name(name: str | None, masters_dir: Path) -> str | None:
+    """A supplier name PRINTED ON A DOCUMENT -> its supplier_id, or None.
+
+    Same discipline as resolve_supplier(): exact name, then normalised name,
+    and only when exactly one master entry matches -- an ambiguous near-match
+    is a miss, never whichever candidate happens to come first. Exists
+    because 9/20 documents print no vendor code, so a record's own
+    supplier_id field cannot be the only way to say which supplier a record
+    belongs to.
+
+    Not for names typed in a question: "Kestrel Industrial" normalises to the
+    same string as "Kestrel Industrial AG" and would resolve to that one
+    entity alone, silently dropping Kestrel Industrial Pneumatics GmbH. A
+    printed full legal name wants exact-or-nothing; a question wants every
+    candidate -- see aggregate/resolve.py's resolve_mention()."""
+    if not name:
+        return None
+    suppliers = _suppliers(masters_dir)
+    exact = [s for s in suppliers if s["name"] == name]
+    if exact:
+        return exact[0]["supplier_id"] if len(exact) == 1 else None
+    normalised = _normalise_name(name)
+    hits = [s for s in suppliers if _normalise_name(s["name"]) == normalised]
+    return hits[0]["supplier_id"] if len(hits) == 1 else None
+
+
 @lru_cache(maxsize=1)
 def _parts(masters_dir: Path) -> dict[str, str]:
     """part_number -> canonical description."""

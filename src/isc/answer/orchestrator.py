@@ -19,6 +19,8 @@ the wrong supplier — found live in P1-07's sample run, not hypothesised.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from isc.answer.citations import bind_citations, verify_attribution
 from isc.common.config import Settings, load_prompt
 from isc.common.confidence import Confidence, Signal
@@ -30,6 +32,9 @@ from isc.models.answer import AbstentionReason, Answer, Citation
 from isc.models.chunk import ScoredChunk
 from isc.retrieve.retriever import Retriever
 
+if TYPE_CHECKING:
+    from isc.aggregate.answerer import RecordAnswerer
+
 # Must match config/prompts/answer/grounded_answer.v1.md's rule 2 exactly --
 # that prompt instructs the model to reply with this string and nothing
 # else when the context does not contain the answer. Checked before citation
@@ -40,10 +45,14 @@ _INSUFFICIENT_CONTEXT = "INSUFFICIENT_CONTEXT"
 
 
 class AnswerOrchestrator:
-    def __init__(self, retriever: Retriever, chat: ChatModel, settings: Settings) -> None:
+    def __init__(self, retriever: Retriever, chat: ChatModel, settings: Settings,
+                 aggregator: RecordAnswerer | None = None) -> None:
         self._retriever = retriever
         self._chat = chat
         self._s = settings
+        # Optional, and None unless settings.aggregate.enabled wires it in
+        # (cli.py): with it absent, ask() is byte-for-byte the P1 chunk path.
+        self._aggregator = aggregator
         # Loaded once per orchestrator, not per ask(): the master list is
         # small and static within a run, same reasoning as
         # extract/masters.py's own @lru_cache on the file read this calls
@@ -52,6 +61,15 @@ class AnswerOrchestrator:
 
     def ask(self, question: str, principal: Principal) -> Answer:
         with span("answer.ask", principal=principal.id):
+            # Step 0: total-spend / part-price questions are answered from
+            # extracted records (aggregate/). None means "not mine" -- not an
+            # aggregate question, or a plan that failed validation -- and the
+            # chunk path below runs unchanged. See docs/adr/0011.
+            if self._aggregator is not None:
+                answered = self._aggregator.try_answer(question, principal)
+                if answered is not None:
+                    return answered
+
             hits = self._retriever.retrieve(question, principal)
             if not hits:
                 return Answer.abstain(question, AbstentionReason.NO_RESULTS)

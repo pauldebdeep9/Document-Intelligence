@@ -12,7 +12,7 @@ from typing import Any, Literal
 
 import yaml
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from isc.common.errors import ConfigError
@@ -85,6 +85,37 @@ class ThresholdSettings(BaseModel):
     reject: float = 0.30
 
 
+_ROUTES = frozenset({"accept", "review", "low_confidence", "reject"})
+
+
+class AggregateSettings(BaseModel):
+    """aggregate/: answering total-spend and part-price questions from
+    extracted records instead of chunks. See docs/adr/0011."""
+
+    # Off until a live retrieval eval measures it: k/n on the cross_document
+    # and ambiguous-total questions, and zero misroutes on every other
+    # subtype (the planner must say "none" to them).
+    enabled: bool = False
+    # Which Thresholds.route() bands may contribute to a computed figure.
+    # Not a new threshold -- the bands are the existing extraction ones.
+    # "review" is included by default because P1-03 measured 0 wrong of 93
+    # review-band values; each one is still named in the answer as pending
+    # review. A value outside these bands is excluded AND named, never
+    # silently dropped.
+    contributing_routes: tuple[str, ...] = ("accept", "review")
+
+    @field_validator("contributing_routes")
+    @classmethod
+    def _known_routes(cls, v: tuple[str, ...]) -> tuple[str, ...]:
+        if not v:
+            raise ValueError("contributing_routes must name at least one route")
+        unknown = set(v) - _ROUTES
+        if unknown:
+            raise ValueError(f"unknown routes {sorted(unknown)}; expected a subset of "
+                             f"{sorted(_ROUTES)}")
+        return v
+
+
 class PathSettings(BaseModel):
     data: Path = REPO_ROOT / "data"
     runs: Path = REPO_ROOT / "runs"
@@ -105,6 +136,7 @@ class Settings(BaseSettings):
     chunk: ChunkSettings = Field(default_factory=ChunkSettings)
     retrieval: RetrievalSettings = Field(default_factory=RetrievalSettings)
     thresholds: ThresholdSettings = Field(default_factory=ThresholdSettings)
+    aggregate: AggregateSettings = Field(default_factory=AggregateSettings)
     paths: PathSettings = Field(default_factory=PathSettings)
 
 

@@ -9,15 +9,21 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from isc.common.config import get_settings
+from isc.common.config import Settings, get_settings
 from isc.common.logging import setup
 from isc.common.tracing import start_run
 from isc.models.acl import Principal, Sensitivity
+
+if TYPE_CHECKING:
+    from isc.aggregate.answerer import RecordAnswerer
+    from isc.llm.ports import ChatModel
+    from isc.storage.local_vector import LocalVectorStore
 
 app = typer.Typer(add_completion=False, help="ISC Document Intelligence")
 console = Console()
@@ -143,6 +149,17 @@ def _resolve_principal(as_user: str, groups: str, acl_dir: Path) -> Principal:
     return Principal(id=as_user, group_ids=frozenset(g for g in groups.split(",") if g))
 
 
+def _aggregator(chat: ChatModel, store: LocalVectorStore, s: Settings) -> RecordAnswerer | None:
+    """The records path (aggregate/) when settings.aggregate.enabled, else
+    None -- the orchestrator then runs the P1 chunk path unchanged."""
+    if not s.aggregate.enabled:
+        return None
+    from isc.aggregate.answerer import RecordAnswerer
+    from isc.storage.sqlite_docstore import SqliteDocStore
+
+    return RecordAnswerer(chat, SqliteDocStore(s.paths.data / "docstore.sqlite"), store, s)
+
+
 @app.command()
 def ask(question: str, as_user: str = typer.Option(..., "--as"),
         groups: str = typer.Option("", "--groups", help="comma separated")) -> None:
@@ -159,7 +176,8 @@ def ask(question: str, as_user: str = typer.Option(..., "--as"),
     store = LocalVectorStore(s.paths.data / "vector_store.pkl")
     chat = get_chat_model()
     retriever = Retriever(store, get_embedding_model(), chat, s)
-    orchestrator = AnswerOrchestrator(retriever, chat, s)
+    orchestrator = AnswerOrchestrator(retriever, chat, s,
+                                      aggregator=_aggregator(chat, store, s))
 
     answer = orchestrator.ask(question, principal)
 
@@ -172,6 +190,7 @@ def ask(question: str, as_user: str = typer.Option(..., "--as"),
         for c in answer.citations:
             t.add_row(c.chunk_id, c.label)
         console.print(t)
+    console.print(f"[dim]route={answer.route}[/]")
     run.summarise()
 
 
@@ -283,7 +302,8 @@ def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
 
             chat = get_chat_model()
             orchestrator = AnswerOrchestrator(
-                Retriever(store, get_embedding_model(), chat, s), chat, s)
+                Retriever(store, get_embedding_model(), chat, s), chat, s,
+                aggregator=_aggregator(chat, store, s))
             users = load_principals(s.paths.data / "acl")
 
             retrieval_result = run_retrieval_eval(gold["questions"], users, orchestrator)
