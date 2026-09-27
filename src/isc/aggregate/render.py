@@ -15,6 +15,12 @@ per-sentence and its splitter only breaks on [.!?] followed by a capital or
 "[" -- a "- " bullet list would merge every line into one sentence and let
 one PO's citation vouch for another PO's number.
 
+Wording is for a finance reader (the D7 review): a headline says how many of
+the matching orders or lines its figure covers, an excluded or
+not-yet-confirmed value sits under the supplier whose total it affects, and
+review status is stated in plain words -- the confidence score stays in
+Answer.confidence, not the text.
+
 What is never rendered: anything about records the principal cannot read.
 The view render sees was filtered before execute() ran, so "visible to you"
 is literally true and a hidden order cannot even be counted.
@@ -70,28 +76,39 @@ def _po(ref: ValueRef) -> str:
     return f"PO {ref.po_number}" if ref.po_number else "An order with no PO number"
 
 
-def render_text(result: AggregateResult, masters_dir: Path) -> tuple[str, list[ScoredChunk]]:
-    names = supplier_names_by_id(masters_dir)
-    ev = _Evidence()
-    lines: list[str] = []
-    plan = result.plan
+def _review_lines(refs: list[ValueRef], ev: _Evidence) -> list[str]:
+    lines = []
+    for r in refs:
+        if r.route == "accept" or r.value is None:
+            continue
+        what = f"line {r.line_number} unit price" if r.line_number is not None else "total"
+        lines.append(f"{_po(r)} {what} ({money(r.value)} {r.currency}) is included but has "
+                     f"not yet been confirmed by a reviewer {ev.markers(r.evidence)}.")
+    return lines
 
-    if plan.operation is Operation.TOTAL_SPEND:
-        lines += _total_spend_lines(result, names, ev)
-    else:
-        lines += _part_price_lines(result, names, ev)
 
-    review = [r for r in result.included if r.route != "accept"]
-    for r in review:
-        what = (f"line {r.line_number} unit price" if r.line_number is not None
-                else "order total")
-        lines.append(f"{_po(r)} {what} is included but is still in the extraction review "
-                     f"queue (confidence {r.confidence.score:.2f}) {ev.markers(r.evidence)}.")
-    for r in result.excluded:
+def _excluded_lines(refs: list[ValueRef], ev: _Evidence) -> list[str]:
+    # Never names the supplier: placement under its section says whose it is,
+    # and an excluded ref with no evidence would be an uncited supplier name.
+    lines = []
+    for r in refs:
         where = f"{_po(r)} line {r.line_number}" if r.line_number is not None else _po(r)
         marks = ev.markers(r.evidence)
         tail = f" {marks}." if marks else "."
         lines.append(f"Not included: {where}, because {r.reason}{tail}")
+    return lines
+
+
+def render_text(result: AggregateResult, masters_dir: Path) -> tuple[str, list[ScoredChunk]]:
+    names = supplier_names_by_id(masters_dir)
+    ev = _Evidence()
+    plan = result.plan
+
+    if plan.operation is Operation.TOTAL_SPEND:
+        lines = _total_spend_lines(result, names, ev)
+    else:
+        lines = _part_price_lines(result, names, ev)
+
     if result.other_currencies:
         parts = ", ".join(f"{_plural(n, 'order')} in {cur}"
                           for cur, n in sorted(result.other_currencies.items()))
@@ -114,15 +131,20 @@ def _total_spend_lines(result: AggregateResult, names: dict[str, str], ev: _Evid
         return [f"{_po(r)}: {money(r.value)} {r.currency} {ev.markers(r.evidence)}."
                 for r in g.included if r.value is not None]
 
-    if len(groups) == 1 and len(plan.supplier_ids) == 1:
-        g = groups[0]
-        lines.append(
-            f"Total spend with {names.get(g.supplier_id, g.supplier_id)} in {g.currency} across "
-            f"the {_plural(len(g.included), 'purchase order')} visible to you: "
-            f"{money(g.total)} {g.currency} {ev.markers(_all_evidence(g.included))}.")
-        lines += po_lines(g)
-        return lines
+    def group_line(g: Group, head: str) -> str:
+        k = len(g.included)
+        m = k + sum(1 for r in result.excluded
+                    if r.supplier_id == g.supplier_id and r.currency == g.currency)
+        if m == k:
+            cover = f"from the {_plural(k, 'matching purchase order')} visible to you"
+            suffix = ""
+        else:
+            cover = f"from {k} of the {m} matching purchase orders visible to you"
+            suffix = f" ({m - k} not included, see below)"
+        return (f"{head}: {money(g.total)} {g.currency}, {cover}{suffix} "
+                f"{ev.markers(_all_evidence(g.included))}.")
 
+    single = len(groups) == 1 and len(plan.supplier_ids) == 1
     if len(plan.supplier_ids) > 1:
         lines.append(
             f"\"{plan.supplier_mention}\" matches {len(plan.supplier_ids)} suppliers in the "
@@ -135,13 +157,22 @@ def _total_spend_lines(result: AggregateResult, names: dict[str, str], ev: _Evid
         # so "visible to you" discloses nothing about hidden orders.
         lines.append(f"Only {len(suppliers)} of the {len(plan.supplier_ids)} "
                      f"{'has' if len(suppliers) == 1 else 'have'} orders visible to you.")
-    for g in groups:
-        name = names.get(g.supplier_id, g.supplier_id)
-        lines.append(
-            f"{name} ({g.supplier_id}), {g.currency}: {money(g.total)} {g.currency} across "
-            f"{_plural(len(g.included), 'purchase order')} "
-            f"{ev.markers(_all_evidence(g.included))}.")
-        lines += po_lines(g)
+    # One section per supplier, in the order the plan resolved them: its
+    # group line(s) and PO lines, then its unconfirmed values, then what was
+    # left out of its total.
+    for sid in plan.supplier_ids:
+        name = names.get(sid, sid)
+        mine = [g for g in groups if g.supplier_id == sid]
+        for g in mine:
+            head = (f"Total spend with {name} in {g.currency}" if single
+                    else f"{name} ({sid}), {g.currency}")
+            lines.append(group_line(g, head))
+            lines += po_lines(g)
+        lines += _review_lines([r for g in mine for r in g.included], ev)
+        lines += _excluded_lines([r for r in result.excluded if r.supplier_id == sid], ev)
+    # execute() only excludes selected suppliers' orders; never drop one silently.
+    lines += _excluded_lines(
+        [r for r in result.excluded if r.supplier_id not in plan.supplier_ids], ev)
     return lines
 
 
@@ -152,9 +183,12 @@ def _part_price_lines(result: AggregateResult, names: dict[str, str], ev: _Evide
     scope = ""
     if plan.supplier_ids:
         scope = " from " + " or ".join(names.get(s, s) for s in plan.supplier_ids)
+    excluded = len(result.excluded)
+    suffix = (f" ({_plural(excluded, 'matching line')} not included, see below)"
+              if excluded else "")
     lines = [
-        f"Part {plan.part_number}{scope} appears on {_plural(len(items), 'priced line')} "
-        f"across the {_plural(len(pos), 'purchase order')} visible to you "
+        f"Part {plan.part_number}{scope}: {_plural(len(items), 'priced line')} "
+        f"across {_plural(len(pos), 'purchase order')} visible to you{suffix} "
         f"{ev.markers(_all_evidence(items))}."
     ]
     for r in items:
@@ -162,4 +196,6 @@ def _part_price_lines(result: AggregateResult, names: dict[str, str], ev: _Evide
             continue
         lines.append(f"{_po(r)} line {r.line_number}: unit price {money(r.value)} {r.currency} "
                      f"{ev.markers(r.evidence)}.")
+    lines += _review_lines(list(items), ev)
+    lines += _excluded_lines(list(result.excluded), ev)
     return lines

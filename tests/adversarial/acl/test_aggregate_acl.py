@@ -70,7 +70,7 @@ def test_restricted_order_never_contributes(tmp_path):
     ans = _answer(tmp_path, BEN)
     assert not ans.abstained
     assert_nothing_hidden_contributes(ans, BEN, [HIDDEN, HIDDEN_UNEXTRACTED])
-    assert "across the 1 purchase order visible to you: 1,000.00 SGD" in ans.text
+    assert "in SGD: 1,000.00 SGD, from the 1 matching purchase order visible to you" in ans.text
     assert "Not checked" not in ans.text   # the hidden unextracted doc is not counted
 
 

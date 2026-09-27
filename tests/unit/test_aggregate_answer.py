@@ -98,8 +98,8 @@ def test_review_band_value_is_included_and_named(tmp_path):
            Po("d2", "4500000002", OMRON, "V102337", "SGD", D("5.00"), total_conf=0.70)]
     ans = _ask(tmp_path, pos, plan("total_spend", OMRON, currency="SGD"), _omron_q())
     assert ": 15.00 SGD" in ans.text
-    assert re.search(r"PO 4500000002 order total is included but is still in the "
-                     r"extraction review queue \(confidence 0\.70\)", ans.text)
+    assert re.search(r"PO 4500000002 total \(5\.00 SGD\) is included but has not yet "
+                     r"been confirmed by a reviewer", ans.text)
     assert ans.confidence.score == 0.70   # weakest contributing value
 
 
@@ -124,7 +124,7 @@ def test_absent_total_is_named_not_treated_as_zero(tmp_path):
     pos = [Po("d1", "4500000001", OMRON, "V102337", "SGD", D("10.00")),
            Po("d2", "4500000002", OMRON, "V102337", "SGD", None)]
     ans = _ask(tmp_path, pos, plan("total_spend", OMRON, currency="SGD"), _omron_q())
-    assert "across the 1 purchase order visible to you: 10.00 SGD" in ans.text
+    assert "in SGD: 10.00 SGD, from 1 of the 2 matching purchase orders visible to you" in ans.text
     assert "Not included: PO 4500000002, because no order total is printed" in ans.text
 
 
@@ -224,6 +224,65 @@ def test_scoped_part_price_route_includes_supplier_confidence(tmp_path):
 
     assert [r.document_id for r in result.items] == []
     assert [(r.document_id, r.line_number) for r in result.excluded] == [("d1", 10)]
+
+
+# -- wording a finance reader cannot misread (D7) ------------------------------
+
+def test_headline_flags_an_incomplete_total(tmp_path):
+    pos = [Po("d1", "4500000001", OMRON, "V102337", "SGD", D("10.00")),
+           Po("d2", "4500000002", OMRON, "V102337", "SGD", D("20.00")),
+           Po("d3", "4500000003", OMRON, "V102337", "SGD", None)]
+    ans = _ask(tmp_path, pos, plan("total_spend", OMRON, currency="SGD"), _omron_q())
+    assert ("from 2 of the 3 matching purchase orders visible to you (1 not included, see below)"
+            in ans.text.splitlines()[0])
+
+
+def test_headline_without_exclusions_says_so_plainly(tmp_path):
+    pos = [Po("d1", "4500000001", OMRON, "V102337", "SGD", D("10.00")),
+           Po("d2", "4500000002", OMRON, "V102337", "SGD", D("20.00"))]
+    ans = _ask(tmp_path, pos, plan("total_spend", OMRON, currency="SGD"), _omron_q())
+    assert "from the 2 matching purchase orders visible to you" in ans.text.splitlines()[0]
+    assert "not included" not in ans.text
+
+
+def test_exclusions_sit_under_their_supplier(tmp_path):
+    """A reader of a multi-supplier answer must see whose total an excluded
+    or unconfirmed order affects without cross-referencing PO numbers."""
+    pos = [Po("d1", "4500000001", AG, "V100781", "EUR", D("1.00")),
+           Po("d2", "4500000002", PNEU, "V100782", "EUR", D("2.00"), total_conf=0.7),
+           Po("d3", "4500000003", PNEU, None, "EUR", None)]
+    q = "How much did we spend with Kestrel Industrial in total?"
+    lines = _ask(tmp_path, pos, plan("total_spend", "Kestrel Industrial"), q).text.splitlines()
+
+    def at(prefix: str) -> int:
+        return next(i for i, line in enumerate(lines) if line.startswith(prefix))
+
+    ag_group, ag_po = at(f"{AG} (V100781)"), at("PO 4500000001:")
+    pneu_group, pneu_po = at(f"{PNEU} (V100782)"), at("PO 4500000002:")
+    pneu_review = at("PO 4500000002 total")
+    pneu_excluded = at("Not included: PO 4500000003")
+    assert ag_group < ag_po < pneu_group < pneu_po < pneu_review < pneu_excluded
+    assert "from 1 of the 2 matching purchase orders" in lines[pneu_group]
+
+
+def test_review_wording_is_plain(tmp_path):
+    pos = [Po("d1", "4500000001", OMRON, "V102337", "SGD", D("10.00")),
+           Po("d2", "4500000002", OMRON, "V102337", "SGD", D("5.00"), total_conf=0.70)]
+    ans = _ask(tmp_path, pos, plan("total_spend", OMRON, currency="SGD"), _omron_q())
+    assert "has not yet been confirmed by a reviewer" in ans.text
+    assert "review queue" not in ans.text and "confidence 0." not in ans.text
+    assert ans.confidence.score == 0.70
+
+
+def test_part_price_headline_counts_excluded_lines(tmp_path):
+    pos = [Po("d1", "4500000001", OMRON, "V102337", "SGD", D("1"), lines=[
+               Line(10, "TRM-BLK-2P5", D("3.00")), Line(20, "TRM-BLK-2P5", None)]),
+           Po("d2", "4500000002", KEYENCE, "V103014", "SGD", D("1"), lines=[
+               Line(10, "TRM-BLK-2P5", D("4.00"))])]
+    q = "What did we pay for part TRM-BLK-2P5 across our purchase orders?"
+    headline = _ask(tmp_path, pos, plan("part_prices", part="TRM-BLK-2P5"), q).text.splitlines()[0]
+    assert "2 priced lines" in headline
+    assert "(1 matching line not included, see below)" in headline
 
 
 # -- grounding: the renderer's output passes the same checks as a draft -------
