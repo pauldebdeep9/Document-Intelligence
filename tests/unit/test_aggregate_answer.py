@@ -178,6 +178,8 @@ def test_every_visible_matching_order_is_accounted_for_exactly_once(tmp_path):
     excluded_ids = {r.document_id for r in result.excluded}
     assert included_ids & excluded_ids == set()
     assert included_ids | excluded_ids == {po.doc_id for po in omron_sgd}
+    assert included_ids == {"d_ok", "d_review", "d_no_code"}
+    assert excluded_ids == {"d_low", "d_absent", "d_unprinted"}
     assert all(r.reason for r in result.excluded)
     assert not any(r.reason for r in result.included)
     assert result.other_currencies == {"EUR": 1}
