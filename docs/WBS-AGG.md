@@ -436,7 +436,10 @@ of scope. AG-11 is where real extraction meets the records path.
 2. Hand-written paraphrase and near-miss set (~20): aggregate phrasings the
    gold does not use ("How much have we paid Omron overall, in SGD?") and
    look-alikes that must route `none` ("What did we order from Kestrel
-   Industrial?", "What is the order total on PO 4522345741?")
+   Industrial?", "What is the order total on PO 4522345741?"). Must include
+   the two truncation shapes AG-02 left fail-open: punctuation between
+   mention and suffix ("…with Kestrel Industrial, AG in total?") and a
+   mention that appears twice in one question.
 3. Runner, planner only, no retrieval: validated plan vs expected; outcomes
    are exact, wrong plan, misroute-in (non-aggregate → records), misroute-out
    (aggregate → chunks), and guard rejection by reason; k/n report to
