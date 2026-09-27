@@ -294,7 +294,7 @@ citation to the header. A number you cannot point at is a number you cannot cite
 
 ---
 
-## AG-05 — Deterministic renderer through the same grounding checks ☐
+## AG-05 — Deterministic renderer through the same grounding checks ☒
 
 **Priority** critical · **~170 LOC** (+~90 test) · **Prompts** 4 · **Depends** AG-04 · **Stop** D7 before prompt 1
 
@@ -667,4 +667,5 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 | 2026-09-28 | AG-02 (adopt) | 2 | DoD green; fail-first a RED, b RED, c RED; guard review: supplier_mention verbatim check is an unbounded substring, so a planner truncating "Kestrel Industrial AG" to "Kestrel Industrial" passes and widens to both entities (untested); currency is shape+word-boundary only, so "ALL" passes on "all orders" (untested); make test 633; prompt 5: truncated-mention, capitalised-currency and part-on-total_spend rejections added test-first, fail-first i/ii/iii RED/RED/RED; make test 640 |
 | 2026-09-28 | AG-03 (adopt) | 1 | 2 tests added (document_chunks ACL, AST source-only reads); fail-first a RED, b RED (would survive without the new test: yes), c RED; review: no bypass — every record, Document and chunk read goes through visible_records()/document_chunks() with the asking principal; nothing rendered derives from an unreadable document (supplier names come from the master, which is not access-controlled by design); make test 642, acl 24 |
 | 2026-09-28 | AG-04 (adopt) | 1 | denied-principal abstention reason asserted (source mutation now RED on it; AG-03's 'second layer' reading corrected); accounting identity test; D5 gap fixed test-first (scoped part prices); fail-first a RED, b RED, c RED (identity test RED under a and c, not b — it checks the partition, not which side); make test 644, acl 24 |
+| 2026-09-28 | AG-05 (adopt) | 1 | AG-04 identity test tightened to exact sides (gate bypass now RED); fail-first a RED, b RED (14 tests: verify_attribution discards the uncited headline, so every single-supplier answer abstains), c RED; D7 wording read out for review; make test 644, acl 24 |
 | | | | |
