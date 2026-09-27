@@ -18,7 +18,7 @@ records instead of chunks. Design and rationale live in
 |---|---|
 | P1 pipeline (ingest → answer), eval harness, `outcomes.jsonl` (schema v1), `isc eval-diff` | complete |
 | P1-09 reading on the target slice | total spend 0/4 (`q_cd_01`–`04`), ambiguous 0/4 (`q_am_01`–`04`), `cross_document` recall@8 0.875 |
-| AG-01..AG-07 | reference implementation in `aggregate-records-path.patch` (one commit, 22 files) — sandbox-verified, not yet run on `Sai2608` |
+| AG-01..AG-07 | reference patch applied as `1c4839f` (adopt mode) and verified on `Sai2608` — see the Log |
 | Live planner eval, route in eval outcomes, complete part-price gold, records carrying their own ACL | not started (AG-08..AG-12) |
 | Dev/test env | `Sai2608` — the repo's own env; its editable install was repointed at this checkout during AG-00 (it pointed at the old `SaiBaba/BabaKoreDao` path) |
 | Branch | `feat/ag-records-path` off `main`; merged after AG-11 |
@@ -657,7 +657,7 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 
 | Date | Item | Prompts | Note |
 |---|---|---|---|
-| 2026-09-28 | AG-01..07 reference patch | — | Built in a sandbox with an approximate tokenizer (tiktoken's download host blocked); 71 new tests; 9/9 offline with scripted plans; the mutation check found the single-supplier sentence layout uncovered — test parametrised; found the part-price gold incomplete (→ AG-10). Not yet run on `Sai2608`. |
+| 2026-09-28 | AG-01..07 reference patch | — | Built in a sandbox with an approximate tokenizer (tiktoken's download host blocked); 71 new tests; 9/9 offline with scripted plans; the mutation check found the single-supplier sentence layout uncovered — test parametrised; found the part-price gold incomplete (→ AG-10). Sandbox run only — the first real run is the "AG adopt" row below. |
 | 2026-09-28 | AG-00 preflight | 2 | Sai2608 editable install repointed from the removed BabaKoreDao path; baselines: make test 561 passed, acl 16, ruff 55, mypy 18 errors in 8 files; patch --check clean |
 | 2026-09-28 | AG adopt — patch applied | 1 | make test 632 passed, acl 22 passed, aggregate gold 13/13 offline; ruff 55, mypy 18 |
 | 2026-09-28 | AG-01 (adopt) | 1 | DoD green; fail-first a RED, b RED, c SURVIVED→test added→RED; make test 633 |
