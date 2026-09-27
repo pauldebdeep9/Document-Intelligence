@@ -18,12 +18,12 @@ records instead of chunks. Design and rationale live in
 |---|---|
 | P1 pipeline (ingest → answer), eval harness, `outcomes.jsonl` (schema v1), `isc eval-diff` | complete |
 | P1-09 reading on the target slice | total spend 0/4 (`q_cd_01`–`04`), ambiguous 0/4 (`q_am_01`–`04`), `cross_document` recall@8 0.875 |
-| AG-01..AG-07 | reference implementation in `aggregate-records-path.patch` (one commit, 22 files) — sandbox-verified, not yet run on `Sai2606` |
+| AG-01..AG-07 | reference implementation in `aggregate-records-path.patch` (one commit, 22 files) — sandbox-verified, not yet run on `Sai2608` |
 | Live planner eval, route in eval outcomes, complete part-price gold, records carrying their own ACL | not started (AG-08..AG-12) |
-| Dev/test env | `Sai2606`. The repo's `environment.yml`, `Makefile`, `README.md` and `.vscode/settings.json` still name `Sai2608`; AG work does not change them, and VS Code's test runner will use `Sai2608` unless repointed |
+| Dev/test env | `Sai2608` — the repo's own env; its editable install was repointed at this checkout during AG-00 (it pointed at the old `SaiBaba/BabaKoreDao` path) |
 | Branch | `feat/ag-records-path` off `main`; merged after AG-11 |
 
-**Baseline before AG-01:** AG-00 preflight green — `Sai2606` is Python 3.11 and
+**Baseline before AG-01:** AG-00 preflight green — `Sai2608` is Python 3.11 and
 resolves `isc` to this checkout, the corpus is present and gold unchanged,
 `make test` and `pytest -m acl` baselines recorded, the reference patch applies
 cleanly to `main`, and this document committed as the branch's first commit.
@@ -85,7 +85,7 @@ Same as `WBS-P1.md`, tightened:
   sample size.
 - **Stop** marks a design decision: Claude Code stops and asks rather than
   choosing.
-- Every command runs through `conda run -n Sai2606 …`.
+- Every command runs through `conda run -n Sai2608 …`.
 - A prompt whose verify step is green ends with a commit `AG-0X.N: <summary>`.
   A red verify stops without committing, so every commit on the branch is a
   known-green point to reset to.
@@ -103,7 +103,7 @@ Goal: <one sentence>.
 In scope: <files>. Do not edit anything else.
 Must hold: <invariants from this item's Watch and Done when>.
 Do: <the prompt line, expanded>.
-Verify: conda run -n Sai2606 pytest -q <paths> — paste the full output.
+Verify: conda run -n Sai2608 pytest -q <paths> — paste the full output.
 Stop after pasting. Do not start prompt N+1. If you hit a choice this
 document or ADR 0011 does not settle, stop and ask.
 ```
@@ -657,7 +657,7 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 
 | Date | Item | Prompts | Note |
 |---|---|---|---|
-| 2026-09-28 | AG-01..07 reference patch | — | Built in a sandbox with an approximate tokenizer (tiktoken's download host blocked); 71 new tests; 9/9 offline with scripted plans; the mutation check found the single-supplier sentence layout uncovered — test parametrised; found the part-price gold incomplete (→ AG-10). Not yet run on `Sai2606`. |
+| 2026-09-28 | AG-01..07 reference patch | — | Built in a sandbox with an approximate tokenizer (tiktoken's download host blocked); 71 new tests; 9/9 offline with scripted plans; the mutation check found the single-supplier sentence layout uncovered — test parametrised; found the part-price gold incomplete (→ AG-10). Not yet run on `Sai2608`. |
 | 2026-09-28 | AG-00 preflight | 2 | Sai2608 editable install repointed from the removed BabaKoreDao path; baselines: make test 561 passed, acl 16, ruff 55, mypy 18 errors in 8 files; patch --check clean |
 | 2026-09-28 | AG adopt — patch applied | 1 | make test 632 passed, acl 22 passed, aggregate gold 13/13 offline; ruff 55, mypy 18 |
 | | | | |
