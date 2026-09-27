@@ -195,7 +195,7 @@ addendum only if D2 goes the other way.
 
 ---
 
-## AG-03 — Permission-first record source ☐
+## AG-03 — Permission-first record source ☒
 
 **Priority** critical · **~90 LOC** (+~180 test incl. builder) · **Prompts** 4–5 · **Depends** none (parallel with AG-01/02)
 
@@ -665,4 +665,5 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 | 2026-09-28 | AG adopt — patch applied | 1 | make test 632 passed, acl 22 passed, aggregate gold 13/13 offline; ruff 55, mypy 18 |
 | 2026-09-28 | AG-01 (adopt) | 1 | DoD green; fail-first a RED, b RED, c SURVIVED→test added→RED; make test 633 |
 | 2026-09-28 | AG-02 (adopt) | 2 | DoD green; fail-first a RED, b RED, c RED; guard review: supplier_mention verbatim check is an unbounded substring, so a planner truncating "Kestrel Industrial AG" to "Kestrel Industrial" passes and widens to both entities (untested); currency is shape+word-boundary only, so "ALL" passes on "all orders" (untested); make test 633; prompt 5: truncated-mention, capitalised-currency and part-on-total_spend rejections added test-first, fail-first i/ii/iii RED/RED/RED; make test 640 |
+| 2026-09-28 | AG-03 (adopt) | 1 | 2 tests added (document_chunks ACL, AST source-only reads); fail-first a RED, b RED (would survive without the new test: yes), c RED; review: no bypass — every record, Document and chunk read goes through visible_records()/document_chunks() with the asking principal; nothing rendered derives from an unreadable document (supplier names come from the master, which is not access-controlled by design); make test 642, acl 24 |
 | | | | |
