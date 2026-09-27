@@ -68,7 +68,10 @@ A second answer path, `src/isc/aggregate/`, runs before retrieval in
    the chunk that prints the value) and goes through the same
    `bind_citations()` and `verify_attribution()` as a generated draft; one
    sentence per line so each PO's number is only vouched for by its own
-   chunks. `Answer.route` records which path answered.
+   chunks. `Answer.route` records which path answered. Headlines state how
+   many matching orders or lines the figure covers; exclusions and
+   review-pending values are placed under the supplier they affect; review
+   status is stated in plain language — the D7 review.
 
 ## Measured (offline, not a substitute for the live eval)
 
