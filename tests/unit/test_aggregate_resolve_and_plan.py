@@ -4,6 +4,8 @@ identifier in it was copied from the question."""
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from isc.aggregate.plan import Operation, QueryPlanRaw, validate_plan
@@ -49,6 +51,18 @@ def test_printed_name_needs_a_unique_match():
     assert supplier_id_for_printed_name("Omron Electronics Asia", MASTERS) == "V102337"
     assert supplier_id_for_printed_name("Omron", MASTERS) is None
     assert supplier_id_for_printed_name(None, MASTERS) is None
+
+
+def test_printed_name_that_normalises_to_two_masters_is_a_miss(tmp_path):
+    """No corpus supplier pair normalises to the same string, so the
+    unique-match guard needs its own master to be tested at all."""
+    (tmp_path / "suppliers.json").write_text(json.dumps([
+        {"supplier_id": "V1", "name": "Acme Tools GmbH", "country": "DE"},
+        {"supplier_id": "V2", "name": "Acme Tools AG", "country": "CH"},
+    ]))
+    assert supplier_id_for_printed_name("Acme Tools", tmp_path) is None
+    assert supplier_id_for_printed_name("Acme Tools GmbH", tmp_path) == "V1"
+    assert resolve_mention("Acme Tools", tmp_path) == ("V1", "V2")
 
 
 # -- validate_plan: every identifier must come from the question ------------
