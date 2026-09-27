@@ -243,7 +243,7 @@ hygiene part of prompt 4, then prompt 5.
 
 ---
 
-## AG-04 — Executor: selection, confidence gate, Decimal ☐
+## AG-04 — Executor: selection, confidence gate, Decimal ☒
 
 **Priority** critical · **~280 LOC** (+~120 test) · **Prompts** 5–6 · **Depends** AG-01, AG-02, AG-03 · **Stop** D4–D6 before prompt 3
 
@@ -666,4 +666,5 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 | 2026-09-28 | AG-01 (adopt) | 1 | DoD green; fail-first a RED, b RED, c SURVIVED→test added→RED; make test 633 |
 | 2026-09-28 | AG-02 (adopt) | 2 | DoD green; fail-first a RED, b RED, c RED; guard review: supplier_mention verbatim check is an unbounded substring, so a planner truncating "Kestrel Industrial AG" to "Kestrel Industrial" passes and widens to both entities (untested); currency is shape+word-boundary only, so "ALL" passes on "all orders" (untested); make test 633; prompt 5: truncated-mention, capitalised-currency and part-on-total_spend rejections added test-first, fail-first i/ii/iii RED/RED/RED; make test 640 |
 | 2026-09-28 | AG-03 (adopt) | 1 | 2 tests added (document_chunks ACL, AST source-only reads); fail-first a RED, b RED (would survive without the new test: yes), c RED; review: no bypass — every record, Document and chunk read goes through visible_records()/document_chunks() with the asking principal; nothing rendered derives from an unreadable document (supplier names come from the master, which is not access-controlled by design); make test 642, acl 24 |
+| 2026-09-28 | AG-04 (adopt) | 1 | denied-principal abstention reason asserted (source mutation now RED on it; AG-03's 'second layer' reading corrected); accounting identity test; D5 gap fixed test-first (scoped part prices); fail-first a RED, b RED, c RED (identity test RED under a and c, not b — it checks the partition, not which side); make test 644, acl 24 |
 | | | | |
