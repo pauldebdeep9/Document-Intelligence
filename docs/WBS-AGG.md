@@ -153,7 +153,7 @@ to a shared module without a rewrite.
 
 ---
 
-## AG-02 — Typed query plan and validation ☐
+## AG-02 — Typed query plan and validation ☒
 
 **Priority** critical · **~120 LOC** (+~70 test) · **Prompts** 3–4 · **Depends** AG-01 · **Stop** D2 before prompt 1
 
@@ -661,4 +661,5 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 | 2026-09-28 | AG-00 preflight | 2 | Sai2608 editable install repointed from the removed BabaKoreDao path; baselines: make test 561 passed, acl 16, ruff 55, mypy 18 errors in 8 files; patch --check clean |
 | 2026-09-28 | AG adopt — patch applied | 1 | make test 632 passed, acl 22 passed, aggregate gold 13/13 offline; ruff 55, mypy 18 |
 | 2026-09-28 | AG-01 (adopt) | 1 | DoD green; fail-first a RED, b RED, c SURVIVED→test added→RED; make test 633 |
+| 2026-09-28 | AG-02 (adopt) | 1 | DoD green; fail-first a RED, b RED, c RED; guard review: supplier_mention verbatim check is an unbounded substring, so a planner truncating "Kestrel Industrial AG" to "Kestrel Industrial" passes and widens to both entities (untested); currency is shape+word-boundary only, so "ALL" passes on "all orders" (untested); make test 633 |
 | | | | |
