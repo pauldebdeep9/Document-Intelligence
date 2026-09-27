@@ -9,8 +9,12 @@ from decimal import Decimal
 import pytest
 
 from isc.aggregate.answerer import RecordAnswerer
+from isc.aggregate.execute import execute
+from isc.aggregate.plan import QueryPlanRaw, validate_plan
+from isc.aggregate.source import visible_records
 from isc.answer.citations import _split_sentences, bind_citations, verify_attribution
 from isc.answer.orchestrator import AnswerOrchestrator
+from isc.common.confidence import Thresholds
 from isc.extract.masters import supplier_ids_by_name
 from isc.models.acl import Principal
 from isc.models.answer import AbstentionReason
@@ -144,6 +148,40 @@ def test_nothing_summable_abstains_instead_of_answering_zero(tmp_path):
     ans = _ask(tmp_path, pos, plan("total_spend", OMRON, currency="SGD"), _omron_q())
     assert ans.abstained and ans.abstention_reason is AbstentionReason.INSUFFICIENT_CONTEXT
     assert ans.route == "records"
+
+
+def test_every_visible_matching_order_is_accounted_for_exactly_once(tmp_path):
+    """The executor's bookkeeping, as identities: every visible Omron SGD
+    order is either included or excluded-with-a-reason, never both, never
+    neither -- whatever mix of gate outcomes the orders hit."""
+    omron_sgd = [
+        Po("d_ok", "4500000001", OMRON, "V102337", "SGD", D("10.00")),
+        Po("d_review", "4500000002", OMRON, "V102337", "SGD", D("20.00"), total_conf=0.70),
+        Po("d_low", "4500000003", OMRON, "V102337", "SGD", D("30.00"), total_conf=0.40),
+        Po("d_absent", "4500000004", OMRON, "V102337", "SGD", None),
+        Po("d_unprinted", "4500000005", OMRON, "V102337", "SGD", D("40.00"),
+           printed_total=D("41.00")),
+        Po("d_no_code", "4500000006", OMRON, None, "SGD", D("50.00")),
+    ]
+    eur = Po("d_eur", "4500000007", OMRON, "V102337", "EUR", D("60.00"))
+    keyence = Po("d_keyence", "4500000008", KEYENCE, "V103014", "SGD", D("70.00"))
+    docs, store = build(tmp_path, [*omron_sgd, eur, keyence])
+    the_plan, reason = validate_plan(
+        QueryPlanRaw(operation="total_spend", supplier=OMRON, currency="SGD"),
+        _omron_q(), MASTERS)
+    assert the_plan is not None, reason
+
+    result = execute(the_plan, visible_records(ANYONE, docs, store), Thresholds(),
+                     frozenset({"accept", "review"}), MASTERS)
+
+    included_ids = {r.document_id for r in result.included}
+    excluded_ids = {r.document_id for r in result.excluded}
+    assert included_ids & excluded_ids == set()
+    assert included_ids | excluded_ids == {po.doc_id for po in omron_sgd}
+    assert all(r.reason for r in result.excluded)
+    assert not any(r.reason for r in result.included)
+    assert result.other_currencies == {"EUR": 1}
+    assert keyence.doc_id not in included_ids | excluded_ids
 
 
 # -- part prices ---------------------------------------------------------------
