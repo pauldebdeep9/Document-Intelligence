@@ -335,7 +335,7 @@ something they may not be entitled to know.
 
 ---
 
-## AG-06 — Planner prompt, answerer, orchestrator and CLI wiring ☐
+## AG-06 — Planner prompt, answerer, orchestrator and CLI wiring ☒
 
 **Priority** critical · **~200 LOC** (+~70 test) · **Prompts** 5 · **Depends** AG-02, AG-05 · **Stop** D3 before prompt 2
 
@@ -668,4 +668,5 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 | 2026-09-28 | AG-03 (adopt) | 1 | 2 tests added (document_chunks ACL, AST source-only reads); fail-first a RED, b RED (would survive without the new test: yes), c RED; review: no bypass — every record, Document and chunk read goes through visible_records()/document_chunks() with the asking principal; nothing rendered derives from an unreadable document (supplier names come from the master, which is not access-controlled by design); make test 642, acl 24 |
 | 2026-09-28 | AG-04 (adopt) | 1 | denied-principal abstention reason asserted (source mutation now RED on it; AG-03's 'second layer' reading corrected); accounting identity test; D5 gap fixed test-first (scoped part prices); fail-first a RED, b RED, c RED (identity test RED under a and c, not b — it checks the partition, not which side); make test 644, acl 24 |
 | 2026-09-28 | AG-05 (adopt) | 2 | AG-04 identity test tightened to exact sides (gate bypass now RED); fail-first a RED, b RED (14 tests: verify_attribution discards the uncited headline, so every single-supplier answer abstains), c RED; D7 wording read out for review; make test 644, acl 24; prompt 5: D7 wording fixed test-first (headline completeness, exclusions under supplier, plain review text), fail-first i RED, ii SURVIVED (test world puts the excluded and review orders on the last supplier, so "under PNEU" and "after all sections" coincide), iii RED; make test 649 |
+| 2026-09-28 | AG-06 (adopt) | 2 | placement test fixed (AG-05 ii RED); prompt-leakage + verify-gate tests; fail-first a/b/c RED; config precedence bug found in smoke (YAML beat env) — fixed test-first; live smoke (cache off): q_cd_01 records / 2,972,338.10 SGD (= gold), single_hop chunks / "A. Tan", q_am_04 records / both Kestrel entities shown separately, not summed; planner ~627 prompt + ~24 completion tokens, ~$0.00011/call; make test 656 |
 | | | | |
