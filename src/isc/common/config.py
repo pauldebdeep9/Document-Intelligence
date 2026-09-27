@@ -8,12 +8,16 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
-import yaml
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+    YamlConfigSettingsSource,
+)
 
 from isc.common.errors import ConfigError
 
@@ -139,33 +143,31 @@ class Settings(BaseSettings):
     aggregate: AggregateSettings = Field(default_factory=AggregateSettings)
     paths: PathSettings = Field(default_factory=PathSettings)
 
-
-def _load_yaml(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {}
-    data = yaml.safe_load(path.read_text()) or {}
-    if not isinstance(data, dict):
-        raise ConfigError(f"{path} must contain a mapping at the top level")
-    return data
-
-
-def _deep_merge(base: dict[str, Any], over: dict[str, Any]) -> dict[str, Any]:
-    out = dict(base)
-    for k, v in over.items():
-        if isinstance(v, dict) and isinstance(out.get(k), dict):
-            out[k] = _deep_merge(out[k], v)
-        else:
-            out[k] = v
-    return out
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Highest first: explicit kwargs, environment, .env, then the YAML
+        (local.yaml deep-merged over default.yaml; a missing file is
+        skipped). The YAML must be a source ranked here, not constructor
+        kwargs: kwargs outrank the environment, which made every key
+        default.yaml sets impossible to override with ISC_*."""
+        yaml_settings = YamlConfigSettingsSource(
+            settings_cls,
+            yaml_file=[CONFIG_DIR / "default.yaml", CONFIG_DIR / "local.yaml"],
+            deep_merge=True,
+        )
+        return init_settings, env_settings, dotenv_settings, file_secret_settings, yaml_settings
 
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    merged = _deep_merge(
-        _load_yaml(CONFIG_DIR / "default.yaml"),
-        _load_yaml(CONFIG_DIR / "local.yaml"),
-    )
-    return Settings(**merged)
+    return Settings()
 
 
 def load_prompt(relpath: str) -> str:
