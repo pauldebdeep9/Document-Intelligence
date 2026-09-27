@@ -122,6 +122,9 @@ def test_export_controlled_order_needs_a_matching_jurisdiction(tmp_path):
     assert "77.00 SGD" in _answer(tmp_path / "g", gita, pos=[ec]).text
     denied = _answer(tmp_path / "e", ewan, pos=[ec])
     assert denied.abstained and "77.00" not in denied.text
+    assert denied.abstention_reason is AbstentionReason.NO_RESULTS
+    assert denied.supporting == []
+    assert "4500000009" not in denied.text
 
 
 def test_the_gate_goes_red_when_the_source_skips_the_check(tmp_path, monkeypatch):
