@@ -250,7 +250,8 @@ def test_exclusions_sit_under_their_supplier(tmp_path):
     or unconfirmed order affects without cross-referencing PO numbers."""
     pos = [Po("d1", "4500000001", AG, "V100781", "EUR", D("1.00")),
            Po("d2", "4500000002", PNEU, "V100782", "EUR", D("2.00"), total_conf=0.7),
-           Po("d3", "4500000003", PNEU, None, "EUR", None)]
+           Po("d3", "4500000003", PNEU, None, "EUR", None),
+           Po("d4", "4500000004", AG, "V100781", "EUR", None)]
     q = "How much did we spend with Kestrel Industrial in total?"
     lines = _ask(tmp_path, pos, plan("total_spend", "Kestrel Industrial"), q).text.splitlines()
 
@@ -262,6 +263,8 @@ def test_exclusions_sit_under_their_supplier(tmp_path):
     pneu_review = at("PO 4500000002 total")
     pneu_excluded = at("Not included: PO 4500000003")
     assert ag_group < ag_po < pneu_group < pneu_po < pneu_review < pneu_excluded
+    # AG is not the last section, so "under AG" and "after everything" differ.
+    assert ag_po < at("Not included: PO 4500000004") < pneu_group
     assert "from 1 of the 2 matching purchase orders" in lines[pneu_group]
 
 
