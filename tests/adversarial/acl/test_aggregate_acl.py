@@ -8,10 +8,13 @@ directory: none of these may be marked xfail, skipped, or weakened.
 
 from __future__ import annotations
 
+import ast
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 
+import isc.aggregate
 from isc.aggregate.answerer import RecordAnswerer
 from isc.aggregate.source import visible_records
 from isc.models.acl import Principal, Sensitivity
@@ -136,3 +139,30 @@ def test_the_gate_goes_red_when_the_source_skips_the_check(tmp_path, monkeypatch
     with pytest.raises(AssertionError, match="leaked chunk"):
         assert_nothing_hidden_contributes(leaky, BEN, [HIDDEN])
     assert HIDDEN.po_number in leaky.text   # and the content check would have caught it too
+
+
+def test_document_chunks_filters_by_principal(tmp_path):
+    """document_chunks() makes its own ACL check rather than trusting that
+    its caller already vetted the document -- the gate above cannot see
+    that, because visible_records() never asks for a hidden document."""
+    _, store = build(tmp_path, [OPEN, HIDDEN])
+    assert store.document_chunks("d_hidden", BEN) == []
+    ordinals = [c.ordinal for c in store.document_chunks("d_hidden", ALICE)]
+    assert ordinals
+    assert all(a < b for a, b in zip(ordinals, ordinals[1:], strict=False))
+    assert store.document_chunks("no_such_doc", ALICE) == []
+
+
+def test_only_source_reads_documents_or_records():
+    """Structural: the spy test proves source.py checks before it loads, but
+    only source.py. Any other module in the package calling get_record() or
+    get_document() would be a second, unchecked way in."""
+    package = Path(isc.aggregate.__file__).parent
+    offenders = [
+        f"{path.name}:{node.lineno} calls .{node.func.attr}()"
+        for path in sorted(package.glob("*.py")) if path.name != "source.py"
+        for node in ast.walk(ast.parse(path.read_text(), filename=str(path)))
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+        and node.func.attr in {"get_record", "get_document"}
+    ]
+    assert offenders == [], f"only aggregate/source.py may read records: {offenders}"
