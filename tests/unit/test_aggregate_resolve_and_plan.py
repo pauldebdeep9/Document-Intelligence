@@ -189,6 +189,74 @@ def test_total_spend_with_a_part_number_is_rejected():
     assert plan is None and reason
 
 
+# -- statistic guard: an aggregate plan cannot express a statistic -----------
+
+_HANDWRITTEN = {c["id"]: c for c in json.loads(
+    (MASTERS.parents[0] / "gold" / "planner" / "handwritten.json").read_text())["cases"]}
+
+# One question per listed word or phrase, each with an otherwise valid
+# part_prices plan: the part is in the text verbatim.
+_STATISTIC_QUESTIONS = {
+    "average": "What is the average price we pay for part TRM-BLK-2P5?",
+    "averages": "Show the averages for part TRM-BLK-2P5 across our purchase orders.",
+    "avg": "Avg unit price for part TRM-BLK-2P5 across our orders?",
+    "median": "What is the median price of part TRM-BLK-2P5?",
+    "lowest": "What is the lowest price we paid for part TRM-BLK-2P5?",
+    "highest": "What is the highest price we paid for part TRM-BLK-2P5?",
+    "cheapest": "Which order had the cheapest part TRM-BLK-2P5?",
+    "dearest": "Which order had the dearest part TRM-BLK-2P5?",
+    "minimum": "What is the minimum we paid for part TRM-BLK-2P5?",
+    "min": "Min unit price for part TRM-BLK-2P5?",
+    "maximum": "What is the maximum we paid for part TRM-BLK-2P5?",
+    "max": "Max unit price for part TRM-BLK-2P5?",
+    "count": "Count the orders with part TRM-BLK-2P5.",
+    "how many": "How many orders include part TRM-BLK-2P5?",
+    "number of": "What is the number of orders with part TRM-BLK-2P5?",
+    "most": "Where did we pay the most for part TRM-BLK-2P5?",
+    "least": "Where did we pay the least for part TRM-BLK-2P5?",
+}
+
+
+@pytest.mark.parametrize("word", sorted(_STATISTIC_QUESTIONS))
+def test_statistic_question_rejects_an_aggregate_plan(word):
+    plan, reason = _v(_STATISTIC_QUESTIONS[word],
+                      operation="part_prices", part_number="TRM-BLK-2P5")
+    assert plan is None
+    assert "statistic" in reason and repr(word) in reason
+
+
+def _handwritten_plan(cid):
+    case = _HANDWRITTEN[cid]
+    return case, validate_plan(QueryPlanRaw(**case["expected"]), case["text"], MASTERS)
+
+
+def test_statistic_guard_matches_whole_words_only():
+    """hw_28: "discounts" contains "count"."""
+    case, (plan, reason) = _handwritten_plan("hw_28")
+    assert plan is not None, reason
+    assert plan.supplier_ids == tuple(case["expected_supplier_ids"])
+
+
+def test_per_unit_list_question_is_not_a_statistic():
+    """hw_09: a price per unit on every order is the list, not a statistic."""
+    _, (plan, reason) = _handwritten_plan("hw_09")
+    assert plan is not None, reason
+    assert plan.operation is Operation.PART_PRICES and plan.part_number == "ENC-INC-1024"
+
+
+def test_none_plan_is_unaffected():
+    plan, reason = _v(_STATISTIC_QUESTIONS["average"], operation="none")
+    assert (plan, reason) == (None, "planner: not an aggregate question")
+
+
+def test_conversational_i_mean_does_not_trigger_the_guard():
+    """hw_20: "mean" is deliberately not a listed word -- it matches "I mean"."""
+    case, (plan, reason) = _handwritten_plan("hw_20")
+    assert case["expected"]["supplier"] == "Kestrel Industrial AG"
+    assert plan is not None, reason
+    assert plan.supplier_ids == (AG,) and plan.currency == "USD"
+
+
 def test_plan_schema_is_strict_mode_compatible():
     schema = to_strict_schema(QueryPlanRaw)
     assert schema["additionalProperties"] is False

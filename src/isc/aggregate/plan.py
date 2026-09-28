@@ -19,9 +19,15 @@ SGD from a Singapore supplier has changed the question, and the answer
 would be precise and wrong. Dropping words changes it too: when the
 question's next word would extend the mention toward a longer master name
 ("Kestrel Industrial" taken from "Kestrel Industrial AG"), the planner
-truncated it, and the plan is rejected. Validation failure is never an
-abstention -- it returns None and the question falls through to the chunk
-path unchanged.
+truncated it, and the plan is rejected. A question that asks for a statistic
+of the totals or prices (average, minimum, count, ranking ...) is rejected
+too, by a whole-word list: the plan cannot express one, and AG-08 measured the
+planner choosing the nearest operation instead. The list is fail-safe and
+incomplete -- phrasings outside it get through, and the live paraphrase set
+measures that; `mean` is deliberately not listed -- it matches 'I mean'; a
+mean-phrased statistic is a known gap, like any phrasing outside the list.
+Validation failure is never an abstention -- it returns None and the question
+falls through to the chunk path unchanged.
 """
 
 from __future__ import annotations
@@ -40,6 +46,11 @@ from isc.extract.masters import supplier_ids_by_name
 from isc.extract.validators import PART_NUMBER
 
 _CURRENCY = re.compile(r"^[A-Z]{3}$")
+_STATISTIC = re.compile(
+    r"(?<![A-Za-z])(average|averages|avg|median|lowest|highest|cheapest|dearest|minimum|min"
+    r"|maximum|max|count|how many|number of|most|least)(?![A-Za-z])",
+    re.IGNORECASE,
+)
 
 
 class Operation(StrEnum):
@@ -97,6 +108,10 @@ def validate_plan(
     op = Operation(raw.operation)
     if op is Operation.NONE:
         return None, "planner: not an aggregate question"
+    m = _STATISTIC.search(question)
+    if m:
+        word = m.group(0).lower()
+        return None, f"question asks for a statistic the plan cannot express ({word!r})"
 
     q = _collapse(question)
     q_upper = question.upper()
