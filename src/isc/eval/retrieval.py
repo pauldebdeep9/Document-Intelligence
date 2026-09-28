@@ -96,6 +96,11 @@ class QuestionOutcome:
     # ACL-conformance violation. See run()'s computation and the P1-09
     # briefing's correction of the original (comparison-based) design.
     leaked_chunk_ids: list[str] = field(default_factory=list)
+    # Which path answered: "chunks" or "records" (Answer.route). None means
+    # "not recorded" -- an outcome read from a schema-v1 outcomes file, which
+    # predates the field. Never inferred: a v1 file cannot prove which path
+    # answered, so None must not be read as "chunks".
+    route: str | None = None
 
 
 @dataclass
@@ -652,6 +657,7 @@ def run(
                 answer_correct=answer_correct,
                 abstention_correct=abstention_correct,
                 leaked_chunk_ids=leaked,
+                route=answer.route,
             ))
     log.info("ran %d questions (%d outcomes), %d failed",
               len(questions), len(result.report.outcomes), len(result.failed))
