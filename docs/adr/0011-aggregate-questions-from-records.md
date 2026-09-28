@@ -109,6 +109,9 @@ gold entries as "every visible priced line of this part".
 
 ## Consequences
 
+- Statistic questions: a whole-word guard in validate_plan() backs the planner;
+  phrasings outside the list are a measured known gap (docs/LIMITATIONS.md), bounded
+  by the renderer showing a list, never a computed statistic.
 - One extra small model call per question when enabled (the planner), on
   every question, including the ones that fall through.
 - Misrouting is the new failure mode: a `single_hop` question answered from

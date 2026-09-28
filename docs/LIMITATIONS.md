@@ -225,3 +225,24 @@ error appeared (`po_010.pdf` line 20 `extended_price`, a 10x digit slip
 against unambiguous source text) -- caught cleanly at confidence 0.02, not
 a false negative, and reads as ordinary model call variance rather than
 anything caused by this fix.
+
+## Aggregate path (AG): statistic questions outside the guard's word list
+
+The planner (prompt v1) has no operation for a statistic, so when a question
+asks for one it picks the nearest operation, `part_prices`: 3/81 misroutes in
+the v1 baseline run, all statistic questions. `validate_plan()` backs it with
+a whole-word list (average, averages, avg, median, lowest, highest, cheapest,
+dearest, minimum, min, maximum, max, count, how many, number of, most, least;
+`mean` excluded because it matches "I mean") and rejects the aggregate plan,
+so the question falls through to the chunk path: 4/4 listed phrasings stopped
+in both runs (hw_17, hw_21, hw_22, hw_26), with 0/12 paraphrases and 0/9 gold
+aggregate questions rejected. A phrasing outside the list gets through: hw_27
+("typically") was misrouted to `part_prices` in 2/2 runs. The impact is
+bounded by D7: the answer is a headed list of priced lines with its count of
+lines and orders, never a computed statistic. Deliberately not fixed by
+extending the list — that would fit the list to the case built to measure it.
+Runs: `runs/run_20260928T123301Z`, `runs/run_20260928T123435Z` (v1 prompt,
+cache off, $0.0179 for both). Prompt v2, which fixed all statistic questions
+in the prompt itself (misroute-in 0/81), was rejected for regressing hw_09
+(paraphrase 10/11 in both runs) — see
+`config/prompts/aggregate/query_plan.v2.NOTES.md`.
