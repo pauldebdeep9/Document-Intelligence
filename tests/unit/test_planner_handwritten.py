@@ -16,7 +16,8 @@ from isc.aggregate.plan import QueryPlanRaw, validate_plan
 ROOT = Path(__file__).resolve().parents[2]
 HANDWRITTEN = ROOT / "data" / "gold" / "planner" / "handwritten.json"
 QUESTIONS = ROOT / "data" / "gold" / "retrieval" / "questions.json"
-PROMPT = ROOT / "config" / "prompts" / "aggregate" / "query_plan.v1.md"
+PROMPTS = sorted(p for p in (ROOT / "config" / "prompts" / "aggregate").glob("query_plan.v*.md")
+                 if "NOTES" not in p.name)
 MASTERS = ROOT / "data" / "masters"
 
 DATA = json.loads(HANDWRITTEN.read_text())
@@ -91,5 +92,7 @@ def test_provenance_forbids_copying_into_a_prompt():
 
 
 def test_no_case_text_is_in_the_planner_prompt():
-    prompt = PROMPT.read_text().casefold()
-    assert [c["id"] for c in DATA["cases"] if c["text"].casefold() in prompt] == []
+    assert len(PROMPTS) >= 2
+    for path in PROMPTS:
+        prompt = path.read_text().casefold()
+        assert [c["id"] for c in DATA["cases"] if c["text"].casefold() in prompt] == [], path.name

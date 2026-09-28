@@ -10,7 +10,10 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-PROMPT = REPO / "config" / "prompts" / "aggregate" / "query_plan.v1.md"
+PROMPT_DIR = REPO / "config" / "prompts" / "aggregate"
+# Every planner prompt version, loaded or not (NOTES files are prose, never
+# sent to a model).
+PROMPTS = sorted(p for p in PROMPT_DIR.glob("query_plan.v*.md") if "NOTES" not in p.name)
 MASTERS = REPO / "data" / "masters"
 GOLD_EXTRACTION = REPO / "data" / "gold" / "extraction"
 
@@ -35,11 +38,13 @@ def _corpus_entities() -> dict[str, str]:
 
 
 def test_planner_prompt_names_no_corpus_entity():
-    text = PROMPT.read_text().casefold()
+    assert len(PROMPTS) >= 2, f"planner prompt versions not found in {PROMPT_DIR}"
     entities = _corpus_entities()
     assert len(entities) > 20, "corpus masters/gold not found -- the check would be vacuous"
     offenders = [
-        f"{term!r} ({source})" for term, source in sorted(entities.items())
-        if re.search(rf"(?<!\w){re.escape(term.casefold())}(?!\w)", text)
+        f"{prompt.name}: {term!r} ({source})"
+        for prompt in PROMPTS
+        for term, source in sorted(entities.items())
+        if re.search(rf"(?<!\w){re.escape(term.casefold())}(?!\w)", prompt.read_text().casefold())
     ]
-    assert offenders == [], f"{PROMPT.name} names corpus entities: {offenders}"
+    assert offenders == [], f"planner prompts name corpus entities: {offenders}"

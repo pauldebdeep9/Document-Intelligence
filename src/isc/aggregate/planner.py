@@ -17,7 +17,10 @@ from isc.common.errors import OutputTruncated, SchemaRepairExhausted
 from isc.llm.ports import ChatModel, LLMResult, Message
 from isc.llm.structured import parse_structured
 
-PROMPT = "aggregate/query_plan.v1.md"
+# v2 adds one rule (a statistic computed from totals or prices routes to
+# "none") and one example; see query_plan.v2.NOTES.md. v1 stays on disk.
+PLANNER_PROMPT = "aggregate/query_plan.v2.md"
+PROMPT = PLANNER_PROMPT   # scripts/eval_planner.py records this path in its meta
 
 
 @dataclass(frozen=True)
@@ -29,7 +32,7 @@ class PlanAttempt:
 
 
 def plan_question(chat: ChatModel, question: str, masters_dir: Path) -> PlanAttempt:
-    prompt = load_prompt(PROMPT)
+    prompt = load_prompt(PLANNER_PROMPT)
     try:
         raw, _conf, result = parse_structured(
             chat, [Message.system(prompt), Message.user(question)], QueryPlanRaw)
