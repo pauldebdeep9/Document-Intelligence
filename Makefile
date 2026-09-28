@@ -1,4 +1,4 @@
-.PHONY: install update lock env-check corpus corpus-clean corpus-verify ingest parse extract index ask eval serve test acl lint schemas slice slice-clean smoke planner-gold
+.PHONY: install update lock env-check corpus corpus-clean corpus-verify ingest parse extract index ask eval serve test acl lint schemas slice slice-clean smoke planner-gold planner-eval
 
 CONDA_ENV = Sai2608
 
@@ -76,3 +76,4 @@ lint:    ; ruff check src tests && mypy
 schemas: ; python scripts/export_schemas.py --out schemas
 smoke:   ; python scripts/smoke_llm.py
 planner-gold: ; python scripts/gen_planner_gold.py
+planner-eval: ; python scripts/eval_planner.py
