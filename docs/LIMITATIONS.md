@@ -263,3 +263,15 @@ classifies these four as `gold_change`; compare runs within the same gold
 only. The "priced lines only" part of D8 is untested by this corpus: the
 extraction gold has no line with a null unit price, so a generator that kept
 unpriced lines would produce identical gold here.
+
+## Aggregate path (AG-11): recall@8 and MRR mix two kinds of retrieved_ids
+
+With `aggregate.enabled` on, recall@8 moved 0.981 → 0.966 and MRR 0.872 →
+0.815 between run A (`run_20260928T145343Z`, flag off) and runs B1/B2
+(`run_20260928T150038Z`, `run_20260928T150333Z`), while answer accuracy rose
+25/35 → 32/35. The drop is a measurement artifact, not a retrieval
+regression: for the 9 of 74 outcomes answered from records, `retrieved_ids`
+holds the renderer's evidence chunks (identity + value chunk per order, in
+citation order), not a ranked search list, so rank-based metrics score them
+as if they were a worse ranking. Follow-up: report recall@k and MRR over
+chunk-routed outcomes only (the route is already on every outcome, AG-09).

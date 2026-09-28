@@ -1,6 +1,6 @@
 # ADR 0011: Aggregate questions are answered from extracted records, not chunks
 
-**Status:** proposed (off by default -- `aggregate.enabled: false` until the live eval below) · **Date:** 2026-09-28
+**Status:** accepted (AG-11: runs run_20260928T145343Z (A, flag off), run_20260928T150038Z (B1), run_20260928T150333Z (B2); `aggregate.enabled: true` by default) · **Date:** 2026-09-28
 
 ## Context
 
@@ -75,6 +75,16 @@ A second answer path, `src/isc/aggregate/`, runs before retrieval in
    many matching orders or lines the figure covers; exclusions and
    review-pending values are placed under the supplier they affect; review
    status is stated in plain language — the D7 review.
+
+## Measured live (AG-11)
+
+Same fresh index, 56 gold questions / 74 outcomes, cache off. Run A
+(`run_20260928T145343Z`, flag off) vs B1 (`run_20260928T150038Z`) and B2
+(`run_20260928T150333Z`), flag on: answer accuracy **25/35 → 32/35** in both
+B runs; the nine aggregate questions (`q_cd_01`..`08`, `q_am_04`) **2/9 →
+9/9** in both; misroute-in 0 (planner gold, AG-08), misroute-out 0; ACL
+leaks 0 in all three runs; `isc eval-diff` A→B: 7 fixed, 0 regressed in each.
+The planner costs ≈ $0.0001 per question (74 planner calls per run).
 
 ## Measured (offline, not a substitute for the live eval)
 

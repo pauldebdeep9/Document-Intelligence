@@ -60,11 +60,13 @@ retrieval:
   min_support_score: 0.0
 
 # Total-spend and part-price questions answered from extracted records, not
-# chunks (src/isc/aggregate/, docs/adr/0011). Off until a live retrieval eval
-# measures it: k/n on q_cd_01..08 and q_am_04, and zero misroutes on every
-# other subtype. Flip with ISC_AGGREGATE__ENABLED=true for that run.
+# chunks (src/isc/aggregate/, docs/adr/0011). On by default since AG-11: the
+# live retrieval eval (runs run_20260928T145343Z A flag off,
+# run_20260928T150038Z B1, run_20260928T150333Z B2) measured the nine
+# aggregate questions 2/9 -> 9/9 in both B runs, 0 misroutes, 0 leaks.
+# ISC_AGGREGATE__ENABLED=false turns it off.
 aggregate:
-  enabled: false
+  enabled: true
   # Which thresholds.route() bands may contribute to a computed figure. Not a
   # new threshold -- the bands below are the extraction routing bands. review
   # is included because P1-03 measured 0 wrong of 93 review-band values; each

@@ -96,10 +96,12 @@ class AggregateSettings(BaseModel):
     """aggregate/: answering total-spend and part-price questions from
     extracted records instead of chunks. See docs/adr/0011."""
 
-    # Off until a live retrieval eval measures it: k/n on the cross_document
-    # and ambiguous-total questions, and zero misroutes on every other
-    # subtype (the planner must say "none" to them).
-    enabled: bool = False
+    # On by default since AG-11, matching config/default.yaml: the live
+    # retrieval eval (runs run_20260928T145343Z A flag off,
+    # run_20260928T150038Z B1, run_20260928T150333Z B2) measured 9/9 on the
+    # aggregate questions in both B runs, 0 misroutes, 0 leaks.
+    # ISC_AGGREGATE__ENABLED=false turns it off.
+    enabled: bool = True
     # Which Thresholds.route() bands may contribute to a computed figure.
     # Not a new threshold -- the bands are the existing extraction ones.
     # "review" is included by default because P1-03 measured 0 wrong of 93
