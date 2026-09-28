@@ -274,6 +274,73 @@
       "id": "hw_20",
       "text": "What did we spend with Kestrel Industrial in total — I mean Kestrel Industrial AG — in USD?",
       "why": "mention twice; a plan resolving to BOTH Kestrel ids is the failure"
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_21",
+      "text": "What's the lowest price we've ever paid for PLC-1756-L83?",
+      "why": "minimum"
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_22",
+      "text": "On average, how much does ENC-INC-1024 cost us per unit?",
+      "why": "average, different wording"
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_23",
+      "text": "Which of our Omron Electronics Asia orders had the highest total?",
+      "why": "maximum / ranking"
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": null,
+        "operation": "part_prices",
+        "part_number": "PLC-1756-L83",
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_24",
+      "text": "Show me all the unit prices we've paid for PLC-1756-L83.",
+      "why": "\"all\" must not trigger a refusal"
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": "SGD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Keyence Singapore Pte Ltd"
+      },
+      "expected_supplier_ids": [
+        "V103014"
+      ],
+      "id": "hw_25",
+      "text": "Give me our combined spend with Keyence Singapore Pte Ltd in SGD.",
+      "why": ""
     }
   ],
   "provenance": {
