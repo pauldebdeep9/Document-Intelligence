@@ -63,3 +63,9 @@ prompt sha256 9e0ab848…27ed0; A and B identical (0/81 unstable).
 **Verdict: NOT DONE.** Misroute-in is 0 in both runs, but the paraphrase
 condition (11/11) fails on hw_09. No v3 was attempted (the AG-08 prompt 5
 rule). v2 is the prompt `plan_question()` loads as of commit c12d584.
+
+## Status
+
+Not adopted. v2 fixed misroute_in (3/81 → 0/81) but regressed hw_09
+(paraphrase 10/11 in both runs). Superseded by a deterministic statistic-word
+guard in validate_plan() with v1 — AG-08 prompt 6.

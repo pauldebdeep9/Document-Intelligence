@@ -17,9 +17,9 @@ from isc.common.errors import OutputTruncated, SchemaRepairExhausted
 from isc.llm.ports import ChatModel, LLMResult, Message
 from isc.llm.structured import parse_structured
 
-# v2 adds one rule (a statistic computed from totals or prices routes to
-# "none") and one example; see query_plan.v2.NOTES.md. v1 stays on disk.
-PLANNER_PROMPT = "aggregate/query_plan.v2.md"
+# v1. v2 (query_plan.v2.md) is kept on disk but not adopted: it regressed a
+# paraphrase -- see query_plan.v2.NOTES.md.
+PLANNER_PROMPT = "aggregate/query_plan.v1.md"
 PROMPT = PLANNER_PROMPT   # scripts/eval_planner.py records this path in its meta
 
 
