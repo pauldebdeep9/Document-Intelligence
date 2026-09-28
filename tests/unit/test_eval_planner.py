@@ -94,6 +94,22 @@ def test_each_outcome_class():
     assert "appears truncated" in got["out_guard"].reason
 
 
+def test_guard_rejected_case_keeps_the_models_raw_plan():
+    """planner.json must show what the model actually said, not only the
+    validated plan: a rejected plan has none, and its reason may not name
+    every field."""
+    cases, chat = _six()
+    got = {o.id: o for o in evaluate(chat, cases, MASTERS)}
+    assert got["out_guard"].raw_plan == {"operation": "total_spend",
+                                         "supplier": "Kestrel Industrial",
+                                         "part_number": None, "currency": "USD"}
+    assert got["out_guard"].got_plan is None
+    summary = summarise(list(got.values()))
+    [row] = [c for c in summary["non_pass"] if c["id"] == "out_guard"]
+    assert row["raw_plan"]["supplier"] == "Kestrel Industrial"
+    assert row["raw_plan"]["currency"] == "USD"
+
+
 def test_widened_plan_is_flagged():
     """Validates (the first mention is followed by "in", not a suffix), but
     resolves both Kestrel entities for a question about one."""

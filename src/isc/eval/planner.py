@@ -92,6 +92,8 @@ class PlannerOutcome:
     usd: float
     expected_plan: dict[str, Any]
     got_plan: dict[str, Any] | None
+    # What the model returned, before validate_plan(); None if the call failed.
+    raw_plan: dict[str, Any] | None = None
 
 
 def _expected_plan(case: dict[str, Any]) -> dict[str, Any]:
@@ -128,6 +130,7 @@ def classify(case: dict[str, Any], attempt: PlanAttempt) -> PlannerOutcome:
         usd=(estimate_usd(attempt.result.model, attempt.result.usage)
              if attempt.result is not None else 0.0),
         expected_plan=expected, got_plan=got,
+        raw_plan=attempt.raw.model_dump() if attempt.raw is not None else None,
     )
 
 
@@ -212,6 +215,9 @@ def summarise(outcomes: list[PlannerOutcome]) -> dict[str, Any]:
                                                 for o in rejected).items())),
         "widened": [o.id for o in outcomes if o.widened],
         "errors": [{"id": o.id, "reason": o.reason} for o in outcomes if o.outcome == "error"],
+        "non_pass": [{"id": o.id, "group": o.group, "outcome": o.outcome, "reason": o.reason,
+                      "widened": o.widened, "raw_plan": o.raw_plan}
+                     for o in outcomes if o.outcome not in CORRECT],
         "cost": {
             "calls": len(called),
             "prompt_tokens": prompt_tokens,
@@ -258,6 +264,12 @@ def render_markdown(summary: dict[str, Any], meta: dict[str, Any]) -> str:
               for m in summary["misroute_out"]] or ["- none"]
     lines += ["", "## Guard rejections (plan proposed, validate_plan refused)", ""]
     lines += [f"- {k}: {v}" for k, v in summary["guard_rejections"].items()] or ["- none"]
+    lines += ["", "## Non-pass cases (raw plan as the model returned it)", ""]
+    lines += [f"- {c['id']} ({c['group']}): {c['outcome']}"
+              + (f"; {c['reason']}" if c["reason"] else "")
+              + (" (widened)" if c["widened"] else "")
+              + f"; raw {c['raw_plan']}"
+              for c in summary["non_pass"]] or ["- none"]
     lines += ["", f"Widened (resolved to more suppliers than expected): "
                   f"{', '.join(summary['widened']) or 'none'}"]
     if summary["errors"]:
