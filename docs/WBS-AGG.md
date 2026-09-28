@@ -471,7 +471,7 @@ The paraphrase set is the check that you haven't.
 
 ---
 
-## AG-09 — Route in eval outcomes and the report ☐
+## AG-09 — Route in eval outcomes and the report ☒
 
 **Priority** high · **~120 LOC** (+~80 test) · **Prompts** 4–5 · **Depends** AG-06; EV-01/EV-02 in place · **Stop** before prompt 2
 
@@ -491,12 +491,16 @@ tests + fixtures
 5. *spare* — fail-first ×3, review
 
 **Done when**
-- [ ] v2 files round-trip; the chosen v1 policy is tested against
+- [x] v2 files round-trip; the chosen v1 policy is tested against
       `tests/fixtures/ev02_synthetic_outcomes/`
-- [ ] Rescoring the v1 fixture reproduces the previous report, plus the new section only
-- [ ] Every new cell carries its denominator (EV-02)
-- [ ] Fail-first: drop `route` from the writer (round-trip red); read v1
+- [x] Rescoring the v1 fixture reproduces the previous report, plus the new section only
+      (checked against the pre-AG-09 code: report.md gains only "Answer route";
+      report.json gains only retrieval.route, schema_version 3 → 4)
+- [x] Every new cell carries its denominator (EV-02)
+- [x] Fail-first: drop `route` from the writer (round-trip red); read v1
       without the default (fixture red); hide route flips in the diff (diff test red)
+      — v1 policy chosen was route=None, not a "chunks" default, so the v1 mutation
+      was the reverse: read v1 AS "chunks" (fixture red)
 
 **Watch** `--rescore-from` reuses the persisted `answer_correct`; it does not
 re-check against current gold. Anything that changes gold (AG-10) needs a
@@ -680,4 +684,5 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 | 2026-09-28 | AG-08 prompt 6 | 1 | option B: `mean` excluded (matches 'I mean', hw_20); v1 prompt + whole-word statistic guard in validate_plan; held-out hw_26–28 added first; A/B misroute_in 1/84 / 1/84 (hw_27 both — 'typically', outside the list), gold 9/9 + 47/47 both, paraphrase 12/12 both, unsupported 7/8 both, hw_27 misroute_in; guard rejected hw_17, hw_21, hw_22, hw_26 in both; $0.017867; verdict NOT DONE |
 | 2026-09-28 | AG-08 close | 0 | verdict corrected, not relaxed: prompt-6 rule required hw_27 (built to measure the guard's gap) to pass — internally inconsistent; covered cases misroute_in 0/83 ×2, gold 9/9 + 47/47, paraphrase 12/12; hw_27 → LIMITATIONS; AG-08 DONE |
 | 2026-09-28 | AG-09 prompt 1 | 1 | outcomes schema v2 with route; v1 read as route=None ("not recorded", never inferred); mixed files rejected; writer refuses route=None (test helper defaults route="chunks"); fail-first i RED (10: new round trip + 8 existing write/reload tests + [missing]), ii RED (v1 fixture test), iii RED (version-3 + existing wrong-version test); make test 740 |
+| 2026-09-28 | AG-09 prompt 2 | 1 | report schema 4: route counts, route×subtype k/n, misroutes named against planner gold (absent = not checked); eval-diff ROUTE_CHANGE after VERDICT_FLIP; None never compared or counted as chunks; fail-first i RED (None-as-chunks), ii RED (None compared), iii RED (misroute_in dropped), plus hide-route-flips RED; v1 rescore = previous report + route section only; make test 749 |
 | | | | |
