@@ -174,12 +174,12 @@ def test_script_refuses_to_run_with_the_cache_on(monkeypatch, capsys):
 
 
 def test_both_case_files_agree_with_the_classifier():
-    """A planner that returns each case's own expected plan scores 81/81: the
+    """A planner that returns each case's own expected plan scores 84/84: the
     case files, validate_plan() and classify() agree end to end."""
     cases = load_cases(GOLD) + load_cases(HANDWRITTEN)
     script = {c["text"]: c["expected"] for c in cases}
-    assert len(cases) == 81
+    assert len(cases) == 84
     summary = summarise(evaluate(ScriptedPlanner(script), cases, MASTERS))
-    assert summary["correct"] == "81/81"
-    assert summary["misroute_in"]["rate"] == "0/81"
+    assert summary["correct"] == "84/84"
+    assert summary["misroute_in"]["rate"] == "0/84"
     assert summary["wrong_plan"] == [] and summary["misroute_out"] == []

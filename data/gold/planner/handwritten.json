@@ -341,6 +341,47 @@
       "id": "hw_25",
       "text": "Give me our combined spend with Keyence Singapore Pte Ltd in SGD.",
       "why": ""
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_26",
+      "text": "What's the cheapest we've ever bought TRM-BLK-2P5 for?",
+      "why": "minimum — word in the guard list"
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_27",
+      "text": "What do we typically pay for PLC-1756-L83?",
+      "why": "statistic word deliberately NOT in the guard list — measures what the guard cannot catch"
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": "SGD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Omron Electronics Asia"
+      },
+      "expected_supplier_ids": [
+        "V102337"
+      ],
+      "id": "hw_28",
+      "text": "What did we spend with Omron Electronics Asia in total, in SGD, including discounts?",
+      "why": "\"count\" inside \"discounts\" must not trigger the guard"
     }
   ],
   "provenance": {

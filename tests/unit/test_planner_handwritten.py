@@ -26,14 +26,14 @@ FIELDS = ("supplier", "part_number", "currency")
 
 
 def test_ids_and_classes():
-    assert [c["id"] for c in DATA["cases"]] == [f"hw_{i:02d}" for i in range(1, 26)]
+    assert [c["id"] for c in DATA["cases"]] == [f"hw_{i:02d}" for i in range(1, 29)]
     by_class: dict[str, list[str]] = {}
     for c in DATA["cases"]:
         by_class.setdefault(c["class"], []).append(c["id"])
     assert by_class == {
-        "paraphrase": [f"hw_{i:02d}" for i in range(1, 10)] + ["hw_24", "hw_25"],
+        "paraphrase": [f"hw_{i:02d}" for i in range(1, 10)] + ["hw_24", "hw_25", "hw_28"],
         "near_miss": [f"hw_{i:02d}" for i in range(10, 16)],
-        "unsupported": ["hw_16", "hw_17", "hw_18", "hw_21", "hw_22", "hw_23"],
+        "unsupported": ["hw_16", "hw_17", "hw_18", "hw_21", "hw_22", "hw_23", "hw_26", "hw_27"],
         "truncation": ["hw_19", "hw_20"],
     }
 
