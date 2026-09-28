@@ -25,7 +25,18 @@ def _fresh_settings(monkeypatch):
 
 
 def test_yaml_value_applies_without_env():
-    assert get_settings().aggregate.enabled is False
+    """The flag loads from config/default.yaml when no ISC_* is set. Since
+    AG-11 the YAML and the code default agree (both true), so this checks the
+    flag loads correctly, not which source won: test_yaml_values_still_load
+    (llm.max_tokens, 8192 in YAML vs 2048 in code) is the one that tells the
+    YAML apart from code defaults."""
+    from pathlib import Path
+
+    import yaml
+
+    default_yaml = Path(__file__).resolve().parents[2] / "config" / "default.yaml"
+    expected = yaml.safe_load(default_yaml.read_text())["aggregate"]["enabled"]
+    assert get_settings().aggregate.enabled is expected
 
 
 def test_env_overrides_a_key_present_in_default_yaml(monkeypatch):
