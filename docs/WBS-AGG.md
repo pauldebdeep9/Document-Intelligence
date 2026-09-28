@@ -384,7 +384,7 @@ and prompt 5.
 
 ---
 
-## AG-07 — Offline gold harness ☐
+## AG-07 — Offline gold harness ☒
 
 **Priority** high · **~170 LOC** test · **Prompts** 3–4 · **Depends** AG-06
 
@@ -457,6 +457,7 @@ of scope. AG-11 is where real extraction meets the records path.
 - [ ] Fail-first: flip one expected `none` to `total_spend` (runner flags a
       misroute-in); corrupt one expected supplier (wrong plan); feed a
       guard-rejected plan (counted as misroute-out with its reason)
+- [ ] Per-call planner tokens and cost read from each LLMResult's usage (the trace only records run totals)
 
 **Watch** misroute-in is the expensive direction. Misroute-out just reproduces
 P1 behaviour; misroute-in replaces a working single-PO answer with a records
@@ -669,4 +670,5 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 | 2026-09-28 | AG-04 (adopt) | 1 | denied-principal abstention reason asserted (source mutation now RED on it; AG-03's 'second layer' reading corrected); accounting identity test; D5 gap fixed test-first (scoped part prices); fail-first a RED, b RED, c RED (identity test RED under a and c, not b — it checks the partition, not which side); make test 644, acl 24 |
 | 2026-09-28 | AG-05 (adopt) | 2 | AG-04 identity test tightened to exact sides (gate bypass now RED); fail-first a RED, b RED (14 tests: verify_attribution discards the uncited headline, so every single-supplier answer abstains), c RED; D7 wording read out for review; make test 644, acl 24; prompt 5: D7 wording fixed test-first (headline completeness, exclusions under supplier, plain review text), fail-first i RED, ii SURVIVED (test world puts the excluded and review orders on the last supplier, so "under PNEU" and "after all sections" coincide), iii RED; make test 649 |
 | 2026-09-28 | AG-06 (adopt) | 2 | placement test fixed (AG-05 ii RED); prompt-leakage + verify-gate tests; fail-first a/b/c RED; config precedence bug found in smoke (YAML beat env) — fixed test-first; live smoke (cache off): q_cd_01 records / 2,972,338.10 SGD (= gold), single_hop chunks / "A. Tan", q_am_04 records / both Kestrel entities shown separately, not summed; planner ~627 prompt + ~24 completion tokens, ~$0.00011/call; make test 656 |
+| 2026-09-28 | AG-07 (adopt) | 1 | tests cleared of ISC_* env (exposure shown: the prompt's ISC_AGGREGATE__ENABLED/ISC_LLM__MAX_TOKENS overrides gave 656 passed — neither is read offline — but ISC_THRESHOLDS__REVIEW=0.95/AUTO_ACCEPT=0.99 gave 3 failed, 653 passed; 656 under both after the fix; the gold module fixture clears ISC_* itself, since it is built before per-test fixtures run); gold harness proves offline by registry sabotage; 9/9 named offline, oracle 4/4; fail-first a RED (9: q_am_04, q_cd_05..08 + 4 completeness), b RED (q_cd_01/02/04), c RED (q_am_04), d ERROR (13, extraction fails with the sabotage message); make test 656 |
 | | | | |
