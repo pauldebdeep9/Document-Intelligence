@@ -207,6 +207,17 @@ def review(limit: int = 20) -> None:
     console.print(t)
 
 
+def load_expected_records(cases_path: Path) -> frozenset[str] | None:
+    """Question ids the planner gold (AG-08's data/gold/planner/cases.json)
+    says should be answered from records -- every case whose expected
+    operation is not "none". None when the file is missing: the report then
+    says misroutes were not checked, rather than claiming zero."""
+    if not cases_path.exists():
+        return None
+    cases = json.loads(cases_path.read_text())["cases"]
+    return frozenset(c["id"] for c in cases if c["expected"]["operation"] != "none")
+
+
 @app.command()
 def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
          run_id: str = typer.Option(..., help="existing run with an extract/ stage"),
@@ -323,8 +334,16 @@ def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
             console.print(f"[red]ACL LEAK[/] in {len(retrieval_report.leaks())} outcome(s): "
                            f"{[o.question_id for o in retrieval_report.leaks()]}")
 
+    expected_records = None
+    if retrieval_report is not None:
+        planner_gold = s.paths.data / "gold" / "planner" / "cases.json"
+        expected_records = load_expected_records(planner_gold)
+        if expected_records is None:
+            console.print(f"[yellow]note[/] {planner_gold} not found -- the report will say "
+                          "misroutes were not checked")
     out = write(run.artifact_dir("eval"), extraction_report, retrieval_report,
-                threshold=s.thresholds.auto_accept, review_threshold=s.thresholds.review)
+                threshold=s.thresholds.auto_accept, review_threshold=s.thresholds.review,
+                expected_records=expected_records)
     console.print(f"[green]report written[/] {out}")
     summary_path = run.summarise()
 

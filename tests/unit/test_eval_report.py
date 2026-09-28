@@ -86,3 +86,16 @@ def test_write_renders_retrieval_report_without_raising(tmp_path):
     assert "cross_document" in text
     assert "line_item" in text
     assert "generation/grounding" in text
+
+
+def test_expected_records_come_from_the_planner_gold(tmp_path):
+    """`isc eval` checks misroutes against data/gold/planner/cases.json: the
+    ids whose expected operation is not "none"."""
+    from pathlib import Path
+
+    from isc.cli import load_expected_records
+
+    cases = Path(__file__).resolve().parents[2] / "data" / "gold" / "planner" / "cases.json"
+    assert load_expected_records(cases) == frozenset(
+        {f"q_cd_0{i}" for i in range(1, 9)} | {"q_am_04"})
+    assert load_expected_records(tmp_path / "missing.json") is None

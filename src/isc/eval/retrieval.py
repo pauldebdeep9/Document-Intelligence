@@ -242,6 +242,54 @@ class RetrievalReport:
         correct = sum(1 for o in rows if o.answer_correct)
         return {"n": len(rows), "correct": correct, "accuracy": correct / len(rows)}
 
+    def route_summary(self, expected_records: frozenset[str] | None = None) -> dict[str, Any]:
+        """Which path answered (AG-09). route None means "not recorded" (an
+        outcome read from a schema-v1 file) and is never counted as
+        "chunks": it has its own count, and its own answer-accuracy cell
+        outside the per-route table.
+
+        answer_accuracy_by_route uses answer_accuracy()'s population
+        (answerable, answer_correct not None) split by (route, subtype).
+
+        expected_records -- question ids that SHOULD route to records (the
+        planner gold). When given, misroutes are named per outcome; when
+        None, the misroute keys are absent, meaning "not checked" -- not an
+        empty list, which would claim a check that never ran."""
+        counts = {"n": len(self.outcomes), "records": 0, "chunks": 0, "not_recorded": 0}
+        for o in self.outcomes:
+            counts["not_recorded" if o.route is None else o.route] += 1
+
+        by_route: dict[str, dict[str, dict[str, int]]] = {}
+        not_recorded = {"correct": 0, "n": 0}
+        for o in self.outcomes:
+            if o.question_class != "answerable" or o.answer_correct is None:
+                continue
+            cell = (not_recorded if o.route is None
+                    else by_route.setdefault(o.route, {}).setdefault(
+                        o.subtype, {"correct": 0, "n": 0}))
+            cell["n"] += 1
+            cell["correct"] += int(o.answer_correct)
+
+        summary: dict[str, Any] = {
+            "counts": counts,
+            "answer_accuracy_by_route": {
+                route: dict(sorted(cells.items())) for route, cells in sorted(
+                    by_route.items(), key=lambda kv: ("records", "chunks").index(kv[0]))},
+            "answer_accuracy_not_recorded": not_recorded,
+        }
+        if expected_records is not None:
+            def named(rows: list[QuestionOutcome]) -> list[dict[str, str]]:
+                return [{"question_id": o.question_id, "principal_id": o.principal_id,
+                         "subtype": o.subtype}
+                        for o in sorted(rows, key=lambda o: (o.question_id, o.principal_id))]
+            summary["misroute_in"] = named([
+                o for o in self.outcomes
+                if o.route == "records" and o.question_id not in expected_records])
+            summary["misroute_out"] = named([
+                o for o in self.outcomes
+                if o.route == "chunks" and o.question_id in expected_records])
+        return summary
+
     def answerable_failures(self) -> list[dict]:
         """Every answerable question whose answer did not contain the gold
         value, each tagged with which stage the failure implicates:
