@@ -42,6 +42,19 @@ def test_no_case_repeats_a_gold_question():
     assert [c["id"] for c in DATA["cases"] if c["text"] in gold] == []
 
 
+def test_class_pins_operation():
+    """The none/aggregate checks below split on each case's own operation, so
+    a near-miss flipped to a valid aggregate plan would pass them all; its
+    class is what says it must route none."""
+    wrong = []
+    for c in DATA["cases"]:
+        must_be_none = c["class"] in ("near_miss", "unsupported")
+        is_none = c["expected"]["operation"] == "none"
+        if c["class"] != "truncation" and must_be_none != is_none:
+            wrong.append((c["id"], c["class"], c["expected"]["operation"]))
+    assert wrong == []
+
+
 @pytest.mark.parametrize("cid", [c["id"] for c in DATA["cases"]
                                  if c["expected"]["operation"] == "none"])
 def test_none_case_has_no_parameters(cid):
