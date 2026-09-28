@@ -454,9 +454,10 @@ of scope. AG-11 is where real extraction meets the records path.
 - [x] Misroute-in reported as its own headline number, not folded into accuracy — except hw_27, a measured known gap (LIMITATIONS)
 - [x] Two runs reported side by side — temperature 0 is not deterministic
 - [x] Cost per planner call recorded
-- [x] Fail-first: misroute-in, wrong-plan and guard-rejected misroute-out each proven
-      able to fail with hand-built cases in tests/unit/test_eval_planner.py (prompt 3,
-      mutations i–iii)
+- [x] Fail-first: misroute-in, wrong-plan and guard-rejected misroute-out are each
+      produced by a hand-built case in test_each_outcome_class
+      (tests/unit/test_eval_planner.py); the runner's own checks were mutation-tested
+      in prompt 3 (every-plan-exact, widened, cache guard)
 - [x] Per-call planner tokens and cost read from each LLMResult's usage (the trace only records run totals)
 
 **Watch** misroute-in is the expensive direction. Misroute-out just reproduces
