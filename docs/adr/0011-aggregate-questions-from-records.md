@@ -34,8 +34,11 @@ A second answer path, `src/isc/aggregate/`, runs before retrieval in
    master. It also rejects a supplier mention the planner truncated (the
    next word in the question would extend it toward a longer master name),
    and accepts a currency only as a capitalised code in the question --
-   found in the AG-02 review. Any rejection returns `None` and the chunk
-   path runs unchanged.
+   found in the AG-02 review. A question asking for a statistic (average,
+   minimum, count, ranking …, by a whole-word list) never gets an aggregate
+   plan — the plan has no way to express one; AG-08 measured the planner
+   choosing the nearest operation instead. Any rejection returns `None` and
+   the chunk path runs unchanged.
 2. **Query-side supplier resolution is a different policy from
    extraction-side.** A printed name wants exact-or-nothing; a typed mention
    wants every candidate. The extraction resolver maps "Kestrel Industrial"
