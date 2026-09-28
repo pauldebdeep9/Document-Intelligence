@@ -530,15 +530,15 @@ fresh run, not a rescore.
 
 **Done when**
 - [x] For `q_cd_05`–`08`, gold's listed lines == the oracle, asserted as an identity
-- [ ] `test_gold_fidelity.py` green against a fresh `make slice` — green against the
-      existing index (corpus unchanged, every gold chunk id resolves); a fresh
-      `make slice` re-runs live extraction/embedding and was out of scope (no live calls)
-- [ ] The log records this as a measurement change, with the chunk path's k/n
-      on these four questions before and after — measured in AG-11 run A
-- [ ] Fail-first: drop the ACL intersection (oracle mismatch red); keep only
+- [x] `test_gold_fidelity.py` green against a fresh `make slice` — AG-11 step 1: 22 passed
+      on run_20260928T145343Z
+- [x] The log records this as a measurement change, with the chunk path's k/n
+      on these four questions before and after — AG-11 run A (run_20260928T145343Z):
+      q_cd_05..08 2/4 on the chunk path against the complete gold
+- [x] Fail-first: drop the ACL intersection (oracle mismatch red); keep only
       the first two lines (identity red); skip the unpriced-line filter (mismatch red)
-      — first two RED; the third SURVIVES by construction: the extraction gold has
-      no unpriced line at all (docs/LIMITATIONS.md)
+      — first two RED on the real gold; (iii) via synthetic case, AG-11 step 0
+      (fdca4d2): the extraction gold has no unpriced line at all
 
 **Watch** this is a measurement change, not a system change. On the chunk path,
 answer accuracy on these four questions should *drop*, because 8 chunks cannot
@@ -551,7 +551,7 @@ silently. `isc eval-diff` will classify these four as `gold_change`.
 
 ---
 
-## AG-11 — Live eval and the go/no-go on the flag ☐ ← **MILESTONE**
+## AG-11 — Live eval and the go/no-go on the flag ☒ ← **MILESTONE**
 
 **Priority** critical · **~20 LOC** + docs · **Prompts** 4–5 · **Depends** AG-06, AG-08, AG-09 (AG-10 first, recommended)
 
@@ -570,13 +570,16 @@ silently. `isc eval-diff` will classify these four as `gold_change`.
 5. *spare* — LIMITATIONS update either way
 
 **Done when**
-- [ ] Aggregate questions as named k/n — target 5/5 total spend (`q_cd_01`–`04`,
+- [x] Aggregate questions as named k/n — target 5/5 total spend (`q_cd_01`–`04`,
       `q_am_04`) and 4/4 part prices against the completed gold, on both B runs
-- [ ] 0 misroute-in across the other 47 questions (AG-09's table)
-- [ ] 0 ACL leaks — the hard gate, unchanged
-- [ ] No regression on any other subtype per `eval-diff`
-- [ ] Per-question cost delta from the planner call recorded
-- [ ] README states measured numbers; ADR 0011 status updated
+- [x] 0 misroute-in across the other 47 questions (AG-09's table)
+- [x] 0 ACL leaks — the hard gate, unchanged
+- [x] No regression on any other subtype per `eval-diff` — 0 regressed, 0 noise in A→B1
+      and A→B2; the other changes were text/abstention-reason only, no verdict flips
+- [x] Per-question cost delta from the planner call recorded — ≈ $0.0001/question
+      (74 planner calls per B run at the AG-08 per-call cost); A's eval-only cost cannot
+      be separated from its whole-slice total ($0.0314)
+- [x] README states measured numbers; ADR 0011 status updated
 
 **Watch** two B runs, both reported, before flipping. One passing run is a
 single reading, not a result.
@@ -658,11 +661,11 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 
 ## Definition of done
 
-1. AG-11's criteria met on both B runs, and `aggregate.enabled` flipped on that evidence
-2. ADR 0011 accepted; ADR 0012 written if AG-12 ran
-3. README and LIMITATIONS state measured numbers, including the part-price gold change
-4. The aggregate tests are part of the adversarial suite, unskipped and passing
-5. Zero ACL leaks on both answer paths
+1. [x] AG-11's criteria met on both B runs, and `aggregate.enabled` flipped on that evidence
+2. [x] ADR 0011 accepted; ADR 0012 written if AG-12 ran — AG-12 has not run, so no ADR 0012
+3. [x] README and LIMITATIONS state measured numbers, including the part-price gold change
+4. [x] The aggregate tests are part of the adversarial suite, unskipped and passing
+5. [x] Zero ACL leaks on both answer paths
 
 ---
 
@@ -690,4 +693,5 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 | 2026-09-28 | AG-09 prompt 1 | 1 | outcomes schema v2 with route; v1 read as route=None ("not recorded", never inferred); mixed files rejected; writer refuses route=None (test helper defaults route="chunks"); fail-first i RED (10: new round trip + 8 existing write/reload tests + [missing]), ii RED (v1 fixture test), iii RED (version-3 + existing wrong-version test); make test 740 |
 | 2026-09-28 | AG-09 prompt 2 | 1 | report schema 4: route counts, route×subtype k/n, misroutes named against planner gold (absent = not checked); eval-diff ROUTE_CHANGE after VERDICT_FLIP; None never compared or counted as chunks; fail-first i RED (None-as-chunks), ii RED (None compared), iii RED (misroute_in dropped), plus hide-route-flips RED; v1 rescore = previous report + route section only; make test 749 |
 | 2026-09-28 | AG-10 | 1 | part-price gold completed (D8): 2→12, 2→20, 2→3, 2→11 lines; only q_cd_05..08 changed; planner gold re-pinned (sha only); fidelity identity test; fail-first i RED, ii RED, iii SURVIVED (no unpriced line anywhere in the extraction gold); measurement change, not a system change; make test 753 |
+| 2026-09-28 | AG-11 | 1 | A run_20260928T145343Z (flag off): acc 25/35; B1 run_20260928T150038Z / B2 run_20260928T150333Z (flag on): acc 32/35 each, aggregate 9/9 each (A 2/9), misroute_in 0, leaks 0; eval-diff fixed 7, regressed 0, noise 0; cost A $0.0314 (whole slice), B $0.0193 each; env-override test re-pointed (sets false vs the new true default), fail-first by hand (both env tests RED); verdict GO — aggregate.enabled on (98464b5) |
 | | | | |
