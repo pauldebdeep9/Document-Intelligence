@@ -246,3 +246,20 @@ cache off, $0.0179 for both). Prompt v2, which fixed all statistic questions
 in the prompt itself (misroute-in 0/81), was rejected for regressing hw_09
 (paraphrase 10/11 in both runs) — see
 `config/prompts/aggregate/query_plan.v2.NOTES.md`.
+
+## Part-price gold completed (AG-10): compare runs within the same gold only
+
+The gold for the four part-price questions (`q_cd_05`..`08`) used to list a
+hand-picked pair of lines each; it now lists every priced line of the part
+in documents the gold principal can read (D8): 2→12, 2→20, 2→3 and 2→11
+lines. This is a measurement change, not a system change — the corpus,
+questions and code under test are unchanged; only 4 of 56 gold entries moved
+(`gold_answer`; `gold_chunk_ids` and `source_documents` for three of them).
+`answer_contains_gold()` now requires every listed price, so on the chunk
+path answer accuracy for these four is expected to drop: 8 retrieved chunks
+cannot list 12–20 lines across up to 6 documents. The new `gold_chunk_ids`
+also move `cross_document` recall@8. `isc eval-diff` against a pre-AG-10 run
+classifies these four as `gold_change`; compare runs within the same gold
+only. The "priced lines only" part of D8 is untested by this corpus: the
+extraction gold has no line with a null unit price, so a generator that kept
+unpriced lines would produce identical gold here.

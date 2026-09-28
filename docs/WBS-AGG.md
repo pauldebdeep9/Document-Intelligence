@@ -510,7 +510,7 @@ fresh run, not a rescore.
 
 ---
 
-## AG-10 — Complete the part-price gold ☐
+## AG-10 — Complete the part-price gold ☒
 
 **Priority** high · **~60 LOC** (+~30 test) · **Prompts** 3–4 · **Depends** none — land before AG-11 · **Stop** D8 before prompt 2
 
@@ -529,12 +529,16 @@ fresh run, not a rescore.
 4. *spare* — before/after note in the log
 
 **Done when**
-- [ ] For `q_cd_05`–`08`, gold's listed lines == the oracle, asserted as an identity
-- [ ] `test_gold_fidelity.py` green against a fresh `make slice`
+- [x] For `q_cd_05`–`08`, gold's listed lines == the oracle, asserted as an identity
+- [ ] `test_gold_fidelity.py` green against a fresh `make slice` — green against the
+      existing index (corpus unchanged, every gold chunk id resolves); a fresh
+      `make slice` re-runs live extraction/embedding and was out of scope (no live calls)
 - [ ] The log records this as a measurement change, with the chunk path's k/n
-      on these four questions before and after
+      on these four questions before and after — measured in AG-11 run A
 - [ ] Fail-first: drop the ACL intersection (oracle mismatch red); keep only
       the first two lines (identity red); skip the unpriced-line filter (mismatch red)
+      — first two RED; the third SURVIVES by construction: the extraction gold has
+      no unpriced line at all (docs/LIMITATIONS.md)
 
 **Watch** this is a measurement change, not a system change. On the chunk path,
 answer accuracy on these four questions should *drop*, because 8 chunks cannot
@@ -685,4 +689,5 @@ conda run -n Sai2608 make slice                                        # AG-10, 
 | 2026-09-28 | AG-08 close | 0 | verdict corrected, not relaxed: prompt-6 rule required hw_27 (built to measure the guard's gap) to pass — internally inconsistent; covered cases misroute_in 0/83 ×2, gold 9/9 + 47/47, paraphrase 12/12; hw_27 → LIMITATIONS; AG-08 DONE |
 | 2026-09-28 | AG-09 prompt 1 | 1 | outcomes schema v2 with route; v1 read as route=None ("not recorded", never inferred); mixed files rejected; writer refuses route=None (test helper defaults route="chunks"); fail-first i RED (10: new round trip + 8 existing write/reload tests + [missing]), ii RED (v1 fixture test), iii RED (version-3 + existing wrong-version test); make test 740 |
 | 2026-09-28 | AG-09 prompt 2 | 1 | report schema 4: route counts, route×subtype k/n, misroutes named against planner gold (absent = not checked); eval-diff ROUTE_CHANGE after VERDICT_FLIP; None never compared or counted as chunks; fail-first i RED (None-as-chunks), ii RED (None compared), iii RED (misroute_in dropped), plus hide-route-flips RED; v1 rescore = previous report + route section only; make test 749 |
+| 2026-09-28 | AG-10 | 1 | part-price gold completed (D8): 2→12, 2→20, 2→3, 2→11 lines; only q_cd_05..08 changed; planner gold re-pinned (sha only); fidelity identity test; fail-first i RED, ii RED, iii SURVIVED (no unpriced line anywhere in the extraction gold); measurement change, not a system change; make test 753 |
 | | | | |
