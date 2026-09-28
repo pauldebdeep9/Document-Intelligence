@@ -13,18 +13,17 @@ fabricated total in the first place.
 from __future__ import annotations
 
 from isc.aggregate.execute import AggregateResult, execute
-from isc.aggregate.plan import QueryPlan, QueryPlanRaw, validate_plan
+from isc.aggregate.plan import QueryPlan
+from isc.aggregate.planner import plan_question
 from isc.aggregate.render import render_text
 from isc.aggregate.source import visible_records
 from isc.answer.citations import bind_citations, verify_attribution
 from isc.common.confidence import Confidence, Thresholds
-from isc.common.config import Settings, load_prompt
-from isc.common.errors import OutputTruncated, SchemaRepairExhausted
+from isc.common.config import Settings
 from isc.common.logging import get_logger
 from isc.common.tracing import span
 from isc.extract.masters import supplier_ids_by_name
-from isc.llm.ports import ChatModel, Message
-from isc.llm.structured import parse_structured
+from isc.llm.ports import ChatModel
 from isc.models.acl import Principal
 from isc.models.answer import AbstentionReason, Answer
 from isc.storage.local_vector import LocalVectorStore
@@ -51,13 +50,8 @@ class RecordAnswerer:
         self._supplier_ids = supplier_ids_by_name(self._masters)
 
     def plan(self, question: str) -> tuple[QueryPlan | None, str]:
-        prompt = load_prompt("aggregate/query_plan.v1.md")
-        try:
-            raw, _conf, _result = parse_structured(
-                self._chat, [Message.system(prompt), Message.user(question)], QueryPlanRaw)
-        except (SchemaRepairExhausted, OutputTruncated) as exc:
-            return None, f"planner failed: {exc}"
-        return validate_plan(raw, question, self._masters)
+        attempt = plan_question(self._chat, question, self._masters)
+        return attempt.plan, attempt.reason
 
     def try_answer(self, question: str, principal: Principal) -> Answer | None:
         with span("aggregate.plan") as s:
