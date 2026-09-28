@@ -472,7 +472,13 @@
       "subtype": "cross_document",
       "gold_chunk_ids": [
         "chk_ec9884ca1d80c866",
-        "chk_2127b3c6d1ccbfee"
+        "chk_9385e34d2a9e89ad",
+        "chk_27f3b43fb2a20460",
+        "chk_cbab477c3557cbdc",
+        "chk_b666024b5ee4c17e",
+        "chk_2127b3c6d1ccbfee",
+        "chk_6204b34455733ce5",
+        "chk_52ca3d0c662a1274"
       ],
       "gold_answer": [
         {
@@ -482,15 +488,79 @@
           "currency": "SGD"
         },
         {
+          "document": "po_001.pdf",
+          "line_number": 10,
+          "unit_price": "1,491.46",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_001.pdf",
+          "line_number": 50,
+          "unit_price": "1,834.49",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_001.pdf",
+          "line_number": 100,
+          "unit_price": "919.63",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_001.pdf",
+          "line_number": 120,
+          "unit_price": "609.16",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_001.pdf",
+          "line_number": 210,
+          "unit_price": "2,103.84",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_001.pdf",
+          "line_number": 360,
+          "unit_price": "80.19",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_008.pdf",
+          "line_number": 270,
+          "unit_price": "2,348.01",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_008.pdf",
+          "line_number": 280,
+          "unit_price": "1,919.62",
+          "currency": "SGD"
+        },
+        {
           "document": "po_014.pdf",
           "line_number": 30,
           "unit_price": "174.53",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_017.pdf",
+          "line_number": 250,
+          "unit_price": "882.09",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_018.pdf",
+          "line_number": 20,
+          "unit_price": "1,922.89",
           "currency": "SGD"
         }
       ],
       "source_documents": [
         "po_000.pdf",
-        "po_014.pdf"
+        "po_001.pdf",
+        "po_008.pdf",
+        "po_014.pdf",
+        "po_017.pdf",
+        "po_018.pdf"
       ],
       "principal": "u_alice"
     },
@@ -501,7 +571,16 @@
       "subtype": "cross_document",
       "gold_chunk_ids": [
         "chk_9385e34d2a9e89ad",
-        "chk_50aa7080e1ebc57a"
+        "chk_27f3b43fb2a20460",
+        "chk_cbab477c3557cbdc",
+        "chk_956bcbd260bc9c09",
+        "chk_b666024b5ee4c17e",
+        "chk_8a92aee498c61553",
+        "chk_7a0a1846134b9526",
+        "chk_2127b3c6d1ccbfee",
+        "chk_50aa7080e1ebc57a",
+        "chk_6204b34455733ce5",
+        "chk_52ca3d0c662a1274"
       ],
       "gold_answer": [
         {
@@ -511,15 +590,126 @@
           "currency": "SGD"
         },
         {
+          "document": "po_001.pdf",
+          "line_number": 80,
+          "unit_price": "528.17",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_001.pdf",
+          "line_number": 270,
+          "unit_price": "2,156.54",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_001.pdf",
+          "line_number": 330,
+          "unit_price": "1,795.26",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_008.pdf",
+          "line_number": 40,
+          "unit_price": "992.45",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_008.pdf",
+          "line_number": 90,
+          "unit_price": "456.53",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_008.pdf",
+          "line_number": 150,
+          "unit_price": "1,904.44",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_008.pdf",
+          "line_number": 250,
+          "unit_price": "1,228.95",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_008.pdf",
+          "line_number": 330,
+          "unit_price": "1,467.20",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_008.pdf",
+          "line_number": 390,
+          "unit_price": "1,396.56",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_008.pdf",
+          "line_number": 400,
+          "unit_price": "2,083.59",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_008.pdf",
+          "line_number": 420,
+          "unit_price": "2,179.45",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_014.pdf",
+          "line_number": 10,
+          "unit_price": "979.93",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_014.pdf",
+          "line_number": 50,
+          "unit_price": "527.46",
+          "currency": "SGD"
+        },
+        {
           "document": "po_017.pdf",
           "line_number": 80,
           "unit_price": "1,227.80",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_017.pdf",
+          "line_number": 140,
+          "unit_price": "905.45",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_017.pdf",
+          "line_number": 210,
+          "unit_price": "1,709.39",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_017.pdf",
+          "line_number": 290,
+          "unit_price": "556.23",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_018.pdf",
+          "line_number": 60,
+          "unit_price": "509.89",
+          "currency": "SGD"
+        },
+        {
+          "document": "po_018.pdf",
+          "line_number": 80,
+          "unit_price": "1,525.08",
           "currency": "SGD"
         }
       ],
       "source_documents": [
         "po_001.pdf",
-        "po_017.pdf"
+        "po_008.pdf",
+        "po_014.pdf",
+        "po_017.pdf",
+        "po_018.pdf"
       ],
       "principal": "u_alice"
     },
@@ -544,6 +734,12 @@
           "line_number": 80,
           "unit_price": "319.78",
           "currency": "EUR"
+        },
+        {
+          "document": "po_004.pdf",
+          "line_number": 120,
+          "unit_price": "1,746.22",
+          "currency": "EUR"
         }
       ],
       "source_documents": [
@@ -558,10 +754,69 @@
       "question_class": "answerable",
       "subtype": "cross_document",
       "gold_chunk_ids": [
+        "chk_c0432b0dbb84161b",
+        "chk_ab0cca8c3f16928c",
+        "chk_ddc9c820090932b3",
+        "chk_3fe8207dbef0ab4e",
+        "chk_afd3ae5b73e1af88",
         "chk_734b992e23cf9d51",
-        "chk_c0432b0dbb84161b"
+        "chk_bcb688cd08c92460"
       ],
       "gold_answer": [
+        {
+          "document": "po_009.pdf",
+          "line_number": 10,
+          "unit_price": "1,757.16",
+          "currency": "USD"
+        },
+        {
+          "document": "po_009.pdf",
+          "line_number": 40,
+          "unit_price": "1,392.00",
+          "currency": "USD"
+        },
+        {
+          "document": "po_009.pdf",
+          "line_number": 130,
+          "unit_price": "2,381.08",
+          "currency": "USD"
+        },
+        {
+          "document": "po_009.pdf",
+          "line_number": 170,
+          "unit_price": "1,881.18",
+          "currency": "USD"
+        },
+        {
+          "document": "po_009.pdf",
+          "line_number": 240,
+          "unit_price": "1,742.56",
+          "currency": "USD"
+        },
+        {
+          "document": "po_009.pdf",
+          "line_number": 340,
+          "unit_price": "1,709.55",
+          "currency": "USD"
+        },
+        {
+          "document": "po_010.pdf",
+          "line_number": 180,
+          "unit_price": "323.22",
+          "currency": "USD"
+        },
+        {
+          "document": "po_010.pdf",
+          "line_number": 230,
+          "unit_price": "2,368.62",
+          "currency": "USD"
+        },
+        {
+          "document": "po_010.pdf",
+          "line_number": 400,
+          "unit_price": "32.31",
+          "currency": "USD"
+        },
         {
           "document": "po_013.pdf",
           "line_number": 10,
@@ -569,15 +824,17 @@
           "currency": "USD"
         },
         {
-          "document": "po_009.pdf",
+          "document": "po_019.pdf",
           "line_number": 10,
-          "unit_price": "1,757.16",
+          "unit_price": "171.70",
           "currency": "USD"
         }
       ],
       "source_documents": [
+        "po_009.pdf",
+        "po_010.pdf",
         "po_013.pdf",
-        "po_009.pdf"
+        "po_019.pdf"
       ],
       "principal": "u_ewan"
     },

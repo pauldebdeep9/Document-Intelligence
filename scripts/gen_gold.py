@@ -223,21 +223,37 @@ def _cross_doc_total(qid: str, text: str, names: list[str], currency: str, princ
     }
 
 
-def _cross_doc_part(qid: str, text: str, part_number: str, refs: list[tuple[str, int]],
-                     principal: str, chunks: dict[str, list[Chunk]],
-                     gold: dict[str, Any]) -> dict[str, Any]:
+def _cross_doc_part(qid: str, text: str, part_number: str, principal: str,
+                     chunks: dict[str, list[Chunk]], gold: dict[str, Any],
+                     users: dict[str, Principal], corpus_dir: Path) -> dict[str, Any]:
+    """D8 (AG-10): EVERY priced line of part_number in every document the
+    principal may read, ordered by document then line -- computed from the
+    extraction gold and the ACL sidecars, never hand-picked. A hand-picked
+    pair let a two-line answer score as complete: answer_contains_gold()
+    only checks the values gold lists."""
+    reader = users[principal]
     answer = []
-    gold_ids = []
-    names = []
-    for name, line_number in refs:
-        ln = _line(gold, name, line_number)
-        assert ln["part_number"] == part_number, f"{name} line {line_number} is not {part_number}"
-        answer.append({
-            "document": name, "line_number": line_number,
-            "unit_price": ln["unit_price"], "currency": gold[name]["raw"]["currency"],
-        })
-        gold_ids.append(_line_chunk(chunks, name, line_number))
-        names.append(name)
+    gold_ids: list[str] = []
+    names: list[str] = []
+    for name in sorted(gold):
+        if not reader.may_read(_doc_acl(corpus_dir, name)):
+            continue
+        numbers = sorted(ln["line_number"] for ln in gold[name]["raw"]["lines"]
+                         if ln["part_number"] == part_number and ln["unit_price"] is not None)
+        for line_number in numbers:
+            ln = _line(gold, name, line_number)
+            assert ln["part_number"] == part_number, \
+                f"{name} line {line_number} is not {part_number}"
+            answer.append({
+                "document": name, "line_number": line_number,
+                "unit_price": ln["unit_price"], "currency": gold[name]["raw"]["currency"],
+            })
+            chunk_id = _line_chunk(chunks, name, line_number)
+            if chunk_id not in gold_ids:
+                gold_ids.append(chunk_id)
+            if name not in names:
+                names.append(name)
+    assert answer, f"{qid}: {principal} can read no priced line of {part_number}"
     return {
         "id": qid, "text": text,
         "question_class": "answerable", "subtype": "cross_document",
@@ -365,7 +381,8 @@ def _no_reader(qid: str, name: str, field: str, text: str, all_principals: list[
 # The question set
 # ---------------------------------------------------------------------------
 
-def _build_questions(chunks: dict[str, list[Chunk]], gold: dict[str, Any]) -> list[dict[str, Any]]:
+def _build_questions(chunks: dict[str, list[Chunk]], gold: dict[str, Any],
+                     users: dict[str, Principal], corpus_dir: Path) -> list[dict[str, Any]]:
     q: list[dict[str, Any]] = []
 
     # -- single_hop (~10): one fact from one chunk, outside the header_lookup
@@ -452,16 +469,16 @@ def _build_questions(chunks: dict[str, list[Chunk]], gold: dict[str, Any]) -> li
         ["po_009.pdf", "po_016.pdf"], "USD", "u_ewan", chunks, gold))
     q.append(_cross_doc_part(
         "q_cd_05", "What did we pay for part PLC-1756-L83 across our purchase orders?",
-        "PLC-1756-L83", [("po_000.pdf", 10), ("po_014.pdf", 30)], "u_alice", chunks, gold))
+        "PLC-1756-L83", "u_alice", chunks, gold, users, corpus_dir))
     q.append(_cross_doc_part(
         "q_cd_06", "What did we pay for part TRM-BLK-2P5 across our purchase orders?",
-        "TRM-BLK-2P5", [("po_001.pdf", 30), ("po_017.pdf", 80)], "u_alice", chunks, gold))
+        "TRM-BLK-2P5", "u_alice", chunks, gold, users, corpus_dir))
     q.append(_cross_doc_part(
         "q_cd_07", "What did we pay for part ENC-INC-1024 across our purchase orders?",
-        "ENC-INC-1024", [("po_003.pdf", 30), ("po_004.pdf", 80)], "u_chen", chunks, gold))
+        "ENC-INC-1024", "u_chen", chunks, gold, users, corpus_dir))
     q.append(_cross_doc_part(
         "q_cd_08", "What did we pay for part TRM-BLK-2P5 across our purchase orders?",
-        "TRM-BLK-2P5", [("po_013.pdf", 10), ("po_009.pdf", 10)], "u_ewan", chunks, gold))
+        "TRM-BLK-2P5", "u_ewan", chunks, gold, users, corpus_dir))
 
     # -- ambiguous (~4): Kestrel Industrial AG (V100781) vs Kestrel Industrial
     # Pneumatics GmbH (V100782) -- the corpus's one genuinely confusable
@@ -776,7 +793,7 @@ def main() -> None:
     corpus_fp = corpus_fingerprint(docs.content_hashes())
     chunks, doc_ids = _build_chunk_index(docs, settings, gold)
 
-    questions = _build_questions(chunks, gold)
+    questions = _build_questions(chunks, gold, users, args.corpus)
 
     store = LocalVectorStore(settings.paths.data / "vector_store.pkl")
     _verify_against_index(questions, store, fingerprint)

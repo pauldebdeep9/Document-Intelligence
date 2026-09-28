@@ -381,3 +381,39 @@ def test_no_reader_question_has_zero_readers_across_the_whole_identity_graph():
     assert readers == [], f"{q['id']}: unexpectedly has readers: {readers}"
     assert q["gold_chunk_ids"] == []
     assert q["expected"] == "empty"
+
+
+# The part each part-price question asks about -- stated here, not read from
+# the gold under test.
+_PART_PRICE_QUESTIONS = {
+    "q_cd_05": "PLC-1756-L83",
+    "q_cd_06": "TRM-BLK-2P5",
+    "q_cd_07": "ENC-INC-1024",
+    "q_cd_08": "TRM-BLK-2P5",
+}
+
+
+@pytest.mark.skipif(not list(SYNTHETIC_DIR.glob("*.acl.json")),
+                    reason="corpus not generated; run `make corpus`")
+@pytest.mark.parametrize("qid", sorted(_PART_PRICE_QUESTIONS))
+def test_part_price_gold_lists_every_visible_priced_line(qid):
+    """D8 (AG-10): a part-price question's gold is EVERY priced line of that
+    part in documents its gold principal can read -- not a hand-picked pair,
+    which let a two-line answer score as complete. The oracle is recomputed
+    here from the extraction gold, the ACL sidecars and users.json, with this
+    file's own readers, independently of scripts/gen_gold.py."""
+    q = next(q for q in _load()["questions"] if q["id"] == qid)
+    part = _PART_PRICE_QUESTIONS[qid]
+    assert part in q["text"]
+    reader = _users()[q["principal"]]
+
+    oracle = {
+        (name, ln["line_number"])
+        for name, g in _all_extraction_gold().items() if reader.may_read(_doc_acl(name))
+        for ln in g["raw"]["lines"]
+        if ln["part_number"] == part and ln["unit_price"] is not None
+    }
+    listed = [(e["document"], e["line_number"]) for e in q["gold_answer"]]
+
+    assert len(listed) == len(set(listed)), f"{qid}: a line is listed twice"
+    assert set(listed) == oracle

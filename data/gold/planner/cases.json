@@ -686,6 +686,6 @@
   ],
   "provenance": {
     "generator": "scripts/gen_planner_gold.py",
-    "questions_sha256": "01f7fb9ea8f37830ba45db26f12db73227cab3ee735f0247a1a489203843bb9f"
+    "questions_sha256": "c4549df79e2510565260ce8ef565f9853155573b7fd6e56839c99a84c3b594c0"
   }
 }
