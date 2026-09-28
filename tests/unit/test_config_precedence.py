@@ -40,8 +40,8 @@ def test_yaml_value_applies_without_env():
 
 
 def test_env_overrides_a_key_present_in_default_yaml(monkeypatch):
-    monkeypatch.setenv("ISC_AGGREGATE__ENABLED", "true")
-    assert get_settings().aggregate.enabled is True
+    monkeypatch.setenv("ISC_AGGREGATE__ENABLED", "false")
+    assert get_settings().aggregate.enabled is False
 
 
 def test_env_overrides_a_nested_llm_key(monkeypatch):
