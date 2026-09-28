@@ -13,17 +13,22 @@ question's own gold principal. It does NOT measure the planner: whether a
 live model produces these plans (and says "none" to every other subtype) is
 the live retrieval eval's job, with aggregate.enabled=true.
 
+The harness proves offline-ness by sabotaging the provider registry, not by
+convention.
+
 Skipped when the corpus has not been generated (`make corpus`).
 """
 
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
 import pytest
 
+import isc.llm.registry as registry
 from isc.aggregate.answerer import RecordAnswerer
 from isc.common.confidence import Thresholds
 from isc.common.config import Settings
@@ -109,22 +114,40 @@ class _HashEmbedder:
         return out
 
 
+def _no_network(*_args, **_kwargs):
+    raise RuntimeError("network model used in the offline gold harness")
+
+
 @pytest.fixture(scope="module")
 def world(tmp_path_factory):
-    out = tmp_path_factory.mktemp("aggregate_slice")
-    s = Settings()
-    run = start_run(out / "runs")
-    blobs, docs = LocalBlobStore(out / "blobs"), SqliteDocStore(out / "docstore.sqlite")
-    run_ingest(SYN, blobs, docs)
-    assert not run_parse(run, blobs, docs).failed
-    th = Thresholds(auto_accept=s.thresholds.auto_accept, review=s.thresholds.review,
-                    reject=s.thresholds.reject)
-    assert not run_extract(run, docs, _GoldExtractor(), DocType.PURCHASE_ORDER, th,
-                           s.paths.data / "masters").failed
-    store = LocalVectorStore(out / "store.pkl")
-    assert not run_index(run, docs, _HashEmbedder(), store, s).failed
-    gold = {q["id"]: q for q in json.loads(GOLD_Q.read_text())["questions"]}
-    return docs, store, s, gold, load_principals(s.paths.data / "acl")
+    # Module scope cannot use the function-scoped monkeypatch, so this one is
+    # created here and undone at teardown; it stays in force for every test.
+    # It also clears ISC_* itself: conftest's per-test clearing runs AFTER a
+    # module fixture is built, and the Settings made here is used throughout.
+    mp = pytest.MonkeyPatch()
+    mp.delenv("OPENAI_API_KEY", raising=False)
+    for name in list(os.environ):
+        if name.startswith("ISC_"):
+            mp.delenv(name)
+    mp.setattr(registry, "get_chat_model", _no_network)
+    mp.setattr(registry, "get_embedding_model", _no_network)
+    try:
+        out = tmp_path_factory.mktemp("aggregate_slice")
+        s = Settings()
+        run = start_run(out / "runs")
+        blobs, docs = LocalBlobStore(out / "blobs"), SqliteDocStore(out / "docstore.sqlite")
+        run_ingest(SYN, blobs, docs)
+        assert not run_parse(run, blobs, docs).failed
+        th = Thresholds(auto_accept=s.thresholds.auto_accept, review=s.thresholds.review,
+                        reject=s.thresholds.reject)
+        assert not run_extract(run, docs, _GoldExtractor(), DocType.PURCHASE_ORDER, th,
+                               s.paths.data / "masters").failed
+        store = LocalVectorStore(out / "store.pkl")
+        assert not run_index(run, docs, _HashEmbedder(), store, s).failed
+        gold = {q["id"]: q for q in json.loads(GOLD_Q.read_text())["questions"]}
+        yield docs, store, s, gold, load_principals(s.paths.data / "acl")
+    finally:
+        mp.undo()
 
 
 @pytest.mark.parametrize("qid", sorted(PLANS))
