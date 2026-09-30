@@ -119,6 +119,27 @@ benchmark.
 - **ACL leaks: 0** — the one metric this project treats as a hard gate, not
   a scored dimension alongside the rest.
 
+#### Aggregate questions (records path)
+
+Total-spend and part-price questions are answered from extracted records
+rather than chunks (ADR 0011; `aggregate.enabled`, on by default since
+AG-11). Live, same fresh index, 56 gold questions, against the completed
+part-price gold (AG-10) — run A `run_20260928T145343Z` flag off, runs B1
+`run_20260928T150038Z` and B2 `run_20260928T150333Z` flag on:
+
+- **answer accuracy: 25/35 → 32/35** (B1 and B2)
+- **the nine aggregate questions: 2/9 → 9/9** (B1 and B2) — total spend 5/5,
+  part prices 4/4
+- misroute-in 0/9 of records answers, misroute-out 0/9 (checked against the
+  planner gold); ACL leaks 0 in all three runs
+- planner cost ≈ $0.0001 per question
+- recall@8 0.981 → 0.966 and MRR 0.872 → 0.815 are a **measurement artifact**,
+  not a retrieval regression: a records answer stores its evidence chunks in
+  `retrieved_ids`, not a ranked search list, so those nine outcomes are not
+  comparable to chunk-path rankings.
+- Known gap: a statistic phrased outside the guard's word list (hw_27,
+  "typically") still reaches the records path — see docs/LIMITATIONS.md.
+
 ## The invariants
 
 Enforced by tests and validators, not conventions:
@@ -181,6 +202,9 @@ Full reasoning lives in `docs/adr/`; one line each here.
   either — why `LOW_SUPPORT` is disabled.
 - **0009** — Binding resolves a citation; it does not verify what it
   supports — citation binding vs. attribution verification, found live.
+- **0011** — Total-spend and part-price questions are answered from
+  extracted records, not chunks: typed plan, permissions before selection,
+  Decimal arithmetic, deterministic cited text (proposed; off by default).
 
 ## Layout
 

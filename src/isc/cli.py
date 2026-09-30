@@ -9,15 +9,21 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from isc.common.config import get_settings
+from isc.common.config import Settings, get_settings
 from isc.common.logging import setup
 from isc.common.tracing import start_run
 from isc.models.acl import Principal, Sensitivity
+
+if TYPE_CHECKING:
+    from isc.aggregate.answerer import RecordAnswerer
+    from isc.llm.ports import ChatModel
+    from isc.storage.local_vector import LocalVectorStore
 
 app = typer.Typer(add_completion=False, help="ISC Document Intelligence")
 console = Console()
@@ -143,6 +149,17 @@ def _resolve_principal(as_user: str, groups: str, acl_dir: Path) -> Principal:
     return Principal(id=as_user, group_ids=frozenset(g for g in groups.split(",") if g))
 
 
+def _aggregator(chat: ChatModel, store: LocalVectorStore, s: Settings) -> RecordAnswerer | None:
+    """The records path (aggregate/) when settings.aggregate.enabled, else
+    None -- the orchestrator then runs the P1 chunk path unchanged."""
+    if not s.aggregate.enabled:
+        return None
+    from isc.aggregate.answerer import RecordAnswerer
+    from isc.storage.sqlite_docstore import SqliteDocStore
+
+    return RecordAnswerer(chat, SqliteDocStore(s.paths.data / "docstore.sqlite"), store, s)
+
+
 @app.command()
 def ask(question: str, as_user: str = typer.Option(..., "--as"),
         groups: str = typer.Option("", "--groups", help="comma separated")) -> None:
@@ -159,7 +176,8 @@ def ask(question: str, as_user: str = typer.Option(..., "--as"),
     store = LocalVectorStore(s.paths.data / "vector_store.pkl")
     chat = get_chat_model()
     retriever = Retriever(store, get_embedding_model(), chat, s)
-    orchestrator = AnswerOrchestrator(retriever, chat, s)
+    orchestrator = AnswerOrchestrator(retriever, chat, s,
+                                      aggregator=_aggregator(chat, store, s))
 
     answer = orchestrator.ask(question, principal)
 
@@ -172,6 +190,7 @@ def ask(question: str, as_user: str = typer.Option(..., "--as"),
         for c in answer.citations:
             t.add_row(c.chunk_id, c.label)
         console.print(t)
+    console.print(f"[dim]route={answer.route}[/]")
     run.summarise()
 
 
@@ -186,6 +205,17 @@ def review(limit: int = 20) -> None:
         t.add_row(r["document_id"], r["field_name"],
                   f"{r['confidence']:.3f}", r["weakest_signal"] or "")
     console.print(t)
+
+
+def load_expected_records(cases_path: Path) -> frozenset[str] | None:
+    """Question ids the planner gold (AG-08's data/gold/planner/cases.json)
+    says should be answered from records -- every case whose expected
+    operation is not "none". None when the file is missing: the report then
+    says misroutes were not checked, rather than claiming zero."""
+    if not cases_path.exists():
+        return None
+    cases = json.loads(cases_path.read_text())["cases"]
+    return frozenset(c["id"] for c in cases if c["expected"]["operation"] != "none")
 
 
 @app.command()
@@ -283,7 +313,8 @@ def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
 
             chat = get_chat_model()
             orchestrator = AnswerOrchestrator(
-                Retriever(store, get_embedding_model(), chat, s), chat, s)
+                Retriever(store, get_embedding_model(), chat, s), chat, s,
+                aggregator=_aggregator(chat, store, s))
             users = load_principals(s.paths.data / "acl")
 
             retrieval_result = run_retrieval_eval(gold["questions"], users, orchestrator)
@@ -303,8 +334,16 @@ def eval(harness: str = typer.Option("both", help="extraction|retrieval|both"),
             console.print(f"[red]ACL LEAK[/] in {len(retrieval_report.leaks())} outcome(s): "
                            f"{[o.question_id for o in retrieval_report.leaks()]}")
 
+    expected_records = None
+    if retrieval_report is not None:
+        planner_gold = s.paths.data / "gold" / "planner" / "cases.json"
+        expected_records = load_expected_records(planner_gold)
+        if expected_records is None:
+            console.print(f"[yellow]note[/] {planner_gold} not found -- the report will say "
+                          "misroutes were not checked")
     out = write(run.artifact_dir("eval"), extraction_report, retrieval_report,
-                threshold=s.thresholds.auto_accept, review_threshold=s.thresholds.review)
+                threshold=s.thresholds.auto_accept, review_threshold=s.thresholds.review,
+                expected_records=expected_records)
     console.print(f"[green]report written[/] {out}")
     summary_path = run.summarise()
 

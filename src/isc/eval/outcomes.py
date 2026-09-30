@@ -45,6 +45,15 @@ added here. Never attach this file to a review, share it, or serve it as-is.
 Bump OUTCOMES_SCHEMA_VERSION whenever a field is added, removed, renamed, or
 reinterpreted on QuestionOutcome or the failed-record shape -- load() checks
 it on every record and refuses to silently misread an older or newer shape.
+
+Schema v2 (AG-09) added `route` ("chunks" | "records"), and v1 -> v2 is the
+one explicit upgrade path: a v1 record still loads, with route=None meaning
+"not recorded". Never "chunks" -- a v1 file cannot prove which path
+answered, and a default would silently turn a gap in the evidence into a
+claim. A v2 record must carry a valid route, a file may not mix versions,
+and write() refuses an outcome whose route is None rather than write a v2
+file that says less than v2 promises. The bump rule above still applies:
+any version outside READABLE_VERSIONS is rejected.
 """
 
 from __future__ import annotations
@@ -55,7 +64,9 @@ from pathlib import Path
 from isc.common.errors import IscError
 from isc.eval.retrieval import QuestionOutcome, RetrievalEvalResult, RetrievalReport
 
-OUTCOMES_SCHEMA_VERSION = 1
+OUTCOMES_SCHEMA_VERSION = 2
+READABLE_VERSIONS = (1, 2)
+ROUTES = ("chunks", "records")
 
 OUTCOMES_FILENAME = "outcomes.jsonl"
 FAILED_FILENAME = "failed.jsonl"
@@ -86,6 +97,17 @@ class OutcomesSchemaMismatch(IscError):
         self.found = found
 
 
+class OutcomesMalformed(IscError):
+    """A record whose version is readable but whose content breaks that
+    version's contract: a v2 record without a valid route, or a file that
+    mixes schema versions."""
+
+    def __init__(self, path: Path, line_no: int, detail: str) -> None:
+        super().__init__(f"{path}:{line_no}: {detail}")
+        self.path = path
+        self.line_no = line_no
+
+
 def _outcome_to_record(o: QuestionOutcome) -> dict:
     """gold_ids is the only non-JSON-native field on QuestionOutcome (a
     set[str]) -- sorted here so the file is stable/diffable across runs
@@ -95,6 +117,12 @@ def _outcome_to_record(o: QuestionOutcome) -> dict:
     (mrr()/ndcg_at_k() in eval/metrics.py score position, not just
     membership), so they round-trip exactly as retrieved.
     """
+    if o.route not in ROUTES:
+        raise ValueError(
+            f"outcome {o.question_id!r} as {o.principal_id!r} has route {o.route!r}; a schema-v"
+            f"{OUTCOMES_SCHEMA_VERSION} file requires one of {ROUTES} -- an outcome loaded from "
+            "a v1 file (route not recorded) cannot be re-written as v2"
+        )
     return {
         "schema_version": OUTCOMES_SCHEMA_VERSION,
         "question_id": o.question_id,
@@ -112,13 +140,21 @@ def _outcome_to_record(o: QuestionOutcome) -> dict:
         "abstention_correct": o.abstention_correct,
         "citations_valid": o.citations_valid,
         "leaked_chunk_ids": list(o.leaked_chunk_ids),
+        "route": o.route,
     }
 
 
 def _record_to_outcome(path: Path, line_no: int, record: dict) -> QuestionOutcome:
     found = record.get("schema_version")
-    if found != OUTCOMES_SCHEMA_VERSION:
+    if found not in READABLE_VERSIONS:
         raise OutcomesSchemaMismatch(path, line_no, OUTCOMES_SCHEMA_VERSION, found)
+    route = None   # v1: not recorded -- never inferred
+    if found == 2:
+        route = record.get("route")
+        if route not in ROUTES:
+            raise OutcomesMalformed(
+                path, line_no, f"schema_version 2 record has route {route!r} (key "
+                f"{'present' if 'route' in record else 'missing'}); v2 requires one of {ROUTES}")
     return QuestionOutcome(
         question_id=record["question_id"],
         question_class=record["question_class"],
@@ -135,6 +171,7 @@ def _record_to_outcome(path: Path, line_no: int, record: dict) -> QuestionOutcom
         abstention_correct=record["abstention_correct"],
         citations_valid=record["citations_valid"],
         leaked_chunk_ids=list(record["leaked_chunk_ids"]),
+        route=route,
     )
 
 
@@ -187,9 +224,18 @@ def load(outcomes_path: Path) -> RetrievalEvalResult:
         )
 
     outcomes: list[QuestionOutcome] = []
+    file_version: object = None
     with outcomes_path.open() as fh:
         for line_no, line in enumerate(fh, start=1):
-            outcomes.append(_record_to_outcome(outcomes_path, line_no, json.loads(line)))
+            record = json.loads(line)
+            outcomes.append(_record_to_outcome(outcomes_path, line_no, record))
+            if file_version is None:
+                file_version = record["schema_version"]
+            elif record["schema_version"] != file_version:
+                raise OutcomesMalformed(
+                    outcomes_path, line_no,
+                    f"schema_version {record['schema_version']} after earlier "
+                    f"schema_version {file_version} records -- a file may not mix versions")
 
     with failed_path.open() as fh:
         lines = fh.readlines()
@@ -200,7 +246,7 @@ def load(outcomes_path: Path) -> RetrievalEvalResult:
         raise OutcomesSchemaMismatch(failed_path, 1, OUTCOMES_SCHEMA_VERSION, None)
     header = json.loads(lines[0])
     found = header.get("schema_version")
-    if found != OUTCOMES_SCHEMA_VERSION:
+    if found not in READABLE_VERSIONS:
         raise OutcomesSchemaMismatch(failed_path, 1, OUTCOMES_SCHEMA_VERSION, found)
     body_lines = lines[1:]
     expected_count = header.get("count")

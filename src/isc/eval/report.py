@@ -26,6 +26,12 @@ EV-03: retrieval.acl_gate replaces the bare retrieval.passed boolean with
 the declared GatePolicy's {name, passed, reason} (schema_version -> 3) --
 same verdict (see evaluate_acl_gate()'s docstring), now with an identifier
 and a reason a reader can act on without parsing report.md's prose.
+
+AG-09: retrieval.route (schema_version -> 4) -- which path answered each
+outcome, answer accuracy per (route, subtype) as {correct, n} cells, and,
+when planner gold is supplied, the misroutes named per outcome. A route of
+None (an outcome from a schema-v1 outcomes file) is "not recorded": counted
+on its own, never as "chunks".
 """
 
 from __future__ import annotations
@@ -33,12 +39,13 @@ from __future__ import annotations
 import json
 from dataclasses import asdict
 from pathlib import Path
+from typing import Any
 
 from isc.common.errors import IscError
 from isc.eval.extraction import ExtractionReport
 from isc.eval.retrieval import RetrievalReport, evaluate_acl_gate
 
-REPORT_SCHEMA_VERSION = 3
+REPORT_SCHEMA_VERSION = 4
 
 
 class ReportSchemaMismatch(IscError):
@@ -67,7 +74,10 @@ def validate_schema_version(payload: dict) -> None:
 
 def write(out_dir: Path, extraction: ExtractionReport | None,
           retrieval: RetrievalReport | None, threshold: float = 0.9,
-          review_threshold: float = 0.6) -> Path:
+          review_threshold: float = 0.6,
+          expected_records: frozenset[str] | None = None) -> Path:
+    """expected_records: question ids the planner gold says should route to
+    records; None means misroutes are not checked (and the report says so)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     payload: dict = {"schema_version": REPORT_SCHEMA_VERSION}
     lines = ["# Evaluation report", ""]
@@ -192,6 +202,7 @@ def write(out_dir: Path, extraction: ExtractionReport | None,
         expected_to_abstain, n_abstained = retrieval.abstention_precision_band()
         abstention_correct, n_unanswerable = retrieval.abstention_recall_band()
         gate = evaluate_acl_gate(retrieval)
+        route = retrieval.route_summary(expected_records)
 
         # EV-02: every rate below is its own {"n": <denominator>, ...} object,
         # never a bare float -- see this module's docstring and
@@ -234,6 +245,7 @@ def write(out_dir: Path, extraction: ExtractionReport | None,
             "acl_leaks": len(retrieval.leaks()),
             "leaks_by_subtype": leaks_by_subtype,
             "acl_gate": asdict(gate),
+            "route": route,
         }
 
         lines += ["## Retrieval", ""]
@@ -303,6 +315,8 @@ def write(out_dir: Path, extraction: ExtractionReport | None,
             lines += ["None."]
         lines += [""]
 
+        lines += ["### Answer route", ""] + _route_lines(route) + [""]
+
         # Abstention by subtype: absent/out_of_scope (plain "abstain") vs
         # underspecified ("abstain_with_clarification", which nothing in
         # this system can currently produce) -- reported separately so the
@@ -343,3 +357,41 @@ def write(out_dir: Path, extraction: ExtractionReport | None,
     md = out_dir / "report.md"
     md.write_text("\n".join(lines))
     return md
+
+
+def _route_lines(route: dict[str, Any]) -> list[str]:
+    """report.md's "Answer route" subsection. Every cell is k/n (EV-02);
+    route None is "not recorded", never shown as chunks."""
+    counts = route["counts"]
+    n = counts["n"]
+    if n and counts["not_recorded"] == n:
+        return ["Route not recorded for these outcomes (schema v1)."]
+    lines = [f"records {counts['records']} of {n} outcomes · chunks {counts['chunks']} of {n} "
+             f"outcomes · not recorded {counts['not_recorded']} of {n} outcomes", ""]
+
+    by_route = route["answer_accuracy_by_route"]
+    subtypes = sorted({st for cells in by_route.values() for st in cells})
+    if subtypes:
+        lines += ["Answer accuracy (answerable, gold principal) by route:", "",
+                  "| subtype | records | chunks |", "|---|---|---|"]
+        for st in subtypes:
+            row = []
+            for r in ("records", "chunks"):
+                cell = by_route.get(r, {}).get(st)
+                row.append(f"{cell['correct']}/{cell['n']}" if cell else "—")
+            lines.append(f"| {st} | {row[0]} | {row[1]} |")
+        lines.append("")
+    nr = route["answer_accuracy_not_recorded"]
+    if nr["n"]:
+        lines += [f"Route not recorded (excluded from the table): {nr['correct']}/{nr['n']} "
+                  "correct.", ""]
+
+    if "misroute_in" not in route:
+        return lines + ["Misroutes not checked (no planner gold supplied)"]
+
+    def listed(rows: list[dict[str, str]]) -> list[str]:
+        return [f"- {r['question_id']} ({r['principal_id']}, {r['subtype']})"
+                for r in rows] or ["none"]
+    lines += ["Answered from records, not expected to be:", ""] + listed(route["misroute_in"])
+    lines += ["", "Expected records, answered from chunks:", ""] + listed(route["misroute_out"])
+    return lines

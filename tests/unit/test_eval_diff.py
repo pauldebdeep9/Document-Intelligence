@@ -409,3 +409,56 @@ def test_composite_leak_and_verdict_and_retrieval_set_keeps_all_three_diffs():
     assert by_field["leaked_chunk_ids"].diff_class == DiffClass.LEAK_CHANGE
     assert by_field["answer_correct"].diff_class == DiffClass.VERDICT_FLIP
     assert by_field["retrieved_ids"].diff_class == DiffClass.RETRIEVAL_SET
+
+
+# -- AG-09: route flips -------------------------------------------------------
+
+def _with_routes(result: RetrievalEvalResult, route: str) -> RetrievalEvalResult:
+    return _result([replace(o, route=route) for o in result.report.outcomes], list(result.failed))
+
+
+def test_route_flip_is_route_change_ranked_after_verdict_flip():
+    from isc.eval.diff import SEVERITY_ORDER
+
+    a = _with_routes(_load_fixture(), "chunks")
+    keys = [(o.question_id, o.principal_id) for o in a.report.outcomes]
+    b = _with_replacement(a, keys[0], route="records")
+    flipped = next(o for o in a.report.outcomes if o.answer_correct is not None)
+    b = _with_replacement(b, (flipped.question_id, flipped.principal_id),
+                          answer_correct=not flipped.answer_correct)
+
+    result = diff(a, b)
+
+    route_diffs = [r for r in result.changed
+                   if any(fd.diff_class == DiffClass.ROUTE_CHANGE for fd in r.field_diffs)]
+    assert [r.key for r in route_diffs] == [keys[0]]
+    assert route_diffs[0].field_diffs[-1] == FieldDiff(
+        "route", "chunks", "records", DiffClass.ROUTE_CHANGE)
+    assert SEVERITY_ORDER.index(DiffClass.ROUTE_CHANGE) == \
+        SEVERITY_ORDER.index(DiffClass.VERDICT_FLIP) + 1
+    rendered = render(result)
+    assert rendered.index("[verdict_flip]") < rendered.index("[route_change]")
+
+
+def test_unrecorded_route_is_counted_never_compared():
+    a = _load_fixture()                      # v1: every route None
+    key = (a.report.outcomes[0].question_id, a.report.outcomes[0].principal_id)
+    b = _with_replacement(_load_fixture(), key, route="records")
+
+    result = diff(a, b)
+
+    assert not any(fd.diff_class == DiffClass.ROUTE_CHANGE
+                   for r in result.changed for fd in r.field_diffs)
+    assert result.route_not_recorded == {"a": 1, "b": 0}
+    assert ("route not recorded in run A for 1 outcome(s), run B for 0 — route changes "
+            "cannot be shown for those.") in render(result)
+
+
+def test_v1_fixture_against_a_v2_copy_of_itself_shows_no_route_change():
+    a = _load_fixture()
+    b = _with_routes(_load_fixture(), "chunks")
+
+    result = diff(a, b)
+
+    assert result.changed == ()
+    assert result.route_not_recorded == {"a": len(a.report.outcomes), "b": 0}

@@ -37,7 +37,7 @@ result -- it does not, deliberately.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 from isc.common.errors import IscError
@@ -63,6 +63,12 @@ class DiffClass(str, Enum):
     # is nearer gold_change's category than verdict_flip's.
     STATUS_CHANGE = "status_change"
     VERDICT_FLIP = "verdict_flip"
+    # Both runs recorded which path answered (Answer.route), and it differs.
+    # Directly after verdict_flip: a route flip usually explains a verdict
+    # flip, and it outranks abstention/retrieval/text changes. A route of
+    # None (schema-v1 outcomes, "not recorded") is never compared -- see
+    # DiffResult.route_not_recorded.
+    ROUTE_CHANGE = "route_change"
     ABSTENTION_CHANGE = "abstention_change"
     RETRIEVAL_SET = "retrieval_set"
     RETRIEVAL_ORDER = "retrieval_order"
@@ -82,6 +88,7 @@ SEVERITY_ORDER: tuple[DiffClass, ...] = (
     DiffClass.LEAK_CHANGE,
     DiffClass.STATUS_CHANGE,
     DiffClass.VERDICT_FLIP,
+    DiffClass.ROUTE_CHANGE,
     DiffClass.ABSTENTION_CHANGE,
     DiffClass.RETRIEVAL_SET,
     DiffClass.RETRIEVAL_ORDER,
@@ -95,6 +102,7 @@ SEVERITY_ORDER: tuple[DiffClass, ...] = (
 _FIELD_PRIORITY: tuple[DiffClass, ...] = (
     DiffClass.LEAK_CHANGE,
     DiffClass.VERDICT_FLIP,
+    DiffClass.ROUTE_CHANGE,
     DiffClass.ABSTENTION_CHANGE,
     DiffClass.RETRIEVAL_SET,
     DiffClass.RETRIEVAL_ORDER,
@@ -185,6 +193,10 @@ class DiffResult:
     status_changes: tuple[StatusChange, ...]
     added: tuple[AddedRecord, ...]
     removed: tuple[RemovedRecord, ...]
+    # Matched keys where exactly one side's route is None ("not recorded",
+    # a schema-v1 file), counted per side. Those keys can show no route
+    # change either way -- counted, never compared, never assumed "chunks".
+    route_not_recorded: dict[str, int] = field(default_factory=lambda: {"a": 0, "b": 0})
 
     @property
     def has_gold_change(self) -> bool:
@@ -247,6 +259,9 @@ def _diff_record(key: Key, a: QuestionOutcome, b: QuestionOutcome) -> RecordDiff
         diffs.append(FieldDiff("abstention_correct", a.abstention_correct, b.abstention_correct,
                                 DiffClass.VERDICT_FLIP))
 
+    if a.route is not None and b.route is not None and a.route != b.route:
+        diffs.append(FieldDiff("route", a.route, b.route, DiffClass.ROUTE_CHANGE))
+
     if a.abstained != b.abstained:
         diffs.append(FieldDiff("abstained", a.abstained, b.abstained, DiffClass.ABSTENTION_CHANGE))
     if a.abstention_reason != b.abstention_reason:
@@ -303,7 +318,11 @@ def diff(
     failed_b = _failed_keys(b)
 
     changed: list[RecordDiff] = []
+    route_not_recorded = {"a": 0, "b": 0}
     for key in sorted(index_a.keys() & index_b.keys()):
+        route_a, route_b = index_a[key].route, index_b[key].route
+        if (route_a is None) != (route_b is None):
+            route_not_recorded["a" if route_a is None else "b"] += 1
         record_diff = _diff_record(key, index_a[key], index_b[key])
         if record_diff is not None:
             changed.append(record_diff)
@@ -328,7 +347,7 @@ def diff(
 
     return DiffResult(
         changed=tuple(changed), status_changes=tuple(status_changes),
-        added=tuple(added), removed=tuple(removed),
+        added=tuple(added), removed=tuple(removed), route_not_recorded=route_not_recorded,
     )
 
 
@@ -364,8 +383,13 @@ def render(result: DiffResult) -> str:
     class, sorted by key for a stable, diffable-itself output."""
     if result.has_gold_change:
         return _render_gold_change_only(result)
+    unrecorded = result.route_not_recorded
+    route_note = (
+        [f"route not recorded in run A for {unrecorded['a']} outcome(s), run B for "
+         f"{unrecorded['b']} — route changes cannot be shown for those."]
+        if unrecorded["a"] or unrecorded["b"] else [])
     if result.is_identical:
-        return "No differences."
+        return "\n".join(["No differences.", *route_note])
 
     items: list[tuple[int, Key, str]] = []
 
@@ -398,4 +422,4 @@ def render(result: DiffResult) -> str:
     summary = f"{len(items)} difference(s): " + ", ".join(
         f"{n} {cls}" for cls, n in sorted(counts.items(), key=lambda kv: -counts[kv[0]]))
 
-    return "\n".join([summary, ""] + [text for _rank, _key, text in items])
+    return "\n".join([summary, *route_note, ""] + [text for _rank, _key, text in items])

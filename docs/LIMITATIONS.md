@@ -225,3 +225,53 @@ error appeared (`po_010.pdf` line 20 `extended_price`, a 10x digit slip
 against unambiguous source text) -- caught cleanly at confidence 0.02, not
 a false negative, and reads as ordinary model call variance rather than
 anything caused by this fix.
+
+## Aggregate path (AG): statistic questions outside the guard's word list
+
+The planner (prompt v1) has no operation for a statistic, so when a question
+asks for one it picks the nearest operation, `part_prices`: 3/81 misroutes in
+the v1 baseline run, all statistic questions. `validate_plan()` backs it with
+a whole-word list (average, averages, avg, median, lowest, highest, cheapest,
+dearest, minimum, min, maximum, max, count, how many, number of, most, least;
+`mean` excluded because it matches "I mean") and rejects the aggregate plan,
+so the question falls through to the chunk path: 4/4 listed phrasings stopped
+in both runs (hw_17, hw_21, hw_22, hw_26), with 0/12 paraphrases and 0/9 gold
+aggregate questions rejected. A phrasing outside the list gets through: hw_27
+("typically") was misrouted to `part_prices` in 2/2 runs. The impact is
+bounded by D7: the answer is a headed list of priced lines with its count of
+lines and orders, never a computed statistic. Deliberately not fixed by
+extending the list — that would fit the list to the case built to measure it.
+Runs: `runs/run_20260928T123301Z`, `runs/run_20260928T123435Z` (v1 prompt,
+cache off, $0.0179 for both). Prompt v2, which fixed all statistic questions
+in the prompt itself (misroute-in 0/81), was rejected for regressing hw_09
+(paraphrase 10/11 in both runs) — see
+`config/prompts/aggregate/query_plan.v2.NOTES.md`.
+
+## Part-price gold completed (AG-10): compare runs within the same gold only
+
+The gold for the four part-price questions (`q_cd_05`..`08`) used to list a
+hand-picked pair of lines each; it now lists every priced line of the part
+in documents the gold principal can read (D8): 2→12, 2→20, 2→3 and 2→11
+lines. This is a measurement change, not a system change — the corpus,
+questions and code under test are unchanged; only 4 of 56 gold entries moved
+(`gold_answer`; `gold_chunk_ids` and `source_documents` for three of them).
+`answer_contains_gold()` now requires every listed price, so on the chunk
+path answer accuracy for these four is expected to drop: 8 retrieved chunks
+cannot list 12–20 lines across up to 6 documents. The new `gold_chunk_ids`
+also move `cross_document` recall@8. `isc eval-diff` against a pre-AG-10 run
+classifies these four as `gold_change`; compare runs within the same gold
+only. The "priced lines only" part of D8 is untested by this corpus: the
+extraction gold has no line with a null unit price, so a generator that kept
+unpriced lines would produce identical gold here.
+
+## Aggregate path (AG-11): recall@8 and MRR mix two kinds of retrieved_ids
+
+With `aggregate.enabled` on, recall@8 moved 0.981 → 0.966 and MRR 0.872 →
+0.815 between run A (`run_20260928T145343Z`, flag off) and runs B1/B2
+(`run_20260928T150038Z`, `run_20260928T150333Z`), while answer accuracy rose
+25/35 → 32/35. The drop is a measurement artifact, not a retrieval
+regression: for the 9 of 74 outcomes answered from records, `retrieved_ids`
+holds the renderer's evidence chunks (identity + value chunk per order, in
+citation order), not a ranked search list, so rank-based metrics score them
+as if they were a worse ranking. Follow-up: report recall@k and MRR over
+chunk-routed outcomes only (the route is already on every outcome, AG-09).

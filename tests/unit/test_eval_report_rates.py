@@ -409,3 +409,87 @@ def test_missing_schema_version_is_rejected_too():
 
     with pytest.raises(ReportSchemaMismatch):
         validate_schema_version(payload)
+
+
+# -- AG-09: answer route (report schema 4) ----------------------------------
+
+def _routed(qid: str, route: str | None, subtype: str = "single_hop",
+            correct: bool | None = True, question_class: str = "answerable") -> QuestionOutcome:
+    return QuestionOutcome(
+        question_id=qid, question_class=question_class, subtype=subtype, principal_id="u_alice",
+        is_gold_principal=True,
+        answer_correct=correct if question_class == "answerable" else None, route=route)
+
+
+def _route_report() -> RetrievalReport:
+    return RetrievalReport(outcomes=[
+        _routed("q_cd_01", "records", "cross_document", True),
+        _routed("q_cd_02", "records", "cross_document", False),
+        _routed("q_cd_03", "chunks", "cross_document", True),   # expected records: misroute_out
+        _routed("q_sh_01", "chunks", "single_hop", True),
+        _routed("q_sh_02", "records", "single_hop", False),     # not expected: misroute_in
+        _routed("q_sh_03", None, "single_hop", True),           # not recorded
+        _routed("q_ua_01", "chunks", "absent", question_class="unanswerable"),
+    ])
+
+
+EXPECTED_RECORDS = frozenset({"q_cd_01", "q_cd_02", "q_cd_03"})
+
+
+def _route_section(md: str) -> list[str]:
+    lines = md.splitlines()
+    start = lines.index("### Answer route")
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("#")), len(lines))
+    return [line for line in lines[start + 1:end] if line.strip()]
+
+
+def test_route_summary_counts_and_per_route_subtype_cells():
+    summary = _route_report().route_summary(None)
+    assert summary["counts"] == {"n": 7, "records": 3, "chunks": 3, "not_recorded": 1}
+    assert summary["answer_accuracy_by_route"] == {
+        "records": {"cross_document": {"correct": 1, "n": 2},
+                    "single_hop": {"correct": 0, "n": 1}},
+        "chunks": {"cross_document": {"correct": 1, "n": 1},
+                   "single_hop": {"correct": 1, "n": 1}},
+    }
+    # route None is never folded into a route's cells -- counted on its own
+    assert summary["answer_accuracy_not_recorded"] == {"correct": 1, "n": 1}
+
+
+def test_route_summary_names_misroutes_against_expected_records():
+    summary = _route_report().route_summary(EXPECTED_RECORDS)
+    assert summary["misroute_in"] == [
+        {"question_id": "q_sh_02", "principal_id": "u_alice", "subtype": "single_hop"}]
+    assert summary["misroute_out"] == [
+        {"question_id": "q_cd_03", "principal_id": "u_alice", "subtype": "cross_document"}]
+
+
+def test_misroutes_absent_when_not_checked(tmp_path):
+    summary = _route_report().route_summary(None)
+    assert "misroute_in" not in summary and "misroute_out" not in summary
+    md = write(tmp_path, None, _route_report()).read_text()
+    assert "Misroutes not checked (no planner gold supplied)" in _route_section(md)
+    payload = json.loads((tmp_path / "report.json").read_text())
+    assert "misroute_in" not in payload["retrieval"]["route"]
+
+
+def test_v1_fixture_reports_route_as_not_recorded_only(tmp_path):
+    result = eval_outcomes.load(FIXTURES / "ev02_synthetic_outcomes" / "outcomes.jsonl")
+    md = write(tmp_path, None, result.report).read_text()
+    assert _route_section(md) == ["Route not recorded for these outcomes (schema v1)."]
+    route = json.loads((tmp_path / "report.json").read_text())["retrieval"]["route"]
+    assert route["counts"] == {"n": 5, "records": 0, "chunks": 0, "not_recorded": 5}
+    assert route["answer_accuracy_by_route"] == {}
+
+
+def test_route_section_is_schema_4_and_has_no_bare_rates(tmp_path):
+    md = write(tmp_path, None, _route_report(), expected_records=EXPECTED_RECORDS).read_text()
+    payload = json.loads((tmp_path / "report.json").read_text())
+    assert payload["schema_version"] == 4 == REPORT_SCHEMA_VERSION
+    assert find_bare_rates(payload) == []
+    section = _route_section(md)
+    assert ("records 3 of 7 outcomes · chunks 3 of 7 outcomes · "
+            "not recorded 1 of 7 outcomes") in section
+    assert "| cross_document | 1/2 | 1/1 |" in section
+    assert "- q_sh_02 (u_alice, single_hop)" in section
+    assert "- q_cd_03 (u_alice, cross_document)" in section

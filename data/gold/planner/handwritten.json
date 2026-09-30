@@ -1,0 +1,391 @@
+{
+  "cases": [
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": "SGD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Omron Electronics Asia"
+      },
+      "expected_supplier_ids": [
+        "V102337"
+      ],
+      "id": "hw_01",
+      "text": "How much have we paid Omron Electronics Asia overall, in SGD?",
+      "why": ""
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": "USD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Keyence Singapore Pte Ltd"
+      },
+      "expected_supplier_ids": [
+        "V103014"
+      ],
+      "id": "hw_02",
+      "text": "Total spend with Keyence Singapore Pte Ltd, USD only?",
+      "why": ""
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": "USD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Kestrel Industrial AG"
+      },
+      "expected_supplier_ids": [
+        "V100781"
+      ],
+      "id": "hw_03",
+      "text": "Sum up everything we ordered from Kestrel Industrial AG in USD.",
+      "why": ""
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": "SGD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Omron"
+      },
+      "expected_supplier_ids": [
+        "V102337"
+      ],
+      "id": "hw_04",
+      "text": "Spend with Omron in SGD, all orders combined?",
+      "why": "short mention must stay verbatim, not expanded"
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": null,
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Kestrel Industrial"
+      },
+      "expected_supplier_ids": [
+        "V100781",
+        "V100782"
+      ],
+      "id": "hw_05",
+      "text": "How much did we spend with Kestrel Industrial overall?",
+      "why": "ambiguous — both entities"
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": null,
+        "operation": "part_prices",
+        "part_number": "TRM-BLK-2P5",
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_06",
+      "text": "List every unit price we've paid for TRM-BLK-2P5.",
+      "why": ""
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": null,
+        "operation": "part_prices",
+        "part_number": "PLC-1756-L83",
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_07",
+      "text": "Across all our POs, what prices did we pay for PLC-1756-L83?",
+      "why": ""
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": null,
+        "operation": "part_prices",
+        "part_number": "TRM-BLK-2P5",
+        "supplier": "Keyence"
+      },
+      "expected_supplier_ids": [
+        "V103014"
+      ],
+      "id": "hw_08",
+      "text": "What did we pay Keyence for part TRM-BLK-2P5 across our orders?",
+      "why": "supplier-scoped part prices"
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": null,
+        "operation": "part_prices",
+        "part_number": "ENC-INC-1024",
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_09",
+      "text": "ENC-INC-1024: what have we paid per unit on every purchase order?",
+      "why": ""
+    },
+    {
+      "class": "near_miss",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_10",
+      "text": "What is the order total on PO 4522345741?",
+      "why": ""
+    },
+    {
+      "class": "near_miss",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_11",
+      "text": "What is the unit price of PLC-1756-L83 on PO 4522345741?",
+      "why": ""
+    },
+    {
+      "class": "near_miss",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_12",
+      "text": "Which parts did we buy from Omron Electronics Asia?",
+      "why": ""
+    },
+    {
+      "class": "near_miss",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_13",
+      "text": "Who supplies part ENC-INC-1024?",
+      "why": ""
+    },
+    {
+      "class": "near_miss",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_14",
+      "text": "When did we last order from Keyence Singapore Pte Ltd?",
+      "why": ""
+    },
+    {
+      "class": "near_miss",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_15",
+      "text": "What currency do we pay Kestrel Industrial AG in?",
+      "why": ""
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_16",
+      "text": "How many purchase orders do we have with Omron Electronics Asia?",
+      "why": "count"
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_17",
+      "text": "What is the average unit price we pay for TRM-BLK-2P5?",
+      "why": "average, not a list"
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_18",
+      "text": "Which supplier did we spend the most with?",
+      "why": "ranking, no supplier named"
+    },
+    {
+      "class": "truncation",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_19",
+      "text": "What did we spend with Kestrel Industrial, AG in total, in USD?",
+      "why": "punctuation hides the suffix; a plan resolving to BOTH Kestrel ids is the failure; falling through is safe"
+    },
+    {
+      "class": "truncation",
+      "expected": {
+        "currency": "USD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Kestrel Industrial AG"
+      },
+      "expected_supplier_ids": [
+        "V100781"
+      ],
+      "id": "hw_20",
+      "text": "What did we spend with Kestrel Industrial in total — I mean Kestrel Industrial AG — in USD?",
+      "why": "mention twice; a plan resolving to BOTH Kestrel ids is the failure"
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_21",
+      "text": "What's the lowest price we've ever paid for PLC-1756-L83?",
+      "why": "minimum"
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_22",
+      "text": "On average, how much does ENC-INC-1024 cost us per unit?",
+      "why": "average, different wording"
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_23",
+      "text": "Which of our Omron Electronics Asia orders had the highest total?",
+      "why": "maximum / ranking"
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": null,
+        "operation": "part_prices",
+        "part_number": "PLC-1756-L83",
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_24",
+      "text": "Show me all the unit prices we've paid for PLC-1756-L83.",
+      "why": "\"all\" must not trigger a refusal"
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": "SGD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Keyence Singapore Pte Ltd"
+      },
+      "expected_supplier_ids": [
+        "V103014"
+      ],
+      "id": "hw_25",
+      "text": "Give me our combined spend with Keyence Singapore Pte Ltd in SGD.",
+      "why": ""
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_26",
+      "text": "What's the cheapest we've ever bought TRM-BLK-2P5 for?",
+      "why": "minimum — word in the guard list"
+    },
+    {
+      "class": "unsupported",
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "hw_27",
+      "text": "What do we typically pay for PLC-1756-L83?",
+      "why": "statistic word deliberately NOT in the guard list — measures what the guard cannot catch"
+    },
+    {
+      "class": "paraphrase",
+      "expected": {
+        "currency": "SGD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Omron Electronics Asia"
+      },
+      "expected_supplier_ids": [
+        "V102337"
+      ],
+      "id": "hw_28",
+      "text": "What did we spend with Omron Electronics Asia in total, in SGD, including discounts?",
+      "why": "\"count\" inside \"discounts\" must not trigger the guard"
+    }
+  ],
+  "provenance": {
+    "author": "hand-written, AG-08 prompt 2",
+    "note": "never generated; never copy these strings into any prompt file"
+  }
+}

@@ -1,0 +1,691 @@
+{
+  "cases": [
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_sh_01",
+      "subtype": "single_hop",
+      "text": "Who is the buyer contact on PO 4513180299?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_sh_02",
+      "subtype": "single_hop",
+      "text": "What is the PO date on PO 4573479065?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_sh_03",
+      "subtype": "single_hop",
+      "text": "Who is the supplier on PO 4573479065?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_sh_04",
+      "subtype": "single_hop",
+      "text": "What currency is PO 4536969136 denominated in?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_sh_05",
+      "subtype": "single_hop",
+      "text": "Who is the buyer contact on PO 4512472645?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_sh_06",
+      "subtype": "single_hop",
+      "text": "What is the PO date on PO 4553021889?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_sh_07",
+      "subtype": "single_hop",
+      "text": "Who is the buyer contact on PO 4557830886?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_sh_08",
+      "subtype": "single_hop",
+      "text": "What is the total order amount on PO 4527194073?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_sh_09",
+      "subtype": "single_hop",
+      "text": "Who is the buyer contact on PO 4591786279?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_sh_10",
+      "subtype": "single_hop",
+      "text": "What is the supplier's vendor code on PO 4582333324?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_hl_01",
+      "subtype": "header_lookup",
+      "text": "What incoterms apply to PO 4582333324?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_hl_02",
+      "subtype": "header_lookup",
+      "text": "What are the payment terms on PO 4578072508?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_hl_03",
+      "subtype": "header_lookup",
+      "text": "What is the ship-to site for PO 4542555435?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_hl_04",
+      "subtype": "header_lookup",
+      "text": "What incoterms apply to PO 4580799032?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_hl_05",
+      "subtype": "header_lookup",
+      "text": "What are the payment terms on PO 4547294316?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_li_01",
+      "subtype": "line_item",
+      "text": "What is the unit price of line 10 on PO 4591914574?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_li_02",
+      "subtype": "line_item",
+      "text": "What is the unit price of line 420 on PO 4591914574?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_li_03",
+      "subtype": "line_item",
+      "text": "What is the description of line 20 on PO 4553021889?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_li_04",
+      "subtype": "line_item",
+      "text": "What is the unit price of line 410 on PO 4553021889?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_li_05",
+      "subtype": "line_item",
+      "text": "What is the unit price of line 20 on PO 4582333324?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_li_06",
+      "subtype": "line_item",
+      "text": "What is the unit price of line 20 on PO 4542555435?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_li_07",
+      "subtype": "line_item",
+      "text": "What quantity was ordered on line 20 of PO 4557830886?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_li_08",
+      "subtype": "line_item",
+      "text": "What is the unit price of line 30 on PO 4578072508?"
+    },
+    {
+      "expected": {
+        "currency": "SGD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Omron Electronics Asia"
+      },
+      "expected_supplier_ids": [
+        "V102337"
+      ],
+      "id": "q_cd_01",
+      "subtype": "cross_document",
+      "text": "What did we spend with Omron Electronics Asia in total, in SGD?"
+    },
+    {
+      "expected": {
+        "currency": "SGD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Keyence Singapore Pte Ltd"
+      },
+      "expected_supplier_ids": [
+        "V103014"
+      ],
+      "id": "q_cd_02",
+      "subtype": "cross_document",
+      "text": "What did we spend with Keyence Singapore Pte Ltd in total, in SGD?"
+    },
+    {
+      "expected": {
+        "currency": "USD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Keyence Singapore Pte Ltd"
+      },
+      "expected_supplier_ids": [
+        "V103014"
+      ],
+      "id": "q_cd_03",
+      "subtype": "cross_document",
+      "text": "What did we spend with Keyence Singapore Pte Ltd in total, in USD?"
+    },
+    {
+      "expected": {
+        "currency": "USD",
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Kestrel Industrial AG"
+      },
+      "expected_supplier_ids": [
+        "V100781"
+      ],
+      "id": "q_cd_04",
+      "subtype": "cross_document",
+      "text": "What did we spend with Kestrel Industrial AG in total, in USD?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "part_prices",
+        "part_number": "PLC-1756-L83",
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_cd_05",
+      "subtype": "cross_document",
+      "text": "What did we pay for part PLC-1756-L83 across our purchase orders?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "part_prices",
+        "part_number": "TRM-BLK-2P5",
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_cd_06",
+      "subtype": "cross_document",
+      "text": "What did we pay for part TRM-BLK-2P5 across our purchase orders?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "part_prices",
+        "part_number": "ENC-INC-1024",
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_cd_07",
+      "subtype": "cross_document",
+      "text": "What did we pay for part ENC-INC-1024 across our purchase orders?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "part_prices",
+        "part_number": "TRM-BLK-2P5",
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_cd_08",
+      "subtype": "cross_document",
+      "text": "What did we pay for part TRM-BLK-2P5 across our purchase orders?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_am_01",
+      "subtype": "ambiguous",
+      "text": "What did we order from Kestrel Industrial?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_am_02",
+      "subtype": "ambiguous",
+      "text": "What is Kestrel Industrial's vendor code?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_am_03",
+      "subtype": "ambiguous",
+      "text": "What are the payment terms on the Kestrel Industrial order?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "total_spend",
+        "part_number": null,
+        "supplier": "Kestrel Industrial"
+      },
+      "expected_supplier_ids": [
+        "V100781",
+        "V100782"
+      ],
+      "id": "q_am_04",
+      "subtype": "ambiguous",
+      "text": "How much did we spend with Kestrel Industrial in total?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_ua_01",
+      "subtype": "absent",
+      "text": "Who is the buyer contact on PO 4573479065?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_ua_02",
+      "subtype": "absent",
+      "text": "What are the payment terms on PO 4536969136?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_ua_03",
+      "subtype": "absent",
+      "text": "What incoterms apply to PO 4512916338?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_ua_04",
+      "subtype": "out_of_scope",
+      "text": "Has the shipment for PO 4522345741 been confirmed as received?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_ua_05",
+      "subtype": "out_of_scope",
+      "text": "Did the goods on PO 4553997652 pass incoming quality inspection?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_ua_06",
+      "subtype": "out_of_scope",
+      "text": "What warranty terms apply under the Master Supply Agreement referenced on PO 4512472645?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_ua_07",
+      "subtype": "underspecified",
+      "text": "What was the unit price?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_ua_08",
+      "subtype": "underspecified",
+      "text": "When is delivery promised?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_01",
+      "subtype": "restricted_filtered",
+      "text": "What is the total order amount on PO 4522345741?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_02",
+      "subtype": "restricted_filtered",
+      "text": "What is the unit price of line 10 on PO 4522345741?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_03",
+      "subtype": "restricted_filtered",
+      "text": "What is the PO date on PO 4512916338?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_04",
+      "subtype": "restricted_filtered",
+      "text": "What is the unit price of line 10 on PO 4512916338?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_05",
+      "subtype": "restricted_filtered",
+      "text": "What is the unit price of line 40 on PO 4512916338?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_06",
+      "subtype": "restricted_filtered",
+      "text": "What part number is on line 40 of PO 4569044139?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_07",
+      "subtype": "restricted_filtered",
+      "text": "What is the unit price of line 20 on PO 4569044139?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_08",
+      "subtype": "restricted_filtered",
+      "text": "What is the total order amount on PO 4569044139?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_10",
+      "subtype": "restricted_unfiltered",
+      "text": "What did we pay per unit for the 250-unit order of ControlLogix processor modules from Omron Electronics Asia?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_11",
+      "subtype": "restricted_unfiltered",
+      "text": "What did we pay per unit for the 24VDC relay module on the SKF Bearings Manufacturing order?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_12",
+      "subtype": "restricted_unfiltered",
+      "text": "When was the SKF Bearings Manufacturing purchase order dated?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_13",
+      "subtype": "restricted_unfiltered",
+      "text": "What did we pay per unit for the 100-unit order of incremental encoders from Keyence Singapore?"
+    },
+    {
+      "expected": {
+        "currency": null,
+        "operation": "none",
+        "part_number": null,
+        "supplier": null
+      },
+      "expected_supplier_ids": [],
+      "id": "q_re_09",
+      "subtype": "no_reader",
+      "text": "What is the total order amount on PO 4594564683?"
+    }
+  ],
+  "provenance": {
+    "generator": "scripts/gen_planner_gold.py",
+    "questions_sha256": "c4549df79e2510565260ce8ef565f9853155573b7fd6e56839c99a84c3b594c0"
+  }
+}

@@ -11,9 +11,11 @@ in, byte for byte where that matters and field for field everywhere else.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
+from isc.common.errors import IscError
 from isc.eval.outcomes import (
     FAILED_FILENAME,
     OUTCOMES_FILENAME,
@@ -26,7 +28,11 @@ from isc.eval.retrieval import QuestionOutcome, RetrievalEvalResult, RetrievalRe
 
 
 def _outcome(**kw) -> QuestionOutcome:
-    base = dict(question_id="q1", question_class="answerable", subtype="single_hop")
+    # route defaults to "chunks": an outcome built in memory came from run(),
+    # which always knows which path answered. route=None ("not recorded")
+    # only ever comes from reading a schema-v1 file.
+    base = dict(question_id="q1", question_class="answerable", subtype="single_hop",
+                route="chunks")
     base.update(kw)
     return QuestionOutcome(**base)
 
@@ -292,3 +298,108 @@ def test_rescore_from_file_reproduces_the_same_metrics_as_in_memory(tmp_path):
     assert [o.question_id for o in rescored.leaks()] == [o.question_id for o in original.leaks()]
     assert rescored.leaks_by_subtype() == original.leaks_by_subtype()
     assert rescored.passed() == original.passed()
+
+
+# -- schema v2: route is recorded; v1 reads as "not recorded" --------------
+
+V1_FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "ev02_synthetic_outcomes"
+
+
+def _v1_expected(line: str) -> QuestionOutcome:
+    """A v1 fixture line as QuestionOutcome, built by hand from the JSON --
+    not via load() -- so this is an independent snapshot of what v1 means."""
+    r = json.loads(line)
+    assert r["schema_version"] == 1
+    return QuestionOutcome(
+        question_id=r["question_id"], question_class=r["question_class"],
+        subtype=r["subtype"], principal_id=r["principal_id"],
+        is_gold_principal=r["is_gold_principal"], retrieved_ids=list(r["retrieved_ids"]),
+        gold_ids=set(r["gold_ids"]), abstained=r["abstained"],
+        abstention_reason=r["abstention_reason"], answer_text=r["answer_text"],
+        citations=list(r["citations"]), answer_correct=r["answer_correct"],
+        abstention_correct=r["abstention_correct"], citations_valid=r["citations_valid"],
+        leaked_chunk_ids=list(r["leaked_chunk_ids"]), route=None,
+    )
+
+
+def test_v2_round_trip_preserves_route(tmp_path):
+    outcomes = [_outcome(question_id="q_a", route="chunks"),
+                _outcome(question_id="q_b", route="records")]
+    outcomes_path, _ = write(tmp_path, RetrievalEvalResult(
+        report=RetrievalReport(outcomes=outcomes), failed=[]))
+    records = [json.loads(line) for line in outcomes_path.read_text().splitlines()]
+    assert [r["route"] for r in records] == ["chunks", "records"]
+    assert {r["schema_version"] for r in records} == {2}
+    assert [o.route for o in load(outcomes_path).report.outcomes] == ["chunks", "records"]
+
+
+def test_committed_v1_fixture_reads_route_as_not_recorded():
+    lines = (V1_FIXTURE / "outcomes.jsonl").read_text().splitlines()
+    expected = [_v1_expected(line) for line in lines]
+    loaded = load(V1_FIXTURE / "outcomes.jsonl").report.outcomes
+    assert loaded == expected
+    assert [o.route for o in loaded] == [None] * len(lines)
+
+
+def _written_record(tmp_path) -> tuple[Path, dict]:
+    outcomes_path, _ = write(tmp_path, RetrievalEvalResult(
+        report=RetrievalReport(outcomes=[_outcome()]), failed=[]))
+    return outcomes_path, json.loads(outcomes_path.read_text())
+
+
+@pytest.mark.parametrize("route", ["missing", "other", None])
+def test_v2_record_without_a_valid_route_is_malformed(tmp_path, route):
+    """A v2 record with no route is malformed, not "not recorded" -- only a
+    v1 file means that."""
+    outcomes_path, record = _written_record(tmp_path)
+    record["schema_version"] = 2
+    if route == "missing":
+        del record["route"]
+    else:
+        record["route"] = route
+    outcomes_path.write_text(json.dumps(record) + "\n")
+    with pytest.raises(IscError, match="route"):
+        load(outcomes_path)
+
+
+def test_schema_version_3_is_rejected(tmp_path):
+    outcomes_path, record = _written_record(tmp_path)
+    record["schema_version"] = 3
+    outcomes_path.write_text(json.dumps(record) + "\n")
+    with pytest.raises(OutcomesSchemaMismatch, match="schema_version"):
+        load(outcomes_path)
+
+
+def test_a_file_mixing_v1_and_v2_records_is_rejected_naming_the_line(tmp_path):
+    outcomes_path, v2 = _written_record(tmp_path)
+    v1 = json.loads((V1_FIXTURE / "outcomes.jsonl").read_text().splitlines()[0])
+    v2["schema_version"] = 2
+    v2["route"] = "records"
+    outcomes_path.write_text(json.dumps(v1) + "\n" + json.dumps(v2) + "\n")
+    with pytest.raises(IscError, match=r":2:.*mix"):
+        load(outcomes_path)
+
+
+def test_writer_refuses_an_outcome_whose_route_was_not_recorded(tmp_path):
+    """A v2 file never claims "not recorded": re-writing outcomes loaded from
+    a v1 file would otherwise produce records the v2 reader rejects."""
+    result = RetrievalEvalResult(
+        report=RetrievalReport(outcomes=[_outcome(route=None)]), failed=[])
+    with pytest.raises(ValueError, match="route"):
+        write(tmp_path, result)
+
+
+def test_retrieval_run_copies_the_answer_route():
+    from isc.eval.retrieval import run
+    from isc.models.acl import Principal
+    from isc.models.answer import Answer
+
+    class RecordsOrchestrator:
+        def ask(self, question, principal):
+            return Answer(question=question, text="Total spend: 1.00 SGD.", route="records")
+
+    q = {"id": "q_cd_01", "text": "What did we spend?", "question_class": "answerable",
+         "subtype": "cross_document", "gold_chunk_ids": [], "gold_answer": None,
+         "principal": "u_alice"}
+    result = run([q], {"u_alice": Principal(id="u_alice")}, RecordsOrchestrator())
+    assert [o.route for o in result.report.outcomes] == ["records"]

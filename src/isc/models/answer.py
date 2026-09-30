@@ -60,6 +60,11 @@ class Answer(BaseModel):
     confidence: Confidence = Field(default_factory=Confidence.unknown)
     supporting: list[ScoredChunk] = Field(default_factory=list)
     run_id: str = ""
+    # Which path produced this answer: "chunks" (retrieve -> generate) or
+    # "records" (aggregate/: plan -> permitted records -> computed figure).
+    # Both populate `supporting` with real, ACL-bearing chunks, so eval's
+    # leak check and recall apply to either path unchanged.
+    route: str = "chunks"
 
     @classmethod
     def abstain(
